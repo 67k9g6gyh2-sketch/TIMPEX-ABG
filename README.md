@@ -1,11 +1,15 @@
-# ABG O₂ Requirement
+# ABG Interpretation
 
-Bedside calculator for the oxygen a patient needs to reach a target PaO₂, from one ABG.
-Uses the a/A ratio method: target PaO₂ = 104 − 0.4 × age → FiO₂ needed → nasal cannula L/min ((FiO₂% − 20) ÷ 4).
-Also shows the A–a gradient (with age norm), P/F ratio and the full step-by-step working.
+Bedside arterial blood gas reader for when electrolytes aren't back: uses only pH, PaCO₂, PaO₂, HCO₃ (optional), FiO₂ and age.
+
+- **Acid–base:** primary disorder; uncompensated / partially / fully compensated; expected-compensation check (Winter's formula, metabolic alkalosis rule, acute vs chronic respiratory rules) to flag mixed disorders.
+- **HCO₃ check:** calculates HCO₃ from pH and PaCO₂ and flags an entered value that doesn't match.
+- **Oxygenation:** mild / moderate / severe hypoxemia on room air (age-adjusted over 60); uncorrected / corrected / overcorrected on O₂.
+- **O₂ requirement:** a/A ratio method (target PaO₂ = 104 − 0.4 × age → FiO₂ needed → nasal cannula L/min), with A–a gradient, P/F ratio and full working.
+- **Copy summary:** one chart-ready line.
 
 Works offline once opened; install it from Safari (Share → Add to Home Screen) or Chrome (Install app).
 
-Method: Gilbert R, Keighley JF. Am Rev Respir Dis. 1974;109(1):142–5.
+References: Berend K et al. N Engl J Med 2014;371:1434–45 · Shapiro BA et al. Clinical Application of Blood Gases, 5th ed. · Gilbert R, Keighley JF. Am Rev Respir Dis 1974;109:142–5.
 
-Clinical decision aid for trained clinicians. It does not replace clinical judgment or your institution's oxygen protocol.
+Clinical decision aid for trained clinicians. It does not replace clinical judgment or your institution's protocols.

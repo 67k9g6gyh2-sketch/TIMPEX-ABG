@@ -1,7 +1,7 @@
 {
-  "name": "ABG O₂ Requirement",
-  "short_name": "ABG O₂",
-  "description": "Bedside oxygen requirement from an ABG: a/A ratio, required FiO2 and nasal cannula flow.",
+  "name": "ABG Interpretation",
+  "short_name": "ABG",
+  "description": "Bedside ABG interpretation: acid–base, compensation, oxygenation and oxygen requirement, from pH, PaCO2, PaO2 and HCO3.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -9,8 +9,23 @@
   "background_color": "#edf1f4",
   "theme_color": "#4f3796",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
