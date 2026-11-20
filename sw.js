@@ -1,5 +1,5 @@
 // Offline cache for the ABG O2 app. Bump CACHE when you replace any file.
-const CACHE = "abg-o2-v2";
+const CACHE = "timpex-abg-v3";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {
