@@ -10,6 +10,9 @@ Bedside arterial blood gas reader for when electrolytes aren't back: uses only p
 - **HCO₃ deficit** = 0.5 (or 0.4) × weight × (24 − HCO₃).
 - **Message to copy**: values with ⬇️/⬆️, P/F, A-aDO₂, desired FiO₂, HCO₃ deficit, compensation and interpretation.
 - Accepts TCO₂, BE and SO₂ from the printout; flags an HCO₃ or TCO₂ that doesn't fit pH and pCO₂.
+- **Complete interpretation**: acid–base + oxygenation, traditional label, Type 1/Type 2 respiratory failure, and gas exchange (P/F, A-aDO₂ or a/A with the likely mechanism).
+- **Guideline-based suggestions** at the end of the message: BTS 2017 (O₂ targets), GOLD 2026 and NICE (NIV), Surviving Sepsis Campaign 2026 and BICARICU-2 (bicarbonate, lactate), ADA/EASD 2024 (DKA), 2023 global ARDS definition and ATS 2024 (ARDS), MSD Manual (metabolic alkalosis).
+- Optional lactate, and a CO₂-retainer tick box (SpO₂ 88–92%, desired FiO₂ for pO₂ 60).
 
 Works offline once opened; install it from Safari (Share → Add to Home Screen) or Chrome (Install app).
 
