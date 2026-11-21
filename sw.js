@@ -1,5 +1,5 @@
 // Offline cache for TIMPEX Gas & Vent. Bump CACHE when you replace any file.
-const CACHE = "timpex-gasvent-v9";
+const CACHE = "timpex-gasvent-v10";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {

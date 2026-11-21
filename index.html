@@ -298,6 +298,21 @@ ul.vint li.ok { border-left-color: var(--ok); }
 .scview.zoom .scview-img { display: block; }
 .scview.zoom .scview-img img { max-width: none; max-height: none; width: 220%; }
 nav.tabs .seg button { font-size: 13.5px; }
+/* v10: photo reader */
+.anbox .antr button { font-size: 13.5px; }
+.anstep { margin: 10px 0 8px; font-size: 14px; line-height: 1.45; background: var(--surface-2); border-radius: 10px; padding: 9px 11px; min-height: 20px; }
+.anstep:empty { display: none; }
+.ancv { border-radius: 10px; overflow: hidden; background: #000; }
+.ancv canvas { display: block; width: 100%; height: auto; }
+.range { width: 100%; margin-top: 10px; accent-color: var(--accent); }
+.mk { display: inline-grid; place-items: center; min-width: 20px; height: 20px; border-radius: 10px; background: #ff3b30; color: #fff; font-size: 12px; margin-right: 2px; }
+.aibox { margin-top: 14px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--surface-2); }
+.aibox summary { cursor: pointer; font: 600 14px/1.35 var(--font-display); }
+.full-col { grid-column: 1 / -1; }
+ol.sugg.nonum { list-style: none; padding-left: 0; }
+.range { -webkit-appearance: auto; appearance: auto; height: 28px; background: transparent; border: 0; padding: 0; }
+.btn.small { color: var(--accent-ink); }
+.btn.ghost.small { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -619,12 +634,60 @@ nav.tabs .seg button { font-size: 13.5px; }
     </div>
     <div class="box" id="sc-box">
       <h3>Scalars (waveforms)</h3>
-      <div class="hint" style="margin-top:0">Photograph the ventilator screen showing pressure, flow and volume against time. The photo stays on this phone: it is not uploaded or saved, and it is gone when you clear or close the app. Keep the patient's name out of the frame.</div>
+      <div class="hint" style="margin-top:0">Photograph the ventilator screen showing pressure, flow and volume against time. The photo stays on this phone (unless you choose the optional AI read): it is not saved, and it is gone when you clear or close the app. Keep the patient's name out of the frame.</div>
       <div class="btnrow" style="margin-top:10px">
         <label class="btn" for="sc-file" id="sc-add">Add photo</label>
         <button type="button" class="btn ghost" id="sc-photo-x" hidden>Remove photos</button>
       </div>
       <input type="file" id="sc-file" accept="image/*" multiple hidden>
+      <div id="an-box" class="anbox" hidden>
+        <div class="vsec" style="margin-top:14px">Read the photo automatically</div>
+        <div class="hint" style="margin-top:0">Box each tracing, tap its line, then tap its zero (flow) or PEEP (pressure) line. The app traces the waveform, splits it into breaths and checks each breath against the patterns below. Runs on this phone; nothing is uploaded.</div>
+        <div id="an-photos" class="chips"></div>
+        <div class="seg full antr" role="group" aria-label="Tracing" style="margin-top:10px">
+          <button type="button" data-tr="flow" aria-pressed="true">Flow tracing</button>
+          <button type="button" data-tr="paw" aria-pressed="false">Pressure tracing</button>
+        </div>
+        <div class="anstep" id="an-step"></div>
+        <div class="ancv"><canvas id="an-cv"></canvas></div>
+        <div class="btnrow" style="margin-top:8px">
+          <button type="button" class="btn ghost small" id="an-redo">Redo flow</button>
+          <button type="button" class="btn ghost small" id="an-skip" hidden>Find PEEP for me</button>
+          <button type="button" class="btn small" id="an-run" disabled>Read the photo</button>
+        </div>
+        <div class="grid2" style="margin-top:10px">
+          <div>
+            <label class="lbl" for="i-ansec">Seconds across the box <span class="opt">optional</span></label>
+            <div class="inp" id="w-ansec"><input id="i-ansec" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">s</span></div>
+          </div>
+          <div>
+            <label class="lbl" for="i-antol">Line match <span class="opt" id="an-tolv">50%</span></label>
+            <input id="i-antol" type="range" min="20" max="90" value="50" class="range">
+          </div>
+        </div>
+        <div id="an-result"></div>
+        <details class="aibox" id="ai-box">
+          <summary>AI read (optional): needs internet and your own Anthropic API key</summary>
+          <div class="hint" style="margin-top:6px">Sends this photo, the mode and the pattern list from the book to Anthropic's Claude for a second opinion. This is the only feature that sends anything off the phone. Use a photo with no patient name or ID, and follow your hospital's data-privacy rules. API usage is billed to your key.</div>
+          <div class="grid2" style="margin-top:10px">
+            <div class="full-col">
+              <label class="lbl" for="i-aikey">API key</label>
+              <div class="inp" id="w-aikey"><input id="i-aikey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…"></div>
+            </div>
+            <div>
+              <span class="lbl" id="ai-model-lbl">Model</span>
+              <div class="seg full" role="group" aria-labelledby="ai-model-lbl" style="margin-top:5px">
+                <button type="button" data-aim="claude-sonnet-5-5" aria-pressed="true">Sonnet</button>
+                <button type="button" data-aim="claude-opus-5-5" aria-pressed="false">Opus</button>
+              </div>
+            </div>
+            <label class="check" for="i-aikeep" style="align-self:end"><input type="checkbox" id="i-aikeep"><span>Remember the key on this phone</span></label>
+          </div>
+          <div class="btnrow" style="margin-top:10px"><button type="button" class="btn small" id="ai-run">Ask AI to read the photo</button></div>
+          <div id="ai-result"></div>
+        </details>
+      </div>
+      <div class="vsec" id="sc-cmp-h" style="margin-top:14px" hidden>Compare by eye (the photo stays pinned while you scroll)</div>
       <div id="sc-photos" class="scphotos" hidden></div>
       <div class="vsec" style="margin-top:14px">Normal for this mode</div>
       <div id="sc-normal-ref" class="scref"></div>
@@ -793,6 +856,9 @@ nav.tabs .seg button { font-size: 13.5px; }
         <li><b>Scalars</b>: add a photo of the ventilator screen. It is shown only on your phone (never uploaded or saved). Compare it with the schematic drawings for your mode and tap <b>Seen</b>; findings feed the interpretation, the suggestions and both messages. The drawings are schematic, not to scale.</li>
         <li><b>Flow–time</b>: expiratory flow not returning to zero → auto-PEEP; small expiratory bumps without a breath → ineffective efforts (often over-assistance with hyperinflation); two breaths with no exhalation between → double triggering (stacked volume); sawtooth → secretions or circuit water; low, long concave expiratory tail → flow limitation; abrupt end of inspiratory flow with a dip or second breath → early cycling. <i>Tobin ch. 53; Brochard &amp; Lellouche ch. 8; Leatherman ch. 30.</i></li>
         <li><b>Pressure–time</b>: concave (scalloped) rise in volume control → flow starvation; big dip before the breath → trigger delay or auto-PEEP; breaths with no dip, fast and regular → auto-triggering (leak, water, cardiac oscillation, sensitive trigger); end-inspiratory spike on PS → delayed cycling; initial spike → rise time too fast; slow rounded rise → too slow; mid-breath dip or a stacked breath after a machine breath → reverse triggering. <i>Tobin ch. 53; Mancebo ch. 6; Brochard &amp; Lellouche ch. 8; Akoumianaki, Chest 2013.</i></li>
+        <li><b>Automatic reading</b>: box a tracing and tap its line; the app follows that colour across the box (one point per pixel column), uses the zero-flow line or PEEP level you tap, splits the trace into breaths and tests each breath. Flow: expiratory flow still below zero and still returning when the next breath starts (auto-PEEP); a bump toward zero that falls back without a breath, or a small inspiratory blip (ineffective effort; within the first fifth of expiration = early cycling); an expiration far shorter than usual with most of the volume not exhaled (double triggering); fine oscillation on the expiratory limb (sawtooth); most of expiration spent at 10–45% of peak expiratory flow (obstruction). Pressure: dip before the breath (patient-triggered; deep = trigger delay); no dip on PS (auto-triggering); concave rise in volume control (flow starvation); dip during the machine breath; overshoot, end-inspiratory spike or slow rise in pressure modes; breaths far closer together than usual (double triggering). Each finding is reported as "n of N breaths" with a confidence, and marked on the photo.</li>
+        <li><b>Limits</b>: one photo, no time scale unless you enter the seconds shown; screen glare, a tilted photo or overlapping curves reduce accuracy (the "line found in %" figure tells you). Leak on the volume curve and anything not listed are left to your eye. Tested on simulated screens: every pattern above detected, no false findings on 600 normal tracings. Always check the red marks against the photo.</li>
+        <li><b>AI read (optional)</b>: sends the photo, the mode and the pattern definitions above to Anthropic's Claude using your own API key, as a second opinion. It is the only feature that sends data off the phone; the key is kept on the phone only if you tick "Remember".</li>
         <li><b>Volume–time</b>: expiratory volume ending above zero → leak (cuff, circuit, bronchopleural fistula). <i>Tobin ch. 53.</i></li>
         <li><b>Severe airflow obstruction</b> (air trapping, obstructive flow or high resistance with normal compliance): aim for plateau &lt; 30 (≤ 25 ideal) and pH ≥ 7.2. Plateau &gt; 30 → less minute ventilation; pH &lt; 7.2 with plateau &lt; 25 → more; pH &lt; 7.2 with plateau 25–30 → no change. The app does not advise a faster rate while air trapping is present. <i>Leatherman, Tobin ch. 30.</i></li>
         <li><b>Cycle-off on PS</b>: COPD often needs a higher cycle-off (around 50% or more of peak flow) to avoid delayed cycling and missed triggers; stiff, restrictive lungs often do better with a low threshold. <i>Brochard &amp; Lellouche ch. 8.</i></li>
@@ -848,7 +914,7 @@ nav.tabs .seg button { font-size: 13.5px; }
 
   <footer>
     <div class="disc"><b>Clinical decision aid.</b> For trained clinicians. It does not replace clinical judgment or your institution's protocols. Read the result with the patient and the history; recheck SpO₂ or the ABG after every change in oxygen.</div>
-    <div>TIMPEX Gas &amp; Vent · v9 · 21 Nov 2026 · <span id="app-hint"></span></div>
+    <div>TIMPEX Gas &amp; Vent · v10 · 21 Nov 2026 · <span id="app-hint"></span></div>
   </footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1423,10 +1489,10 @@ var ABG = (function () {
       means: "Expiratory flow limitation (bronchospasm, COPD, asthma, secretions); sets up air trapping.",
       action: "bronchodilator, check for secretions or a kinked tube, allow a long expiratory time, follow plateau and auto-PEEP.",
       src: "Leatherman ch. 30" },
-    { id: "f_early", g: "Flow", modes: PRESSM, tone: "warn", title: "Early (premature) cycling",
+    { id: "f_early", g: "Flow", modes: ALLM, tone: "warn", title: "Early (premature) cycling",
       look: "Inspiratory flow stops abruptly, then pressure dips below PEEP or flow turns inspiratory again, often with a second breath.",
       means: "The ventilator ends inspiration before the patient does: cycle-off % too high or set inspiratory time too short.",
-      action: "lower the cycle-off % on PS (stiff, restrictive lungs often need a low threshold) or lengthen inspiratory time in pressure control.",
+      action: "lower the cycle-off % on PS (stiff, restrictive lungs often need a low threshold), lengthen inspiratory time in pressure control, or in volume control lengthen inspiration (lower flow or add a short pause).",
       src: "Brochard & Lellouche ch. 8" },
     { id: "f_late", g: "Pressure", modes: ["psv"], tone: "warn", title: "Delayed cycling",
       look: "A pressure spike at the end of inspiration with a long, slowly falling inspiratory flow tail.",
@@ -1478,9 +1544,231 @@ var ABG = (function () {
   }
   function scalarBlock(sp) {
     var ids = scalarIds(sp);
-    if (ids.length) return ["Scalars:"].concat(ids.map(function (id) { return "• " + SC[id].title + ": " + lc(SC[id].means); }));
+    var au = sp && sp.scalars && sp.scalars.auto ? sp.scalars.auto : {}, hdr = "Scalars:";
+    if (sp && sp.scalars && sp.scalars.autoInfo) hdr = "Scalars (" + sp.scalars.autoInfo + "; confirm at the bedside):";
+    if (ids.length) return [hdr].concat(ids.map(function (id) {
+      var a = au[id];
+      return "• " + SC[id].title + (a ? " (" + a.how + (a.n != null ? " " + a.n + "/" + a.of + " breaths" : a.conf ? ", " + a.conf + " confidence" : "") + ")" : "") + ": " + lc(SC[id].means);
+    }));
+    if (sp && sp.scalars && sp.scalars.autoInfo && !sp.scalars.normal) return [hdr, "• No asynchrony pattern detected on the photo"];
     if (sp && sp.scalars && sp.scalars.normal) return ["Scalars: no asynchrony, air trapping or leak seen"];
     return null;
+  }
+
+
+  /* ---------- Auto-read of scalar tracings ----------
+     Input: one value per screen column (inspiration / higher pressure = positive), any units.
+     Breath-by-breath rules follow the patterns in SCALARS (Tobin ch. 53; Brochard & Lellouche ch. 8). */
+  function movAvg(a, w) {
+    var n = a.length, h = Math.floor(w / 2), out = new Array(n);
+    for (var i = 0; i < n; i++) { var s = 0, c = 0; for (var j = Math.max(0, i - h); j <= Math.min(n - 1, i + h); j++) { s += a[j]; c++; } out[i] = s / c; }
+    return out;
+  }
+  function median_(a) { var b = a.filter(function (x) { return x != null && isFinite(x); }).sort(function (x, y) { return x - y; }), n = b.length; return n ? (n % 2 ? b[(n - 1) / 2] : (b[n / 2 - 1] + b[n / 2]) / 2) : null; }
+  function confOf(n, of) { if (!n) return null; var fr = of ? n / of : 1; return n >= 2 && fr >= 0.5 ? "high" : n >= 2 || fr >= 0.34 ? "moderate" : "low"; }
+  function amax(a, i0, i1) { var m = -Infinity, k = i0; for (var i = i0; i <= i1; i++) if (a[i] > m) { m = a[i]; k = i; } return { v: m, i: k }; }
+  function amin(a, i0, i1) { var m = Infinity, k = i0; for (var i = i0; i <= i1; i++) if (a[i] < m) { m = a[i]; k = i; } return { v: m, i: k }; }
+  function rateOf(onsets, secsPerCol) {
+    if (!secsPerCol || onsets.length < 2) return null;
+    var span = (onsets[onsets.length - 1] - onsets[0]) * secsPerCol; return span > 0 ? (onsets.length - 1) * 60 / span : null;
+  }
+
+  // o: { secsPerCol, noise (screen units of jitter, default 1.2) }
+  function analyzeFlow(raw, o) {
+    o = o || {};
+    var n = raw.length, R = { kind: "flow", findings: {}, events: [], notes: [] };
+    if (n < 40) { R.error = "The box is too narrow: include at least three breaths."; return R; }
+    var f = movAvg(raw, 3), fs = movAvg(raw, 5), noise = o.noise != null ? o.noise : 1.2;
+    var Ai = amax(f, 0, n - 1).v, Ae = -amin(f, 0, n - 1).v;
+    if (!(Ai > 0) || !(Ae > 0)) { R.error = "No inspiratory and expiratory flow on either side of the zero line: re-tap the zero line."; return R; }
+    // inspirations: rise above 20% of peak flow; foot = start of the rise; end = flow back to zero
+    var thOn = 0.2 * Ai, ins = [], inI = f[0] > thOn, st = 0, partial0 = inI;
+    for (var i = 1; i < n; i++) {
+      if (!inI && f[i] > thOn && f[i - 1] <= thOn) {
+        // foot of the breath: walk back along the steep inspiratory rise only (not the slower passive return of expiration)
+        var sc = Math.max(f[i] - f[i - 1], i + 1 < n ? f[i + 1] - f[i] : 0), lim = Math.max(0.04 * Ai, 0.35 * sc), j = i;
+        while (j > 0 && f[j] - f[j - 1] > lim) j--;
+        inI = true; st = j;
+      }
+      else if (inI && f[i] <= 0) { ins.push({ s: st, e: i, partial: partial0 }); partial0 = false; inI = false; }
+    }
+    if (inI) ins.push({ s: st, e: n - 1, open: true });
+    ins.forEach(function (b) { b.peak = amax(f, b.s, b.e).v; });
+    function pct75(a) { var b2 = a.slice().sort(function (x, y) { return x - y; }); return b2.length ? b2[Math.min(b2.length - 1, Math.floor(0.75 * b2.length))] : null; }
+    var refPk = pct75(ins.map(function (b) { return b.peak; })), refTi = pct75(ins.map(function (b) { return b.e - b.s; })), smallIns = [];
+    if (ins.length >= 3) ins = ins.filter(function (b) { var small = b.peak < 0.45 * refPk && (b.e - b.s) < 0.6 * refTi; if (small) smallIns.push(b); return !small; });
+    ins.forEach(function (b) {
+      var pk = amax(f, b.s, b.e); b.peak = pk.v; b.pk = pk.i;
+      var a = 0; for (var k = b.s; k <= b.e; k++) if (f[k] > 0) a += f[k]; b.area = a;
+      var q = Math.round(b.s + 0.75 * (b.e - b.s)); b.flat = b.peak > 0 ? f[q] / b.peak : null;
+    });
+    var full = ins.filter(function (b) { return !b.partial && !b.open; });
+    R.breaths = ins.filter(function (b) { return !b.partial; }).length;
+    R.onsets = ins.filter(function (b) { return !b.partial; }).map(function (b) { return b.s; });
+    if (ins.length < 2) { R.error = "Fewer than two breaths found: widen the box to include at least three breaths, or re-tap the line."; return R; }
+    var flats = full.map(function (b) { return b.flat; }), fm = median_(flats);
+    R.shape = fm == null ? null : fm > 0.85 ? "square" : fm < 0.7 ? "decelerating" : "mixed";
+    // expirations
+    var ex = [];
+    for (var k2 = 0; k2 < ins.length; k2++) {
+      var a0 = ins[k2].e, a1 = k2 + 1 < ins.length ? ins[k2 + 1].s : n - 1;
+      if (a1 - a0 < 3) continue;
+      var mn = amin(f, a0, a1); var area = 0; for (var q2 = a0; q2 <= a1; q2++) if (f[q2] < 0) area -= f[q2];
+      ex.push({ s: a0, e: a1, complete: k2 + 1 < ins.length, min: mn.v, mi: mn.i, dur: a1 - a0, area: area, prevIns: ins[k2] });
+    }
+    if (ins[0].s > 6) { var mn0 = amin(f, 0, ins[0].s); ex.unshift({ s: 0, e: ins[0].s, complete: false, lead: true, min: mn0.v, mi: mn0.i, dur: ins[0].s, area: 0 }); }
+    var comp = ex.filter(function (x) { return x.complete; });
+    var durs = comp.map(function (x) { return x.dur; }).sort(function (a, b) { return a - b; });
+    var medDur = durs.length ? durs[Math.min(durs.length - 1, Math.floor(0.75 * durs.length))] : null;
+    var cnt = { f_trap: 0, f_ineff: 0, f_double: 0, f_saw: 0, f_obstr: 0, f_early: 0 }, offZero = 0, ineffBreaths = 0;
+    smallIns.forEach(function (b) {   // a small inspiratory blip inside expiration: an effort that did not become a breath
+      var host = null; ex.forEach(function (x) { if (b.s >= x.s && b.e <= x.e) host = x; });
+      var early = host && !host.lead && (b.s - host.s) < 0.2 * host.dur;
+      if (early) { cnt.f_early++; R.events.push({ x: b.pk || b.s, type: "f_early" }); } else { cnt.f_ineff++; ineffBreaths++; R.events.push({ x: b.s, type: "f_ineff" }); }
+    });
+    if (comp.length >= 2 && medDur) comp.forEach(function (x) { if (x.dur < 0.4 * medDur && x.prevIns && x.area < 0.5 * x.prevIns.area) x.dbl = true; });
+    ex.forEach(function (x) {
+      var depth = Math.abs(Math.min(x.min, -1e-9));
+      if (depth < 0.15 * Ae && x.complete) return;
+      // trapping: flow still clearly below zero and still returning when the next breath starts
+      if (x.complete && !x.dbl) {
+        var endV = f[x.e], m = Math.max(3, Math.round(0.12 * x.dur)), rise = (f[x.e] - f[Math.max(x.s, x.e - m)]) / depth;
+        if ((endV < -0.1 * depth && rise > 0.03) || endV < -0.25 * depth) { cnt.f_trap++; R.events.push({ x: x.e, type: "f_trap" }); }
+        else if (Math.abs(endV) > 0.1 * depth && Math.abs(rise) < 0.02) offZero++;
+      }
+      // bumps in expiration: flow moves toward zero then away again, without a breath
+      var from = x.lead ? x.s + 2 : x.mi + Math.max(2, Math.round(0.06 * x.dur)), to = x.e - 2, hadIneff = false;
+      for (var i3 = from + 1; i3 < to; i3++) {
+        if (!(fs[i3] >= fs[i3 - 1] && fs[i3] > fs[i3 + 1])) continue;
+        if (smallIns.some(function (b) { return i3 >= b.s - 3 && i3 <= b.e + 3; })) continue;
+        var W = Math.max(4, Math.round(0.3 * x.dur)), dropMin = amin(fs, i3, Math.min(x.e, i3 + W)).v;
+        var v0 = i3; while (v0 > x.s && fs[v0 - 1] <= fs[v0]) v0--;
+        var riseL = fs[i3] - fs[v0], drop = fs[i3] - dropMin, need = Math.max(0.08 * depth, 3 * noise);
+        if (riseL >= need && drop >= need && fs[i3] < thOn) {
+          var early = !x.lead && (i3 - x.s) < 0.2 * x.dur && fs[v0] < -0.4 * depth;
+          if (early) { cnt.f_early++; R.events.push({ x: i3, type: "f_early" }); }
+          else { cnt.f_ineff++; hadIneff = true; R.events.push({ x: i3, type: "f_ineff" }); }
+          i3 += 3;
+        }
+      }
+      if (hadIneff) ineffBreaths++;
+      // sawtooth: fine oscillation on the expiratory limb
+      var seg = []; for (var i4 = x.mi; i4 <= x.e; i4++) seg.push(f[i4]);
+      if (seg.length >= 20) {
+        var sm = movAvg(seg, 9), amp = Math.max(0.035 * depth, 1.4 * noise), osc = 0, last = 0;
+        for (var i5 = 0; i5 < seg.length; i5++) { var r = seg[i5] - sm[i5]; if (r > amp && last !== 1) { osc++; last = 1; } else if (r < -amp && last !== -1) { osc++; last = -1; } }
+        if (osc >= 8 && osc / seg.length >= 0.08) { cnt.f_saw++; R.events.push({ x: Math.round((x.mi + x.e) / 2), type: "f_saw" }); }
+      }
+      // obstructive tail: most of expiration spent at 10–45% of peak expiratory flow
+      if (x.complete && x.e - x.mi > 10) {
+        var tail = 0, tot = 0; for (var i6 = x.mi; i6 <= x.e; i6++) { var rr = -f[i6] / depth; tot++; if (rr > 0.1 && rr < 0.45) tail++; }
+        if (tail / tot > 0.6) { cnt.f_obstr++; }
+      }
+    });
+    // double triggering: an expiration far shorter than usual, with most of the breath not exhaled
+    comp.forEach(function (x) { if (x.dbl) { cnt.f_double++; R.events.push({ x: x.e, type: "f_double" }); } });
+    var ofComp = comp.length || 1, ofAll = ex.length || 1, ofTrap = comp.filter(function (x) { return !x.dbl; }).length || 1;
+    R.findings.f_trap = cnt.f_trap ? { n: cnt.f_trap, of: ofTrap } : null;
+    R.findings.f_ineff = cnt.f_ineff ? { n: cnt.f_ineff, of: ofAll, breaths: ineffBreaths } : null;
+    R.findings.f_early = cnt.f_early ? { n: cnt.f_early, of: ofAll } : null;
+    R.findings.f_double = cnt.f_double ? { n: cnt.f_double, of: ofComp } : null;
+    R.findings.f_saw = cnt.f_saw && cnt.f_saw / ofAll >= 0.34 ? { n: cnt.f_saw, of: ofAll } : null;
+    R.findings.f_obstr = cnt.f_obstr && cnt.f_obstr / ofComp >= 0.5 ? { n: cnt.f_obstr, of: ofComp } : null;
+    if (offZero >= Math.max(2, 0.5 * ofComp)) R.notes.push("Expiratory flow flattens slightly away from the zero line in most breaths: the zero line may be tapped a little off. Re-tap it if trapping looks doubtful.");
+    R.rate = rateOf(R.onsets, o.secsPerCol);
+    Object.keys(R.findings).forEach(function (k) { if (!R.findings[k]) delete R.findings[k]; else R.findings[k].conf = confOf(R.findings[k].n, R.findings[k].of); });
+    return R;
+  }
+
+  // o: { vmode, baseline (optional, same units), secsPerCol, bur, noise }
+  function analyzePaw(raw, o) {
+    o = o || {};
+    var n = raw.length, R = { kind: "paw", findings: {}, events: [], notes: [] }, vm = VMODES[o.vmode] ? o.vmode : "acvc";
+    if (n < 40) { R.error = "The box is too narrow: include at least three breaths."; return R; }
+    var p = movAvg(raw, 3), p5 = movAvg(raw, 5), noise = o.noise != null ? o.noise : 1.2;
+    var srt = p.slice().sort(function (a, b) { return a - b; });
+    var b = o.baseline != null && isFinite(o.baseline) ? o.baseline : median_(srt.slice(Math.floor(n * 0.05), Math.max(6, Math.floor(n * 0.45))));
+    var top = srt[n - 1], Ap = top - b;
+    R.baseline = b;
+    if (!(Ap > 4 * noise)) { R.error = "No clear pressure rise above the baseline: re-tap the line or the PEEP level."; return R; }
+    var thr = b + 0.35 * Ap, br = [], up = p[0] > thr;
+    for (var i = 1; i < n; i++) {
+      if (!up && p[i] > thr && p[i - 1] <= thr) { var j = i; while (j > 0 && p[j - 1] < p[j] - 0.004 * Ap) j--; br.push({ on: i, foot: j }); up = true; }
+      else if (up && p[i] < b + 0.2 * Ap && p[i - 1] >= b + 0.2 * Ap) { if (br.length && br[br.length - 1].end == null) br[br.length - 1].end = i; up = false; }
+    }
+    br = br.filter(function (x) { return x.end != null; });
+    R.breaths = br.length; R.onsets = br.map(function (x) { return x.foot; });
+    if (br.length < 2) { R.error = "Fewer than two breaths found: widen the box or re-tap the line."; return R; }
+    var cyc = []; for (var k = 1; k < br.length; k++) cyc.push(br[k].foot - br[k - 1].foot);
+    var cs = cyc.slice().sort(function (a, b) { return a - b; });
+    var medCyc = cs.length ? cs[Math.min(cs.length - 1, Math.floor(0.75 * cs.length))] : n / br.length;
+    var c = { trig: 0, nodip: 0, p_dip: 0, p_scoop: 0, p_over: 0, f_late: 0, p_slow: 0, f_double: 0, middip: 0, p_rev: 0 };
+    br.forEach(function (x, k) {
+      var w = Math.max(4, Math.round(0.15 * medCyc)), lo = amin(p, Math.max(0, x.foot - w), Math.min(n - 1, x.foot + 2));
+      x.dip = b - lo.v;
+      var trig = x.dip > Math.max(0.04 * Ap, 2 * noise);
+      if (x.foot - w < 0 && !trig) x.trig = null;            // breath at the left edge: no lead-in to judge the trigger
+      else { x.trig = trig; if (trig) c.trig++; else c.nodip++; }
+      if (x.dip > Math.max(0.15 * Ap, 3 * noise)) { c.p_dip++; R.events.push({ x: lo.i, type: "p_dip" }); }
+      var pk = amax(p, x.foot, x.end), len = x.end - x.foot;
+      if (len < 6) return;
+      if (isVC(vm)) {
+        // scooped rise: curve sags below the straight line from foot to peak
+        var s0 = x.foot, s1 = pk.i, dsum = 0, dn = 0;
+        if (s1 - s0 >= 6) {
+          for (var q = Math.round(s0 + 0.2 * (s1 - s0)); q <= Math.round(s0 + 0.8 * (s1 - s0)); q++) { var line = p[s0] + (p[s1] - p[s0]) * (q - s0) / (s1 - s0); dsum += (line - p[q]) / Ap; dn++; }
+          if (dn && dsum / dn > 0.07) { c.p_scoop++; R.events.push({ x: Math.round((s0 + s1) / 2), type: "p_scoop" }); }
+          // dip during the machine breath (patient effort mid-breath)
+          var Wd = Math.max(4, Math.round(0.3 * (s1 - s0)));
+          for (var q2 = s0 + 2; q2 < s1 - 1; q2++) {
+            if (p[q2] >= p[q2 - 1] && p[q2] > p[q2 + 1]) { var after = amin(p, q2, Math.min(s1, q2 + Wd)).v; if (p[q2] - after > Math.max(0.04 * Ap, 2.5 * noise)) { c.middip++; x.middip = true; R.events.push({ x: q2, type: "middip" }); break; } }
+          }
+        }
+      } else {
+        var m0 = Math.round(x.foot + 0.35 * len), m1 = Math.round(x.foot + 0.75 * len), pl = [];
+        for (var q3 = m0; q3 <= m1; q3++) pl.push(p[q3]);
+        var plat = median_(pl), amp = plat - b;
+        if (amp > 0) {
+          var early = amax(p, x.foot, Math.round(x.foot + 0.3 * len)).v, late = amax(p, Math.round(x.foot + 0.75 * len), x.end).v;
+          if (early - plat > Math.max(0.08 * amp, 2.5 * noise)) { c.p_over++; R.events.push({ x: x.foot + 2, type: "p_over" }); }
+          var t90 = x.foot; while (t90 < x.end && p[t90] < b + 0.9 * amp) t90++;
+          var slow = (t90 - x.foot) / len > 0.4;
+          if (slow) { c.p_slow++; R.events.push({ x: t90, type: "p_slow" }); }
+          var lateIdx = amax(p, Math.round(x.foot + 0.75 * len), x.end).i;
+          if (!slow && late - plat > Math.max(0.08 * amp, 2.5 * noise) && late - p[x.end] > 0.5 * (late - plat)) { c.f_late++; R.events.push({ x: lateIdx, type: "f_late" }); }
+        }
+      }
+      if (k > 0 && medCyc && (x.foot - br[k - 1].foot) < 0.45 * medCyc) { c.f_double++; x.stacked = true; R.events.push({ x: x.foot, type: "f_double" }); }
+    });
+    // reverse triggering: machine-timed breath (no dip) with effort during it, or followed by a stacked breath
+    if (CTRL.indexOf(vm) > -1) br.forEach(function (x, k) {
+      if (x.trig === false && (x.middip || (br[k + 1] && br[k + 1].stacked))) { c.p_rev++; R.events.push({ x: x.foot, type: "p_rev" }); }
+    });
+    R.rate = rateOf(R.onsets, o.secsPerCol);
+    var N = br.length;
+    // auto-triggering: on PS every breath should start with a patient effort; on assist-control, untriggered breaths faster than the set rate
+    var known = c.trig + c.nodip, untrigShare = known ? c.nodip / known : 0;
+    if (vm === "psv" && known >= 2 && untrigShare >= 0.5) { R.findings.p_auto = { n: c.nodip, of: known }; }
+    else if (vm !== "psv" && R.rate != null && o.bur && R.rate > o.bur + 2 && untrigShare >= 0.5) R.findings.p_auto = { n: c.nodip, of: known };
+    else if (vm !== "psv" && untrigShare >= 0.8) R.notes.push("No trigger dip before most breaths: machine-timed breaths (or auto-triggering if the rate is above the set rate).");
+    R.triggered = c.trig; R.untriggered = c.nodip;
+    [["p_dip", 1], ["p_scoop", 1], ["p_over", 1], ["f_late", 1], ["p_slow", 1], ["f_double", 1], ["p_rev", 1]].forEach(function (z) { if (c[z[0]]) R.findings[z[0]] = { n: c[z[0]], of: N }; });
+    if (c.middip && !c.p_rev) R.notes.push("A dip during the breath in " + c.middip + " of " + N + " breaths: the patient is pulling during the machine breath (flow starvation or effort out of phase).");
+    Object.keys(R.findings).forEach(function (k) { R.findings[k].conf = confOf(R.findings[k].n, R.findings[k].of); });
+    return R;
+  }
+  // Combine flow and pressure reads into catalogue findings that apply to the mode
+  function mergeReads(reads, vm) {
+    var ok = {}, out = {}; scalarsFor(vm).forEach(function (f) { ok[f.id] = 1; });
+    (reads || []).forEach(function (R) {
+      if (!R || R.error) return;
+      Object.keys(R.findings).forEach(function (id) {
+        if (!ok[id]) return;
+        var fd = R.findings[id], cur = out[id];
+        if (!cur || fd.n / fd.of > cur.n / cur.of) out[id] = { n: fd.n, of: fd.of, conf: fd.conf, from: R.kind };
+      });
+    });
+    return out;
   }
 
   // Message blocks for an intubated patient (user's layout)
@@ -1970,7 +2258,7 @@ var ABG = (function () {
   }
 
   return {
-    VMODES: VMODES, isVC: isVC, SCALARS: SCALARS, scalarsFor: scalarsFor, scalarIds: scalarIds, scalarBlock: scalarBlock, ventMessage: ventMessage, isVentKey: isVentKey, parseIE: parseIE, peepTable: peepTable, oiGrade: oiGrade, ventInterp: ventInterp, ventBlocks: ventBlocks, desiredMV: desiredMV,
+    VMODES: VMODES, isVC: isVC, analyzeFlow: analyzeFlow, analyzePaw: analyzePaw, mergeReads: mergeReads, movAvg: movAvg, SCALARS: SCALARS, scalarsFor: scalarsFor, scalarIds: scalarIds, scalarBlock: scalarBlock, ventMessage: ventMessage, isVentKey: isVentKey, parseIE: parseIE, peepTable: peepTable, oiGrade: oiGrade, ventInterp: ventInterp, ventBlocks: ventBlocks, desiredMV: desiredMV,
     effectiveTarget: effectiveTarget, applyAdequacy: applyAdequacy, supportFio2: supportFio2, supportLine: supportLine, modeName: modeName, pbw: pbw, targetPco2: targetPco2, ventCalc: ventCalc, ventLines: ventLines, desiredText: desiredText, endExpPressure: endExpPressure, DEVICES: DEVICES,
     gasExchange: gasExchange, respFailure: respFailure, fullInterpretation: fullInterpretation, suggestions: suggestions,
     chartLine: chartLine, interpretation: interpretation, compensationLines: compensationLines, message: message,
@@ -1988,7 +2276,8 @@ if (typeof module !== "undefined") module.exports = ABG;
   "use strict";
   function $(id) { return document.getElementById(id); }
   var fmt = ABG.fmt;
-  var S = { customTarget: false, workOpen: false, vd: 0.5, msg: "", mode: "nc", dev: "venturi", nivType: "bipap", sex: null, vmode: "acvc", tab: "calc", sc: {}, scNormal: false, photos: [], vmsg: "" };
+  var S = { customTarget: false, workOpen: false, vd: 0.5, msg: "", mode: "nc", dev: "venturi", nivType: "bipap", sex: null, vmode: "acvc", tab: "calc", sc: {}, scNormal: false, photos: [], vmsg: "",
+    an: { idx: -1, tr: "flow", t: { flow: {}, paw: {} }, reads: null, auto: {}, autoSet: {}, info: "" }, aiModel: "claude-sonnet-5-5" };
   document.addEventListener("toggle", function (ev) {
     if (ev.target && ev.target.classList && ev.target.classList.contains("work")) S.workOpen = ev.target.open;
   }, true);
@@ -2160,7 +2449,8 @@ if (typeof module !== "undefined") module.exports = ABG;
       vmode: S.vmode, pinsp: num("i-pinsp"), ie: ABG.parseIE($("i-ie").value), flow: num("i-flow"), ppeak: num("i-ppeak"),
       peeptot: num("i-peeptot"), vte: num("i-vte"), vti: num("i-vti"), ftot: num("i-ftot")
     };
-    support.scalars = { ids: Object.keys(S.sc).filter(function (k) { return S.sc[k]; }), normal: S.scNormal };
+    var autoNotes = {}; Object.keys(S.an.auto).forEach(function (k) { if (S.sc[k]) autoNotes[k] = S.an.auto[k]; });
+    support.scalars = { ids: Object.keys(S.sc).filter(function (k) { return S.sc[k]; }), normal: S.scNormal, auto: autoNotes, autoInfo: S.an.info || "" };
     var ieBad = support.ie != null && typeof support.ie !== "object";
     if (ieBad) support.ie = null;
     var supBad = ["ncFlow", "hfFlow", "ipap", "epap", "peep", "vt", "rr", "pplat", "mawp", "height", "pco2Target", "pinsp", "flow", "ppeak", "peeptot", "vte", "vti", "ftot"].some(function (k) { return support[k] != null && !isFinite(support[k]); });
@@ -2587,13 +2877,13 @@ if (typeof module !== "undefined") module.exports = ABG;
         var on = !!S.sc[f.id];
         return '<div class="scitem' + (on ? " on" : "") + '">' + DRAW(f.id, pc) +
           '<div class="scrow"><div><div class="sct">' + esc(f.title) + '</div><div class="scl">' + sub2(esc(f.look)) + "</div></div>" +
-          '<button type="button" class="chip sc-tog" data-sc="' + f.id + '" aria-pressed="' + on + '">' + (on ? "Seen ✓" : "Seen") + "</button></div></div>";
+          '<button type="button" class="chip sc-tog" data-sc="' + f.id + '" aria-pressed="' + on + '">' + (on ? (S.an.auto[f.id] ? (S.an.auto[f.id].how === "AI read" ? "AI ✓" : "Auto ✓") : "Seen ✓") : "Seen") + "</button></div></div>";
       }).join("");
     }).join("");
   }
   $("sc-list").addEventListener("click", function (ev) {
     var b = ev.target.closest(".sc-tog"); if (!b) return;
-    var id = b.getAttribute("data-sc"); S.sc[id] = !S.sc[id];
+    var id = b.getAttribute("data-sc"); S.sc[id] = !S.sc[id]; delete S.an.autoSet[id]; if (!S.sc[id]) delete S.an.auto[id];
     if (S.sc[id]) { S.scNormal = false; $("sc-normal").checked = false; }
     b.setAttribute("aria-pressed", String(!!S.sc[id])); b.textContent = S.sc[id] ? "Seen ✓" : "Seen";
     b.closest(".scitem").classList.toggle("on", !!S.sc[id]);
@@ -2620,22 +2910,307 @@ if (typeof module !== "undefined") module.exports = ABG;
   function renderPhotos() {
     setTabsH();
     var box = $("sc-photos");
-    box.hidden = !S.photos.length; $("sc-photo-x").hidden = !S.photos.length;
+    box.hidden = !S.photos.length; $("sc-photo-x").hidden = !S.photos.length; $("sc-cmp-h").hidden = !S.photos.length;
     $("sc-add").textContent = S.photos.length ? "Add another photo" : "Add photo";
     box.innerHTML = S.photos.map(function (u, i) { return '<img src="' + u + '" alt="Scalar photo ' + (i + 1) + '" data-i="' + i + '">'; }).join("");
+    $("an-box").hidden = !S.photos.length;
+    $("an-photos").innerHTML = S.photos.length > 1 ? S.photos.map(function (u, i) { return '<button type="button" class="chip" data-anp="' + i + '" aria-pressed="' + (i === S.an.idx) + '">Read photo ' + (i + 1) + "</button>"; }).join("") : "";
   }
   $("sc-file").addEventListener("change", function () {
     var fs = Array.prototype.slice.call($("sc-file").files || []);
-    fs.forEach(function (f) { if (/^image\//.test(f.type) && S.photos.length < 4) S.photos.push(URL.createObjectURL(f)); });
+    var added = false;
+    fs.forEach(function (f) { if (/^image\//.test(f.type) && S.photos.length < 4) { S.photos.push(URL.createObjectURL(f)); added = true; } });
     $("sc-file").value = ""; renderPhotos();
+    if (added) anLoad(S.photos.length - 1);
   });
-  $("sc-photo-x").addEventListener("click", function () { S.photos.forEach(function (u) { try { URL.revokeObjectURL(u); } catch (e) {} }); S.photos = []; renderPhotos(); });
+  $("sc-photo-x").addEventListener("click", function () { S.photos.forEach(function (u) { try { URL.revokeObjectURL(u); } catch (e) {} }); S.photos = []; anReset(true); renderPhotos(); });
   $("sc-photos").addEventListener("click", function (ev) {
     var im = ev.target.closest("img"); if (!im) return;
     $("sc-view-img").src = im.src; $("sc-view").classList.remove("zoom"); $("sc-view").hidden = false; document.body.style.overflow = "hidden";
   });
   $("sc-view-img").addEventListener("click", function () { $("sc-view").classList.toggle("zoom"); $("sc-view-hint").textContent = $("sc-view").classList.contains("zoom") ? "Zoomed: scroll to move; tap to fit" : "Tap the photo to zoom"; });
   $("sc-view-x").addEventListener("click", function () { $("sc-view").hidden = true; document.body.style.overflow = ""; });
+
+
+  /* ---------- automatic photo reader (on this phone) ---------- */
+  var AN = { img: null, data: null, W: 0, H: 0, drag: null };
+  var TRN = { flow: "flow", paw: "pressure" }, TRC = { flow: "#2f7de1", paw: "#e0a21b" };
+  function anReset(all) {
+    S.an.t = { flow: {}, paw: {} }; S.an.reads = null; S.an.tr = "flow";
+    Object.keys(S.an.autoSet).forEach(function (k) { delete S.sc[k]; }); S.an.autoSet = {}; S.an.auto = {}; S.an.info = "";
+    if (all) { S.an.idx = -1; AN.img = null; AN.data = null; }
+    $("an-result").innerHTML = ""; anUI(); anDraw(); renderScList(); render();
+  }
+  function anLoad(i) {
+    S.an.idx = i; var im = new Image();
+    im.onload = function () {
+      var W = Math.min(im.naturalWidth, 1400), H = Math.round(im.naturalHeight * W / im.naturalWidth);
+      var c = $("an-cv"); c.width = W; c.height = H;
+      var off = document.createElement("canvas"); off.width = W; off.height = H;
+      var x = off.getContext("2d"); x.drawImage(im, 0, 0, W, H);
+      AN.img = im; AN.W = W; AN.H = H; AN.data = x.getImageData(0, 0, W, H).data;
+      S.an.t = { flow: {}, paw: {} }; S.an.reads = null; S.an.tr = "flow"; $("an-result").innerHTML = "";
+      renderPhotos(); anUI(); anDraw();
+    };
+    im.src = S.photos[i];
+  }
+  function px(x, y) { var k = (y * AN.W + x) * 4, d = AN.data; return [d[k], d[k + 1], d[k + 2]]; }
+  function cdist(a, b) { var r = a[0] - b[0], g = a[1] - b[1], bl = a[2] - b[2]; return Math.sqrt(r * r + g * g + bl * bl); }
+  function boxNorm(b) { return { x0: Math.max(0, Math.round(Math.min(b.x0, b.x1))), x1: Math.min(AN.W - 1, Math.round(Math.max(b.x0, b.x1))), y0: Math.max(0, Math.round(Math.min(b.y0, b.y1))), y1: Math.min(AN.H - 1, Math.round(Math.max(b.y0, b.y1))) }; }
+  function bgOf(b) {   // median colour inside the box = screen background
+    var rs = [], gs = [], bs = [], step = Math.max(1, Math.floor((b.x1 - b.x0) * (b.y1 - b.y0) / 6000));
+    for (var k = 0, y = b.y0; y <= b.y1; y++) for (var x = b.x0; x <= b.x1; x++, k++) if (k % step === 0) { var c = px(x, y); rs.push(c[0]); gs.push(c[1]); bs.push(c[2]); }
+    var md = function (a) { a.sort(function (p, q) { return p - q; }); return a[Math.floor(a.length / 2)]; };
+    return [md(rs), md(gs), md(bs)];
+  }
+  function pickColour(tr, x, y) {   // the pixel near the tap that stands out most from the background
+    var T = S.an.t[tr], b = T.box, bg = bgOf(b), best = null, bd = -1;
+    for (var yy = Math.max(b.y0, y - 9); yy <= Math.min(b.y1, y + 9); yy++) for (var xx = Math.max(b.x0, x - 9); xx <= Math.min(b.x1, x + 9); xx++) {
+      var c = px(xx, yy), d = cdist(c, bg); if (d > bd) { bd = d; best = c; }
+    }
+    T.col = best; T.bg = bg; T.tap = [x, y];
+  }
+  // One y per column along the chosen colour, following the line from column to column
+  function extract(tr) {
+    var T = S.an.t[tr], b = T.box, tol = (+$("i-antol").value || 50) / 100;
+    var thr = Math.max(28, tol * cdist(T.col, T.bg)), hBox = b.y1 - b.y0, ys = [], prev = null, found = 0;
+    for (var x = b.x0; x <= b.x1; x++) {
+      var runs = [], cur = null;
+      for (var y = b.y0; y <= b.y1; y++) {
+        if (cdist(px(x, y), T.col) < thr) { if (cur && y - cur.e <= 2) cur.e = y; else { cur = { s: y, e: y }; runs.push(cur); } }
+      }
+      if (!runs.length) { ys.push(null); continue; }
+      var pick = runs[0];
+      if (prev == null) runs.forEach(function (r) { if (r.e - r.s > pick.e - pick.s) pick = r; });
+      else runs.forEach(function (r) { var dc = Math.min(Math.abs(r.s - prev), Math.abs(r.e - prev)), dp = Math.min(Math.abs(pick.s - prev), Math.abs(pick.e - prev)); if (dc < dp) pick = r; });
+      var yv = pick.e - pick.s > 0.2 * hBox && prev != null ? (Math.abs(pick.s - prev) > Math.abs(pick.e - prev) ? pick.s : pick.e) : (pick.s + pick.e) / 2;
+      ys.push(yv); prev = yv; found++;
+    }
+    // fill gaps by straight lines
+    var n = ys.length, i = 0;
+    while (i < n) {
+      if (ys[i] != null) { i++; continue; }
+      var a = i - 1, z = i; while (z < n && ys[z] == null) z++;
+      for (var k = i; k < z; k++) ys[k] = a >= 0 && z < n ? ys[a] + (ys[z] - ys[a]) * (k - a) / (z - a) : a >= 0 ? ys[a] : z < n ? ys[z] : (b.y0 + b.y1) / 2;
+      i = z;
+    }
+    return { ys: ys, coverage: n ? found / n : 0, x0: b.x0 };
+  }
+  function anStepOf(tr) { var T = S.an.t[tr]; return !T.box ? "box" : !T.col ? "line" : T.zero == null && !T.skip ? "zero" : "done"; }
+  function anUI() {
+    var tr = S.an.tr, st = anStepOf(tr), nm = TRN[tr];
+    document.querySelectorAll("[data-tr]").forEach(function (b) { var k = b.getAttribute("data-tr"); b.setAttribute("aria-pressed", String(k === tr)); b.textContent = (k === "flow" ? "Flow" : "Pressure") + " tracing" + (anStepOf(k) === "done" ? " ✓" : ""); });
+    $("an-step").innerHTML = !AN.img ? "" : st === "box" ? "<b>1.</b> Drag a box around the " + nm + " tracing only (at least 3 breaths)."
+      : st === "line" ? "<b>2.</b> Tap on the " + nm + " line itself."
+      : st === "zero" ? (tr === "flow" ? "<b>3.</b> Tap the <b>zero-flow line</b> (the flow axis; flow is zero there)." : "<b>3.</b> Tap the <b>PEEP level</b> (the flat baseline between breaths), or let the app find it.")
+      : "Done. " + (anStepOf(tr === "flow" ? "paw" : "flow") === "done" ? "Tap <b>Read the photo</b>." : "Add the " + TRN[tr === "flow" ? "paw" : "flow"] + " tracing too for a fuller read, or tap <b>Read the photo</b>.");
+    $("an-cv").style.touchAction = st === "box" ? "none" : "pan-y";
+    $("an-redo").textContent = "Redo " + nm;
+    $("an-skip").hidden = !(tr === "paw" && st === "zero");
+    $("an-run").disabled = !(anStepOf("flow") === "done" || anStepOf("paw") === "done");
+    $("an-tolv").textContent = $("i-antol").value + "%";
+  }
+  function anDraw() {
+    var c = $("an-cv"); if (!AN.img) { c.width = c.width; return; }
+    var x = c.getContext("2d"), lw = Math.max(2, AN.W / 320);
+    x.drawImage(AN.img, 0, 0, AN.W, AN.H);
+    ["flow", "paw"].forEach(function (tr) {
+      var T = S.an.t[tr], col = TRC[tr]; if (!T.box) return; var b = T.box;
+      x.save(); x.setLineDash([lw * 3, lw * 2]); x.lineWidth = lw; x.strokeStyle = col; x.strokeRect(b.x0, b.y0, b.x1 - b.x0, b.y1 - b.y0);
+      if (T.zero != null) { x.beginPath(); x.moveTo(b.x0, T.zero); x.lineTo(b.x1, T.zero); x.stroke(); }
+      x.restore();
+      x.font = "bold " + Math.round(lw * 7) + "px sans-serif"; x.fillStyle = col; x.fillText(tr === "flow" ? "FLOW" : "PRESSURE", b.x0 + lw * 2, b.y0 - lw * 2 > lw * 8 ? b.y0 - lw * 2 : b.y0 + lw * 8);
+      if (T.tap) { x.beginPath(); x.arc(T.tap[0], T.tap[1], lw * 4, 0, 7); x.lineWidth = lw; x.strokeStyle = col; x.stroke(); }
+      if (T.trace) {
+        x.beginPath(); T.trace.ys.forEach(function (y, i) { if (i) x.lineTo(T.trace.x0 + i, y); else x.moveTo(T.trace.x0, y); });
+        x.lineWidth = lw * 0.9; x.strokeStyle = "#ff2bd6"; x.stroke();
+      }
+    });
+    if (AN.drag) { var d = boxNorm(AN.drag); x.setLineDash([]); x.lineWidth = lw; x.strokeStyle = TRC[S.an.tr]; x.strokeRect(d.x0, d.y0, d.x1 - d.x0, d.y1 - d.y0); }
+    (S.an.marks || []).forEach(function (m) {
+      x.beginPath(); x.arc(m.x, m.y, lw * 6, 0, 7); x.lineWidth = lw * 1.2; x.strokeStyle = "#ff3b30"; x.stroke();
+      x.font = "bold " + Math.round(lw * 7) + "px sans-serif"; x.fillStyle = "#ff3b30"; x.fillText(String(m.k), m.x + lw * 7, m.y - lw * 5);
+    });
+  }
+  function cvPt(ev) { var c = $("an-cv"), r = c.getBoundingClientRect(); return [(ev.clientX - r.left) * AN.W / r.width, (ev.clientY - r.top) * AN.H / r.height]; }
+  $("an-cv").addEventListener("pointerdown", function (ev) {
+    if (!AN.img) return; var p = cvPt(ev), st = anStepOf(S.an.tr);
+    if (st === "box") { AN.drag = { x0: p[0], y0: p[1], x1: p[0], y1: p[1] }; try { $("an-cv").setPointerCapture(ev.pointerId); } catch (e) {} ev.preventDefault(); }
+    else AN.tap = { x: p[0], y: p[1], t: Date.now() };
+  });
+  $("an-cv").addEventListener("pointermove", function (ev) { if (!AN.drag) return; var p = cvPt(ev); AN.drag.x1 = p[0]; AN.drag.y1 = p[1]; anDraw(); ev.preventDefault(); });
+  $("an-cv").addEventListener("pointerup", function (ev) {
+    var tr = S.an.tr, T = S.an.t[tr], p = cvPt(ev);
+    if (AN.drag) {
+      var b = boxNorm(AN.drag); AN.drag = null;
+      if (b.x1 - b.x0 > AN.W * 0.15 && b.y1 - b.y0 > 12) { T.box = b; T.col = null; T.zero = null; T.skip = false; T.trace = null; }
+      anUI(); anDraw(); return;
+    }
+    if (!AN.tap || Math.abs(p[0] - AN.tap.x) > 12 || Math.abs(p[1] - AN.tap.y) > 12) { AN.tap = null; return; }
+    AN.tap = null; var st = anStepOf(tr), x = Math.round(p[0]), y = Math.round(p[1]);
+    if (st === "line") pickColour(tr, Math.min(T.box.x1, Math.max(T.box.x0, x)), Math.min(T.box.y1, Math.max(T.box.y0, y)));
+    else if (st === "zero") { T.zero = Math.min(T.box.y1, Math.max(T.box.y0, y)); if (tr === "flow" && anStepOf("paw") !== "done") { S.an.tr = "paw"; } }
+    anUI(); anDraw();
+    if (anStepOf("flow") === "done" && (anStepOf("paw") === "done" || S.an.t.paw.box == null) && st === "zero") anRun();
+  });
+  document.querySelectorAll("[data-tr]").forEach(function (b) { b.addEventListener("click", function () { S.an.tr = b.getAttribute("data-tr"); anUI(); anDraw(); }); });
+  $("an-redo").addEventListener("click", function () { S.an.t[S.an.tr] = {}; S.an.marks = []; anUI(); anDraw(); });
+  $("an-skip").addEventListener("click", function () { S.an.t.paw.skip = true; S.an.t.paw.zero = null; anUI(); anDraw(); anRun(); });
+  $("i-antol").addEventListener("input", function () { anUI(); });
+  $("an-run").addEventListener("click", anRun);
+  $("an-photos").addEventListener("click", function (ev) { var b = ev.target.closest("[data-anp]"); if (b) anLoad(+b.getAttribute("data-anp")); });
+  var EVTAG = { f_trap: "Flow not back to zero", f_ineff: "Missed trigger", f_early: "Early cycling", f_double: "Double trigger", f_saw: "Sawtooth", p_dip: "Big trigger dip", p_scoop: "Scooped rise", p_over: "Overshoot", f_late: "End spike", p_slow: "Slow rise", p_rev: "Reverse trigger", middip: "Dip mid-breath" };
+  function anRun() {
+    if (!AN.data) return;
+    var vm = S.vmode, secs = num("i-ansec"), reads = [], cov = {}, marks = [], order = [];
+    ["flow", "paw"].forEach(function (tr) {
+      if (anStepOf(tr) !== "done") return;
+      var T = S.an.t[tr], ex = extract(tr); T.trace = ex; cov[tr] = ex.coverage;
+      var spc = ok(secs) && secs > 0 ? secs / ex.ys.length : null, R;
+      if (tr === "flow") R = ABG.analyzeFlow(ex.ys.map(function (y) { return T.zero - y; }), { secsPerCol: spc, noise: 1.2 });
+      else {
+        var base = T.zero != null ? T.zero : T.box.y1;
+        R = ABG.analyzePaw(ex.ys.map(function (y) { return base - y; }), { vmode: vm, baseline: T.zero != null ? 0 : null, secsPerCol: spc, bur: ok(num("i-rr")) ? num("i-rr") : null, noise: 1.2 });
+      }
+      R.coverage = ex.coverage; reads.push(R);
+      if (!R.error) R.events.forEach(function (e) { var y = ex.ys[e.x]; if (y != null) { if (order.indexOf(e.type) < 0) order.push(e.type); marks.push({ x: ex.x0 + e.x, y: y, k: order.indexOf(e.type) + 1, type: e.type }); } });
+    });
+    S.an.marks = marks; S.an.order = order; S.an.reads = reads;
+    // apply: replace earlier automatic findings with this read
+    Object.keys(S.an.autoSet).forEach(function (k) { delete S.sc[k]; delete S.an.auto[k]; }); S.an.autoSet = {};
+    var merged = ABG.mergeReads(reads, vm), nb = Math.max.apply(null, reads.map(function (r) { return r.breaths || 0; }).concat([0]));
+    Object.keys(merged).forEach(function (id) { var m = merged[id]; if (!S.sc[id]) { S.sc[id] = true; S.an.autoSet[id] = true; } S.an.auto[id] = { n: m.n, of: m.of, conf: m.conf, how: "auto-read" }; });
+    if (Object.keys(merged).length) { S.scNormal = false; $("sc-normal").checked = false; }
+    S.an.info = reads.some(function (r) { return !r.error; }) ? "auto-read from photo, " + nb + " breaths" : "";
+    $("an-result").innerHTML = anCard(reads, merged, order);
+    anDraw(); renderScList(); render();
+  }
+  function anCard(reads, merged, order) {
+    var byId = {}; ABG.SCALARS.forEach(function (f) { byId[f.id] = f; });
+    var vm = S.vmode, pcMode = vm === "acpc" || vm === "prvc" || vm === "psv", rows = [];
+    reads.forEach(function (R) {
+      var nm = R.kind === "flow" ? "Flow" : "Pressure";
+      if (R.error) { rows.push('<li class="warn"><span class="st">' + nm + ": " + esc(R.error) + "</span></li>"); return; }
+      var info = R.breaths + " breaths read · line found in " + Math.round(R.coverage * 100) + "% of the box" + (R.rate ? " · ≈ " + Math.round(R.rate) + " breaths/min" : "");
+      if (R.kind === "flow" && R.shape) info += " · inspiratory flow " + (R.shape === "square" ? "square (volume control)" : R.shape === "decelerating" ? "decelerating (pressure-type)" : "mixed shape");
+      if (R.kind === "paw" && R.triggered + R.untriggered) info += " · " + R.triggered + " patient-triggered, " + R.untriggered + " machine-timed";
+      rows.push('<li><span class="st">' + nm + "</span><span class=\"sm\">" + esc(info) + "</span></li>");
+      if (R.coverage < 0.7) rows.push('<li class="warn"><span class="st">' + nm + ": the line was found in only " + Math.round(R.coverage * 100) + "% of the box.</span><span class=\"sm\">Re-tap the line, raise Line match, or box the tracing more tightly.</span></li>");
+      if (R.kind === "flow" && R.shape === "decelerating" && !pcMode) rows.push('<li class="warn"><span class="st">The flow looks decelerating (pressure-type) but the mode is set to ' + ABG.VMODES[vm] + ".</span><span class=\"sm\">Check the mode above; the pattern list depends on it.</span></li>");
+      if (R.kind === "flow" && R.shape === "square" && pcMode) rows.push('<li class="warn"><span class="st">The flow looks square (volume control) but the mode is set to ' + ABG.VMODES[vm] + ".</span></li>");
+      R.notes.forEach(function (nt) { rows.push('<li><span class="sm">' + esc(nt) + "</span></li>"); });
+    });
+    var ids = Object.keys(merged);
+    var fl = ids.length ? ids.map(function (id) {
+      var m = merged[id], f = byId[id], k = order.indexOf(id) + 1;
+      return '<li class="' + (m.conf === "low" ? "" : "warn") + '"><span class="st">' + (k ? '<b class="mk">' + k + "</b> " : "") + esc(f.title) + " — " + m.n + " of " + m.of + " breaths</span>" +
+        '<span class="sm">' + sub2(esc(f.means)) + " <b>Confidence: " + m.conf + ".</b></span><span class=\"ss\">" + esc(f.src) + "</span></li>";
+    }).join("") : '<li class="ok"><span class="st">No asynchrony pattern detected on the tracing(s) read.</span><span class="sm">Patterns the reader cannot judge from one photo (e.g. leak on the volume curve) still need your eye: use the list below.</span></li>';
+    var other = order.filter(function (t) { return ids.indexOf(t) < 0; }).map(function (t) { return (order.indexOf(t) + 1) + " = " + (EVTAG[t] || t); });
+    return '<div class="card" data-tone="' + (ids.length ? "warn" : "ok") + '"><ol class="sugg nonum">' + fl + "</ol>" +
+      (rows.length ? '<div class="vsec">What was read</div><ul class="vint">' + rows.join("").replace(/<span class="st">/g, "<b>").replace(/<\/span><span class="sm">/g, "</b> ").replace(/<span class="sm">/g, "").replace(/<\/span>/g, "") + "</ul>" : "") +
+      (other.length ? '<div class="src">Other marks on the photo: ' + esc(other.join(", ")) + ".</div>" : "") +
+      '<div class="src">Automatic reading of a photo. Numbered red circles on the photo show where each finding was seen; the pink line is what the app read. Check them, untick anything wrong in the list below, and confirm at the bedside.</div></div>';
+  }
+
+
+  /* ---------- optional AI read (user's own Anthropic API key; the only network call the app makes) ---------- */
+  var AIK = "timpex-gv-aikey";
+  try { var kk = localStorage.getItem(AIK); if (kk) { $("i-aikey").value = kk; $("i-aikeep").checked = true; } } catch (e) {}
+  document.querySelectorAll("[data-aim]").forEach(function (b) { b.addEventListener("click", function () {
+    S.aiModel = b.getAttribute("data-aim"); document.querySelectorAll("[data-aim]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+  }); });
+  $("i-aikeep").addEventListener("change", function () { try { if ($("i-aikeep").checked && $("i-aikey").value.trim()) localStorage.setItem(AIK, $("i-aikey").value.trim()); else localStorage.removeItem(AIK); } catch (e) {} });
+  $("i-aikey").addEventListener("change", function () { try { if ($("i-aikeep").checked) localStorage.setItem(AIK, $("i-aikey").value.trim()); } catch (e) {} });
+  function aiPrompt(vm) {
+    var modeTxt = { acvc: "assist-control volume control (constant flow; pressure rises during inspiration)", simv: "SIMV volume control", acpc: "assist-control pressure control (square pressure, decelerating flow)", prvc: "PRVC (pressure-regulated volume control)", psv: "pressure support (every breath patient-triggered and flow-cycled)" }[vm];
+    var lines = ABG.scalarsFor(vm).map(function (f) { return "- id \"" + f.id + "\" — " + f.title + ". Looks like: " + f.look + " Meaning: " + f.means; }).join("\n");
+    var bur = num("i-rr");
+    return "You read photos of mechanical-ventilator screens (pressure–time, flow–time and volume–time scalars) for an internal-medicine physician. " +
+      "Judge the waveforms against these patterns, taken from Tobin MJ (ed), Principles and Practice of Mechanical Ventilation, 3rd ed. (ch. 6 Mancebo, ch. 8 Brochard & Lellouche, ch. 30 Leatherman, ch. 53 Tobin, Jubran & Laghi) and Akoumianaki, Chest 2013:\n" + lines +
+      "\n\nVentilator mode entered by the user: " + modeTxt + "." + (ok(bur) ? " Set rate (BUR): " + bur + "/min." : "") +
+      "\nConventions: inspiratory flow is drawn upward; time runs left to right; pressure baseline is PEEP." +
+      "\nRules: report a pattern only if you can see it in at least one breath; give how many of the visible breaths show it. If the image is not a ventilator scalar screen, or is too blurred, cropped or glared to judge, set readable to false and say why. Do not guess clinical history. If you see an abnormality not in the list, put it in \"other\"." +
+      "\nReply with JSON only, no other text, in this shape: {\"readable\": true, \"reason\": \"\", \"mode_seen\": \"volume control|pressure control|pressure support|unclear\", \"breaths_seen\": 0, \"findings\": [{\"id\": \"one of the ids above\", \"breaths\": \"2 of 5\", \"confidence\": \"high|moderate|low\", \"evidence\": \"where on the screen, under 25 words\"}], \"other\": \"\", \"summary\": \"2 to 3 plain sentences\"}";
+  }
+  function photoB64(url, cb) {
+    var im = new Image();
+    im.onload = function () {
+      var k = Math.min(1, 1568 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement("canvas");
+      c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
+      c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+      cb(c.toDataURL("image/jpeg", 0.85).split(",")[1]);
+    };
+    im.onerror = function () { cb(null); };
+    im.src = url;
+  }
+  function aiParse(text) {
+    var a = text.indexOf("{"), z = text.lastIndexOf("}");
+    if (a < 0 || z <= a) throw new Error("The reply was not in the expected format.");
+    return JSON.parse(text.slice(a, z + 1));
+  }
+  function aiApply(J, vm) {
+    var okIds = {}; ABG.scalarsFor(vm).forEach(function (f) { okIds[f.id] = 1; });
+    var got = [];
+    (J.findings || []).forEach(function (fd) {
+      if (!fd || !okIds[fd.id]) return;
+      var m = /(\d+)\s*(?:of|\/)\s*(\d+)/.exec(String(fd.breaths || "")), conf = /^(high|moderate|low)$/.test(fd.confidence) ? fd.confidence : "low";
+      if (!S.sc[fd.id]) { S.sc[fd.id] = true; S.an.autoSet[fd.id] = true; }
+      S.an.auto[fd.id] = { how: "AI read", n: m ? +m[1] : null, of: m ? +m[2] : null, conf: conf };
+      got.push(fd);
+    });
+    if (got.length) { S.scNormal = false; $("sc-normal").checked = false; }
+    S.an.info = (S.an.info && S.an.info.indexOf("auto-read") === 0 ? S.an.info + " + " : "") + "AI read (" + (S.aiModel.indexOf("opus") > -1 ? "Opus" : "Sonnet") + ")";
+    return got;
+  }
+  function aiCard(J, got, vm) {
+    var byId = {}; ABG.SCALARS.forEach(function (f) { byId[f.id] = f; });
+    if (J.readable === false) return '<div class="card" data-tone="warn"><div class="empty">The AI could not read this photo: ' + esc(J.reason || "no reason given") + "</div></div>";
+    var modeWarn = J.mode_seen && J.mode_seen !== "unclear" && ((J.mode_seen === "volume control") !== ABG.isVC(vm)) && !(J.mode_seen === "pressure control" && vm === "prvc")
+      ? '<li class="warn"><span class="st">The AI sees ' + esc(J.mode_seen) + " waveforms, but the mode is set to " + ABG.VMODES[vm] + ".</span><span class=\"sm\">Check the mode; the pattern list depends on it.</span></li>" : "";
+    var items = got.map(function (fd) {
+      var f = byId[fd.id];
+      return '<li class="' + (fd.confidence === "low" ? "" : "warn") + '"><span class="st">' + esc(f.title) + (fd.breaths ? " — " + esc(fd.breaths) + " breaths" : "") + "</span>" +
+        '<span class="sm">' + esc(fd.evidence || "") + " <b>Confidence: " + esc(fd.confidence || "low") + ".</b></span><span class=\"ss\">" + esc(f.src) + "</span></li>";
+    }).join("") || '<li class="ok"><span class="st">No listed asynchrony seen by the AI.</span></li>';
+    return '<div class="card" data-tone="' + (got.length ? "warn" : "ok") + '">' + (J.summary ? '<div class="supl" style="margin:0 0 8px">' + esc(J.summary) + "</div>" : "") +
+      '<ol class="sugg">' + modeWarn + items + (J.other ? '<li><span class="st">Other</span><span class="sm">' + esc(J.other) + "</span></li>" : "") + "</ol>" +
+      '<div class="src">AI second opinion (' + esc(S.aiModel) + (J.breaths_seen ? ", " + esc(String(J.breaths_seen)) + " breaths seen" : "") + "). It can be wrong: compare with the photo and confirm at the bedside.</div></div>";
+  }
+  $("ai-run").addEventListener("click", function () {
+    var key = $("i-aikey").value.trim(), vm = S.vmode, out = $("ai-result");
+    if (!/^sk-ant-/.test(key)) { out.innerHTML = '<div class="card" data-tone="warn"><div class="empty">Enter an Anthropic API key (it starts with sk-ant-).</div></div>'; return; }
+    var url = S.photos[S.an.idx >= 0 ? S.an.idx : S.photos.length - 1]; if (!url) return;
+    try { if ($("i-aikeep").checked) localStorage.setItem(AIK, key); } catch (e) {}
+    $("ai-run").disabled = true; out.innerHTML = '<div class="card"><div class="empty">Sending the photo to ' + esc(S.aiModel) + "…</div></div>";
+    photoB64(url, function (b64) {
+      if (!b64) { $("ai-run").disabled = false; out.innerHTML = '<div class="card" data-tone="warn"><div class="empty">Could not prepare the photo.</div></div>'; return; }
+      var ctl = typeof AbortController !== "undefined" ? new AbortController() : null, timer = setTimeout(function () { if (ctl) ctl.abort(); }, 90000);
+      fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST", signal: ctl ? ctl.signal : undefined,
+        headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify({ model: S.aiModel, max_tokens: 1500, system: aiPrompt(vm),
+          messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: "image/jpeg", data: b64 } },
+            { type: "text", text: "Read the ventilator scalars in this photo and reply with the JSON only." }] }] })
+      }).then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (j) { return { ok: res.ok, status: res.status, j: j }; });
+      }).then(function (r) {
+        clearTimeout(timer); $("ai-run").disabled = false;
+        if (!r.ok) {
+          var msg = r.j && r.j.error && r.j.error.message ? r.j.error.message : "HTTP " + r.status;
+          out.innerHTML = '<div class="card" data-tone="warn"><div class="empty">' + (r.status === 401 ? "The API key was not accepted. " : r.status === 429 ? "Rate limit or credit limit reached. " : "") + esc(msg) + "</div></div>"; return;
+        }
+        var text = (r.j.content || []).filter(function (c) { return c.type === "text"; }).map(function (c) { return c.text; }).join("\n");
+        var J; try { J = aiParse(text); } catch (e) { out.innerHTML = '<div class="card" data-tone="warn"><div class="empty">' + esc(e.message) + "</div></div>"; return; }
+        var got = J.readable === false ? [] : aiApply(J, vm);
+        out.innerHTML = aiCard(J, got, vm);
+        renderScList(); render();
+      }).catch(function (e) {
+        clearTimeout(timer); $("ai-run").disabled = false;
+        out.innerHTML = '<div class="card" data-tone="warn"><div class="empty">' + (e && e.name === "AbortError" ? "No reply within 90 seconds." : "Could not reach the AI service (no internet, or the request was blocked).") + "</div></div>";
+      });
+    });
+  });
 
   /* ---------- ventilator card ---------- */
   function ventCard(v, sp, ab, paco2, fio2Pct) {
@@ -2719,6 +3294,7 @@ if (typeof module !== "undefined") module.exports = ABG;
   var VENT_FIELDS = ["i-vt", "i-pinsp", "i-rr", "i-ie", "i-flow", "i-peep", "i-ppeak", "i-pplat", "i-mawp", "i-peeptot", "i-vte", "i-vti", "i-ftot", "i-ht", "i-pco2t"];
   function clearScalars() {
     S.sc = {}; S.scNormal = false; $("sc-normal").checked = false;
+    S.an = { idx: -1, tr: "flow", t: { flow: {}, paw: {} }, reads: null, auto: {}, autoSet: {}, info: "" }; $("an-result").innerHTML = ""; $("ai-result").innerHTML = "";
     S.photos.forEach(function (u) { try { URL.revokeObjectURL(u); } catch (e) {} }); S.photos = [];
     renderPhotos(); renderScList();
   }
