@@ -13,6 +13,7 @@ Bedside arterial blood gas reader for when electrolytes aren't back: uses only p
 - **Complete interpretation**: acid–base + oxygenation, traditional label, Type 1/Type 2 respiratory failure, and gas exchange (P/F, A-aDO₂ or a/A with the likely mechanism).
 - **Guideline-based suggestions** at the end of the message: BTS 2017 (O₂ targets), GOLD 2026 and NICE (NIV), Surviving Sepsis Campaign 2026 and BICARICU-2 (bicarbonate, lactate), ADA/EASD 2024 (DKA), 2023 global ARDS definition and ATS 2024 (ARDS), MSD Manual (metabolic alkalosis).
 - Optional lactate, and a CO₂-retainer tick box (SpO₂ 88–92%, desired FiO₂ for pO₂ 60).
+- **Support modes**: room air, nasal cannula (L/min), mask/HFNC, NIV (BiPAP/CPAP) and mechanical ventilation, each with its own fields, desired FiO₂ wording and suggestions. On the ventilator: predicted body weight, VT per kg, minute ventilation, driving pressure, oxygenation index, and the RR needed to reach a target pCO₂ (BTS/ICS 2016, ERS 2022, ARDSNet, SSC 2026, ATS 2024, UK-ROX 2025).
 
 Works offline once opened; install it from Safari (Share → Add to Home Screen) or Chrome (Install app).
 

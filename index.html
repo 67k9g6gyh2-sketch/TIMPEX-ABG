@@ -246,6 +246,19 @@ ol.sugg .st { display: block; font-weight: 600; }
 ol.sugg li.crit .st { color: var(--crit); }
 ol.sugg .sm { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
 ol.sugg .ss { display: inline-block; font: 700 11px/1.2 var(--font-display); letter-spacing: 0.04em; color: var(--accent); background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; margin-top: 4px; }
+
+/* ---- v6: support selector ---- */
+.modes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.modes button { appearance: none; cursor: pointer; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); border-radius: 10px;
+  padding: 8px 2px 7px; font: 700 15px/1.1 var(--font-display); text-align: center; }
+.modes button small { display: block; font: 600 10.5px/1.2 var(--font-display); color: var(--muted); margin-top: 2px; }
+.modes button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.modes button[aria-pressed="true"] small { color: var(--accent-ink); opacity: 0.85; }
+.modes button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mpanel { display: flex; flex-direction: column; gap: 4px; }
+#fio2-row { display: flex; flex-direction: column; gap: 0; }
+#fio2-row[hidden] { display: none !important; }
+.supl { font-size: 13px; color: var(--muted); margin-top: -4px; }
 </style>
 </head>
 <body>
@@ -319,25 +332,125 @@ ol.sugg .ss { display: inline-block; font: 700 11px/1.2 var(--font-display); let
     </div>
 
     <div class="box">
-      <h3>Patient and oxygen</h3>
-      <div class="grid2">
-        <div class="full-col">
-          <label class="lbl" for="i-fio2">FiO<sub>2</sub> when the ABG was drawn</label>
-          <div class="inp" id="w-fio2"><input id="i-fio2" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">%</span></div>
-          <div class="chips" id="fio2-chips">
-            <button type="button" class="chip" data-f="21">RA<small>21%</small></button>
-            <button type="button" class="chip" data-f="24">1 L<small>24%</small></button>
-            <button type="button" class="chip" data-f="28">2 L<small>28%</small></button>
-            <button type="button" class="chip" data-f="32">3 L<small>32%</small></button>
-            <button type="button" class="chip" data-f="36">4 L<small>36%</small></button>
-            <button type="button" class="chip" data-f="40">5 L<small>40%</small></button>
-            <button type="button" class="chip" data-f="44">6 L<small>44%</small></button>
-            <button type="button" class="chip" data-f="50">50%<small>FiO₂</small></button>
-            <button type="button" class="chip" data-f="70">70%<small>FiO₂</small></button>
-            <button type="button" class="chip" data-f="100">100%<small>FiO₂</small></button>
+      <h3>Support when the ABG was drawn</h3>
+      <div class="modes" role="group" aria-label="Oxygen or ventilatory support">
+        <button type="button" data-mode="ra" aria-pressed="false">RA<small>room air</small></button>
+        <button type="button" data-mode="nc" aria-pressed="true">NC<small>cannula</small></button>
+        <button type="button" data-mode="mask" aria-pressed="false">Mask<small>or HFNC</small></button>
+        <button type="button" data-mode="niv" aria-pressed="false">NIV<small>BiPAP/CPAP</small></button>
+        <button type="button" data-mode="mv" aria-pressed="false">MV<small>ventilator</small></button>
+      </div>
+
+      <div class="mpanel" data-for="ra" hidden><div class="hint">FiO<sub>2</sub> 21%.</div></div>
+
+      <div class="mpanel" data-for="nc">
+        <label class="lbl" for="i-ncflow">Nasal cannula flow</label>
+        <div class="inline-row" style="margin-top:5px">
+          <div class="inp" id="w-ncflow"><input id="i-ncflow" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">L/min</span></div>
+          <div class="chips" id="nc-chips">
+            <button type="button" class="chip" data-l="1">1</button><button type="button" class="chip" data-l="2">2</button>
+            <button type="button" class="chip" data-l="3">3</button><button type="button" class="chip" data-l="4">4</button>
+            <button type="button" class="chip" data-l="5">5</button><button type="button" class="chip" data-l="6">6</button>
           </div>
-          <div class="hint" id="fio2-hint">Room air, nasal cannula (L/min) or a set FiO<sub>2</sub>. Or type the % (28) or fraction (0.28).</div>
         </div>
+        <div class="hint" id="nc-hint">FiO<sub>2</sub> ≈ 20% + 4% per L/min (valid for 1–6 L/min).</div>
+      </div>
+
+      <div class="mpanel" data-for="mask" hidden>
+        <span class="lbl">Device</span>
+        <div class="chips" id="dev-chips" style="margin-top:5px">
+          <button type="button" class="chip" data-dev="venturi" aria-pressed="true">Venturi</button>
+          <button type="button" class="chip" data-dev="mask" aria-pressed="false">Simple mask</button>
+          <button type="button" class="chip" data-dev="nrm" aria-pressed="false">Non-rebreather</button>
+          <button type="button" class="chip" data-dev="hfnc" aria-pressed="false">HFNC</button>
+        </div>
+        <div id="hf-row" hidden style="margin-top:10px">
+          <label class="lbl" for="i-hfflow">HFNC flow</label>
+          <div class="inline-row" style="margin-top:5px">
+            <div class="inp" id="w-hfflow"><input id="i-hfflow" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">L/min</span></div>
+            <div class="chips" id="hf-chips"><button type="button" class="chip" data-h="30">30</button><button type="button" class="chip" data-h="40">40</button><button type="button" class="chip" data-h="50">50</button><button type="button" class="chip" data-h="60">60</button></div>
+          </div>
+        </div>
+        <div class="hint" id="dev-hint"></div>
+      </div>
+
+      <div class="mpanel" data-for="niv" hidden>
+        <div class="row">
+          <span class="lbl" id="niv-lbl">NIV mode</span>
+          <div class="seg" role="group" aria-labelledby="niv-lbl">
+            <button type="button" data-niv="bipap" aria-pressed="true">BiPAP</button>
+            <button type="button" data-niv="cpap" aria-pressed="false">CPAP</button>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:10px">
+          <div id="ipap-cell">
+            <label class="lbl" for="i-ipap">IPAP</label>
+            <div class="inp" id="w-ipap"><input id="i-ipap" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">cmH₂O</span></div>
+          </div>
+          <div>
+            <label class="lbl" for="i-epap" id="epap-lbl">EPAP</label>
+            <div class="inp" id="w-epap"><input id="i-epap" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">cmH₂O</span></div>
+          </div>
+        </div>
+        <div class="hint" id="niv-hint"></div>
+      </div>
+
+      <div class="mpanel" data-for="mv" hidden>
+        <div class="grid2">
+          <div>
+            <label class="lbl" for="i-peep">PEEP</label>
+            <div class="inp" id="w-peep"><input id="i-peep" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">cmH₂O</span></div>
+          </div>
+          <div>
+            <label class="lbl" for="i-vt">Tidal volume</label>
+            <div class="inp" id="w-vt"><input id="i-vt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">mL</span></div>
+          </div>
+          <div>
+            <label class="lbl" for="i-rr">RR <span class="opt">total</span></label>
+            <div class="inp" id="w-rr"><input id="i-rr" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">/min</span></div>
+          </div>
+          <div>
+            <label class="lbl" for="i-pplat">Plateau <span class="opt">optional</span></label>
+            <div class="inp" id="w-pplat"><input id="i-pplat" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">cmH₂O</span></div>
+          </div>
+          <div>
+            <label class="lbl" for="i-ht">Height <span class="opt">for PBW</span></label>
+            <div class="inp" id="w-ht"><input id="i-ht" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">cm</span></div>
+          </div>
+          <div>
+            <span class="lbl" id="sex-lbl">Sex <span class="opt">for PBW</span></span>
+            <div class="seg full" role="group" aria-labelledby="sex-lbl" style="margin-top:5px">
+              <button type="button" data-sex="m" aria-pressed="false">Male</button>
+              <button type="button" data-sex="f" aria-pressed="false">Female</button>
+            </div>
+          </div>
+          <div>
+            <label class="lbl" for="i-mawp">Mean airway P <span class="opt">optional</span></label>
+            <div class="inp" id="w-mawp"><input id="i-mawp" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">cmH₂O</span></div>
+          </div>
+          <div>
+            <label class="lbl" for="i-pco2t">Target pCO<sub>2</sub> <span class="opt">auto if blank</span></label>
+            <div class="inp" id="w-pco2t"><input id="i-pco2t" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="auto"><span class="u">mmHg</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="fio2-row" hidden>
+        <label class="lbl" for="i-fio2" id="fio2-lbl">FiO<sub>2</sub></label>
+        <div class="inp" id="w-fio2"><input id="i-fio2" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">%</span></div>
+        <div class="chips" id="fio2-chips">
+          <button type="button" class="chip" data-f="28">28</button><button type="button" class="chip" data-f="35">35</button>
+          <button type="button" class="chip" data-f="40">40</button><button type="button" class="chip" data-f="50">50</button>
+          <button type="button" class="chip" data-f="60">60</button><button type="button" class="chip" data-f="80">80</button>
+          <button type="button" class="chip" data-f="100">100</button>
+        </div>
+        <div class="hint" id="fio2-hint">Type the % (40) or fraction (0.4).</div>
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>Patient</h3>
+      <div class="grid2">
         <div>
           <label class="lbl" for="i-age">Age</label>
           <div class="inp" id="w-age"><input id="i-age" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">years</span></div>
@@ -376,8 +489,11 @@ ol.sugg .ss { display: inline-block; font: 700 11px/1.2 var(--font-display); let
     <h3 class="sec">Interpretation</h3>
     <div id="ab-result"></div>
 
-    <h3 class="sec">O<sub>2</sub> requirement</h3>
+    <h3 class="sec">Oxygenation target</h3>
     <div id="result"></div>
+
+    <h3 class="sec" id="vent-sec" hidden>Ventilator</h3>
+    <div id="vent-result" hidden></div>
 
     <h3 class="sec">HCO<sub>3</sub> deficit</h3>
     <div id="def-result"></div>
@@ -489,6 +605,18 @@ ol.sugg .ss { display: inline-block; font: 700 11px/1.2 var(--font-display); let
     </div>
 
     <div class="box">
+      <h3>Support modes</h3>
+      <ul class="plain">
+        <li><b>RA / NC</b>: FiO₂ 21%, or 20% + 4% per L/min on nasal cannula. The desired FiO₂ is turned back into a cannula flow; above 44% the app points to a Venturi mask or HFNC.</li>
+        <li><b>Mask / HFNC</b>: enter the set FiO₂ (Venturi, HFNC) or an estimate (simple mask, non-rebreather). HFNC at ≥ 30 L/min counts for the ARDS P/F criterion.</li>
+        <li><b>NIV</b>: BiPAP (IPAP/EPAP, pressure support = IPAP − EPAP) or CPAP. EPAP ≥ 5 counts for the ARDS P/F criterion. Hypercapnic patients on NIV: SpO₂ 88–92%; if still acidotic, raise IPAP toward 20–30 cmH₂O, fix leak, recheck the ABG in 1–2 h. <i>BTS/ICS 2016.</i> Hypoxemic failure: HFNC is suggested over NIV. <i>ERS 2022.</i></li>
+        <li><b>Ventilator</b>: predicted body weight (men 50, women 45.5, + 0.91 × (height cm − 152.4)), VT per kg PBW, minute ventilation, driving pressure (Pplat − PEEP), oxygenation index (FiO₂ × mean airway pressure × 100 ÷ pO₂).</li>
+        <li><b>Target pCO₂ on the ventilator</b>: Winter's value in metabolic acidosis; expected compensation in metabolic alkalosis; otherwise the pCO₂ that gives pH 7.40 (7.38 for chronic hypercapnia) at the current HCO₃. RR needed = RR × pCO₂ ÷ target, assuming VT and dead space stay the same. You can type your own target.</li>
+        <li><b>Ventilator goals</b> (ARDSNet): VT 6 mL/kg PBW (4–8), plateau ≤ 30, pH 7.30–7.45, RR ≤ 35, pO₂ 55–80 or SpO₂ 88–95% in ARDS. Without ARDS, SSC 2026 suggests 6–8 mL/kg PBW. Oxygen targets outside ARDS: UK-ROX (JAMA 2025) found no mortality difference between SpO₂ 90% and usual care; avoid unnecessary hyperoxia.</li>
+      </ul>
+    </div>
+
+    <div class="box">
       <h3>Suggestions and their sources</h3>
       <ul class="plain">
         <li><b>O₂ target</b> SpO₂ 94–98%, or 88–92% if at risk of hypercapnic respiratory failure or the gas shows respiratory-acidosis hypercapnia. Stop O₂ once the target holds on room air. <i>BTS guideline for oxygen use in adults, 2017.</i></li>
@@ -512,6 +640,10 @@ ol.sugg .ss { display: inline-block; font: 700 11px/1.2 var(--font-display); let
         <li>Umpierrez GE, et al. Hyperglycaemic crises in adults with diabetes: a consensus report. Diabetologia. 2024;67(8):1455–79.</li>
         <li>Matthay MA, et al. A new global definition of acute respiratory distress syndrome. Am J Respir Crit Care Med. 2024;209(1):37–47.</li>
         <li>Qadir N, et al. An update on management of adult patients with ARDS: an official ATS clinical practice guideline. Am J Respir Crit Care Med. 2024.</li>
+        <li>Davidson AC, et al. BTS/ICS guideline for the ventilatory management of acute hypercapnic respiratory failure in adults. Thorax. 2016;71(Suppl 2):ii1–35.</li>
+        <li>Oczkowski S, et al. ERS clinical practice guidelines: high-flow nasal cannula in acute respiratory failure. Eur Respir J. 2022;59(4):2101574.</li>
+        <li>NIH NHLBI ARDS Network. Lower tidal volume ventilation protocol (ARDSNet).</li>
+        <li>Martin DS, et al. Conservative oxygen therapy in mechanically ventilated critically ill adults: the UK-ROX randomized clinical trial. JAMA. 2025;334(5):398–408.</li>
         <li>Berend K, de Vries APJ, Gans ROB. Physiological approach to assessment of acid–base disturbances. N Engl J Med. 2014;371(15):1434–45.</li>
         <li>Shapiro BA, Peruzzi WT, Kozelowski-Templin R. Clinical Application of Blood Gases. 5th ed. Mosby; 1994.</li>
         <li>Gilbert R, Keighley JF. The arterial/alveolar oxygen tension ratio. Am Rev Respir Dis. 1974;109(1):142–5.</li>
@@ -522,7 +654,7 @@ ol.sugg .ss { display: inline-block; font: 700 11px/1.2 var(--font-display); let
 
   <footer>
     <div class="disc"><b>Clinical decision aid.</b> For trained clinicians. It does not replace clinical judgment or your institution's protocols. Read the result with the patient and the history; recheck SpO₂ or the ABG after every change in oxygen.</div>
-    <div>TIMPEX ABG · v5 · 21 Nov 2026 · <span id="app-hint"></span></div>
+    <div>TIMPEX ABG · v6 · 21 Nov 2026 · <span id="app-hint"></span></div>
   </footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -818,6 +950,84 @@ var ABG = (function () {
 
 
 
+  /* ---------- Oxygen / ventilatory support ---------- */
+  // s: { mode: "ra"|"nc"|"mask"|"niv"|"mv", ncFlow, fio2Pct, dev ("venturi"|"mask"|"nrm"|"hfnc"), hfFlow,
+  //      nivType ("bipap"|"cpap"), ipap, epap, peep, vt, rr, pplat, mawp, height, sex ("m"|"f"), pco2Target }
+  var DEVICES = { venturi: "Venturi mask", mask: "Simple face mask", nrm: "Non-rebreather mask", hfnc: "HFNC" };
+  function num_(v) { return v != null && isFinite(v) ? v : null; }
+  function supportFio2(s) {
+    if (!s || s.mode === "ra") return 21;
+    if (s.mode === "nc") return num_(s.ncFlow) != null && s.ncFlow > 0 ? ncToFio2(s.ncFlow) : null;
+    return num_(s.fio2Pct);
+  }
+  // Positive pressure at end-expiration, where it exists (for ARDS criteria)
+  function endExpPressure(s) {
+    if (!s) return null;
+    if (s.mode === "mv") return num_(s.peep);
+    if (s.mode === "niv") return num_(s.epap);
+    return null;
+  }
+  function supportLine(s, fio2Pct) {
+    var f = fio2Pct != null ? fmt(fio2Pct, 0) + "%" : "—";
+    if (!s || s.mode === "ra") return "Room air";
+    if (s.mode === "nc") return "Nasal cannula " + (num_(s.ncFlow) != null ? fmt(s.ncFlow, 1) + " L/min" : "—") + " (FiO₂ ≈ " + f + ")";
+    if (s.mode === "mask") {
+      var d = DEVICES[s.dev] || "Mask";
+      return d + (s.dev === "hfnc" && num_(s.hfFlow) != null ? " " + fmt(s.hfFlow, 0) + " L/min" : "") + ", FiO₂ " + (s.dev === "mask" || s.dev === "nrm" ? "≈ " : "") + f;
+    }
+    if (s.mode === "niv") {
+      if (s.nivType === "cpap") return "NIV (CPAP) " + (num_(s.epap) != null ? fmt(s.epap, 0) : "—") + " cmH₂O, FiO₂ " + f;
+      var ps = num_(s.ipap) != null && num_(s.epap) != null ? " (PS " + fmt(s.ipap - s.epap, 0) + ")" : "";
+      return "NIV (BiPAP) IPAP " + (num_(s.ipap) != null ? fmt(s.ipap, 0) : "—") + " / EPAP " + (num_(s.epap) != null ? fmt(s.epap, 0) : "—") + " cmH₂O" + ps + ", FiO₂ " + f;
+    }
+    var parts = ["FiO₂ " + f];
+    if (num_(s.peep) != null) parts.push("PEEP " + fmt(s.peep, 0));
+    if (num_(s.vt) != null) parts.push("VT " + fmt(s.vt, 0) + " mL");
+    if (num_(s.rr) != null) parts.push("RR " + fmt(s.rr, 0));
+    return "Mechanical ventilation: " + parts.join(", ");
+  }
+  function modeName(s) { return !s ? "" : s.mode === "niv" ? "NIV" : s.mode === "mv" ? "ventilator" : s.mode === "mask" ? (DEVICES[s.dev] || "mask") : s.mode === "nc" ? "nasal cannula" : "room air"; }
+
+  // ARDSNet predicted body weight
+  function pbw(heightCm, sex) {
+    if (num_(heightCm) == null || heightCm < 120 || heightCm > 230) return null;
+    return (sex === "f" ? 45.5 : 50) + 0.91 * (heightCm - 152.4);
+  }
+  // pCO2 to aim for on the ventilator: expected compensation for metabolic disorders;
+  // otherwise the pCO2 that gives pH 7.40 (7.38 for chronic hypercapnia / CO2 retainers) at the current HCO3.
+  function targetPco2(ab, retainer) {
+    if (!ab || ab.errors.length) return null;
+    var p = ab.primary, ex = ab.check ? ab.check.extra : null, h = ab.hco3;
+    if (p === "met-acid" || p === "mixed-acid" || ex === "met-acid")
+      return { value: 1.5 * h + 8, why: "Winter's expected pCO₂ for HCO₃ " + fmt(h, 1) };
+    if (p === "met-alk") return { value: 0.7 * h + 20, why: "expected compensation for HCO₃ " + fmt(h, 1) };
+    var chronic = retainer || (p === "resp-acid" && ab.check && (ab.check.timing === "chronic" || ab.check.timing === "between"));
+    var ph = chronic ? 7.38 : 7.40;
+    return { value: Math.pow(10, 9 - ph) * h / 24, why: "pCO₂ for pH " + fmt(ph, 2) + " at HCO₃ " + fmt(h, 1) + (chronic ? " (avoid post-hypercapnic alkalosis)" : "") };
+  }
+  function ventCalc(s, ab, paco2, pao2, fio2Pct, retainer) {
+    if (!s || s.mode !== "mv") return null;
+    var o = { pbw: pbw(s.height, s.sex) };
+    if (num_(s.vt) != null && o.pbw) o.vtkg = s.vt / o.pbw;
+    if (num_(s.vt) != null && num_(s.rr) != null) o.ve = s.vt * s.rr / 1000;
+    if (num_(s.pplat) != null && num_(s.peep) != null) o.dp = s.pplat - s.peep;
+    if (num_(s.mawp) != null && fio2Pct != null && num_(pao2) != null) o.oi = (fio2Pct / 100) * s.mawp * 100 / pao2;
+    o.target = num_(s.pco2Target) != null ? { value: s.pco2Target, why: "custom" } : targetPco2(ab, retainer);
+    if (o.target && num_(s.rr) != null && num_(paco2) != null) o.rrNeed = s.rr * paco2 / o.target.value;
+    return o;
+  }
+  function ventLines(v, s) {
+    if (!v) return [];
+    var L = [];
+    if (v.vtkg != null) L.push("VT " + fmt(s.vt, 0) + " mL = " + fmt(v.vtkg, 1) + " mL/kg PBW (PBW " + fmt(v.pbw, 0) + " kg)");
+    else if (v.pbw) L.push("PBW " + fmt(v.pbw, 0) + " kg (6 mL/kg = " + Math.round(6 * v.pbw) + " mL)");
+    if (v.ve != null) L.push("Minute ventilation: " + fmt(v.ve, 1) + " L/min");
+    if (v.dp != null) L.push("Driving pressure: " + fmt(v.dp, 0) + " cmH₂O (Pplat " + fmt(s.pplat, 0) + " − PEEP " + fmt(s.peep, 0) + ")");
+    if (v.oi != null) L.push("Oxygenation index: " + fmt(v.oi, 1));
+    if (v.target && v.rrNeed != null) L.push("Target pCO₂ " + fmt(v.target.value, 0) + " (" + v.target.why + "): RR ≈ " + Math.round(v.rrNeed) + "/min" + (v.rrNeed > 35 ? " (above 35)" : ""));
+    return L;
+  }
+
   /* ---------- Complete interpretation ---------- */
   function lc(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
 
@@ -826,7 +1036,12 @@ var ABG = (function () {
     var ix = indices(m.pao2, m.paco2, m.fio2Pct); if (!ix || ix.PAO2 <= 0) return null;
     var aA = m.pao2 / ix.PAO2; if (aA > 1) return null;
     var g = { pf: ix.pf, Aa: ix.AaGrad, aA: aA, onO2: m.fio2Pct > 21.5 };
-    g.pfText = "P/F " + Math.round(ix.pf) + (ix.pf <= 100 ? " (≤ 100)" : ix.pf <= 200 ? " (≤ 200)" : ix.pf <= 300 ? " (≤ 300)" : "");
+    var sp = m.support, pe = endExpPressure(sp);
+    g.ctx = sp && sp.mode === "mv" && pe != null ? " on PEEP " + fmt(pe, 0) : sp && sp.mode === "niv" && pe != null ? " on " + (sp.nivType === "cpap" ? "CPAP " : "EPAP ") + fmt(pe, 0)
+      : sp && sp.mode === "mask" && sp.dev === "hfnc" && num_(sp.hfFlow) != null ? " on HFNC " + fmt(sp.hfFlow, 0) + " L/min" : "";
+    g.pfText = "P/F " + Math.round(ix.pf) + g.ctx + (ix.pf <= 100 ? " (≤ 100)" : ix.pf <= 200 ? " (≤ 200)" : ix.pf <= 300 ? " (≤ 300)" : "");
+    // Does the P/F meet the ARDS oxygenation criterion's support condition (2023 global definition)?
+    g.ardsSupport = !!(sp && ((sp.mode === "mv") || (sp.mode === "niv" && pe != null && pe >= 5) || (sp.mode === "mask" && sp.dev === "hfnc" && num_(sp.hfFlow) != null && sp.hfFlow >= 30)));
     if (!g.onO2 && m.age != null && isFinite(m.age)) {
       g.exp = expectedAa(m.age); g.widened = ix.AaGrad > g.exp;
       g.gradText = "A-aDO₂ " + Math.round(ix.AaGrad) + (g.widened ? " (widened; age norm ≤ " + Math.round(g.exp) + ")" : " (normal for age)");
@@ -870,12 +1085,14 @@ var ABG = (function () {
      Sources: BTS 2017 oxygen guideline; GOLD 2026 + NICE QS10 (NIV); SSC 2026 (bicarbonate, lactate);
      BICARICU-2 (JAMA 2025); ADA/EASD/JBDS 2024 hyperglycaemic crises; Global ARDS definition 2023;
      ATS 2024 ARDS guideline; MSD Manual (metabolic alkalosis). */
-  var PRIORITY = ["check", "sev", "mixed", "niv", "fatigue", "shunt", "o2", "bicarb", "cause", "lactate", "ards", "drive",
-                  "alk", "hypervent", "hypovent", "chronicCO2", "ardsRx", "def"];
-  // Each suggestion: short text (goes in the message) + optional detail (shown in the app) + source tag
+  var PRIORITY = ["check", "sev", "mixed", "niv", "nivOpt", "fatigue", "rr", "shunt", "o2", "ards", "ardsRx", "vt", "pplat", "hfnc",
+                  "bicarb", "cause", "lactate", "dp", "drive", "alk", "hypervent", "hypovent", "chronicCO2", "def"];
+  // Each suggestion: short text (message) + optional detail (app) + source tag. Mode-aware: ra, nc, mask, niv, mv.
   function suggestions(c) {
     var S = {}, add = function (key, text, src, tone, more) { if (!S[key]) S[key] = { key: key, text: text, src: src || "", tone: tone || "", more: more || "" }; };
     var ab = c.ab && !c.ab.errors.length ? c.ab : null;
+    var sp = c.support || { mode: "nc" }, mode = sp.mode, v = c.vent || null;
+    var onPP = mode === "niv" || mode === "mv";
     var p = ab ? ab.primary : null, ex = ab && ab.check ? ab.check.extra : null;
     var metAcid = p === "met-acid" || p === "mixed-acid" || ex === "met-acid";
     var metAlk = p === "met-alk" || p === "mixed-alk" || ex === "met-alk";
@@ -884,25 +1101,60 @@ var ABG = (function () {
     var co2Risk = !!(c.retainer || hypercap);
     var spo2 = co2Risk ? "88–92%" : "94–98%";
     var L = c.lactate != null && isFinite(c.lactate) ? c.lactate : null;
+    var ox = c.ox, r = c.r && !c.r.errors.length ? c.r : null;
+    var g = c.g, pf = g ? g.pf : null;
+    var ardsRange = !!(g && pf <= 300 && g.ardsSupport);
+    var ardsSev = pf == null ? "" : pf <= 100 ? "severe" : pf <= 200 ? "moderate" : "mild";
 
     if (c.mismatch) add("check", "Recheck the entries: HCO₃ or TCO₂ does not fit the pH and pCO₂.", "", "warn",
       "Usually a typo, or values copied from different samples (e.g. a serum bicarbonate drawn at another time).");
     if (ab && ab.ph < 7.20) add("sev", "Severe acidemia: treat the cause now, monitor closely (HDU/ICU), repeat the ABG after each intervention.", "", "crit");
     if (ab && ab.ph > 7.60) add("sev", "Severe alkalemia: needs urgent correction; check K⁺ and ionized calcium.", "MSD Manual", "crit",
       "Alkalemia lowers ionized calcium and, with hypokalemia, raises the risk of arrhythmia.");
-    if (p === "mixed-acid") add("mixed", "Mixed respiratory and metabolic acidosis: arrange ventilatory support early while treating the metabolic cause.", "", "crit");
+    if (p === "mixed-acid") add("mixed", mode === "mv" ? "Mixed respiratory and metabolic acidosis on the ventilator: raise minute ventilation (see RR) while treating the metabolic cause."
+      : "Mixed respiratory and metabolic acidosis: arrange ventilatory support early while treating the metabolic cause.", "", "crit");
 
-    if (hypercap && ab.ph < 7.35) {
-      add("niv", "Acidotic hypercapnia: in a COPD exacerbation, start NIV if pH < 7.35 and pCO₂ > 45 persist after optimal medical therapy" +
-        (ab.ph <= 7.25 ? "; pH ≤ 7.25 is life-threatening, so involve ICU early" : "") + ".", "GOLD 2026; NICE", ab.ph <= 7.25 ? "crit" : "warn",
-        "GOLD lists respiratory acidosis (PaCO₂ ≥ 45 mmHg and pH ≤ 7.35) as an indication for NIV; NICE asks for NIV when acidotic hypercapnia is not improving after 1 h of optimal medical therapy. Recheck the ABG after starting NIV.");
-      add("hypovent", "Look for the cause of hypoventilation: COPD/asthma, sedatives or opioids, neuromuscular weakness, obesity hypoventilation.", "", "");
-    } else if (hypercap) {
-      add("chronicCO2", "Compensated hypercapnia: compare with baseline pCO₂ and avoid excess O₂.", "", "");
+    /* ---- Ventilation ---- */
+    if (mode === "mv") {
+      if (v && v.target && v.rrNeed != null && Math.abs(v.rrNeed - sp.rr) >= 2 && ab) {
+        var up = v.rrNeed > sp.rr;
+        var permissive = ardsRange && respAcid && ab.ph >= 7.30 && up;
+        if (permissive) add("rr", "pH ≥ 7.30 on lung-protective ventilation: permissive hypercapnia is acceptable; no RR increase needed.", "ARDSNet", "",
+          "ARDSNet pH goal is 7.30–7.45. If pH falls to 7.15–7.30, increase RR (max 35) until pH > 7.30 or pCO₂ < 25; if pH < 7.15, RR 35 then VT +1 mL/kg steps.");
+        else add("rr", (up ? "Raise" : "Lower") + " RR to ≈ " + Math.round(Math.min(v.rrNeed, 35)) + "/min (from " + fmt(sp.rr, 0) + ") to bring pCO₂ toward " + fmt(v.target.value, 0) + " (" + v.target.why + ")" +
+          (v.rrNeed > 35 ? "; this needs > 35/min, so also use VT within 6–8 mL/kg PBW and accept some hypercapnia" : "") + ".", up ? "ARDSNet" : "", ab.ph < 7.25 || ab.ph > 7.55 ? "warn" : "",
+          (up ? "Assumes tidal volume and dead space stay the same (pCO₂ falls in proportion to alveolar ventilation). ARDSNet caps RR at 35 and targets pH 7.30–7.45; watch for auto-PEEP at high rates."
+              : "A low pCO₂ on the ventilator often means a high set rate or an agitated, pained or febrile patient breathing over the set rate; check before cutting support.") +
+          (metAcid ? " In metabolic acidosis keep pCO₂ near the Winter's value: a 'normal' 40 is too high and worsens acidemia." : ""));
+      }
+      if (v && v.vtkg != null && v.vtkg > 8) add("vt", "VT " + fmt(v.vtkg, 1) + " mL/kg PBW is high: reduce toward " + (ardsRange ? "6" : "6–8") + " mL/kg PBW (" + Math.round((ardsRange ? 6 : 7) * v.pbw) + " mL).", ardsRange ? "ATS 2024; ARDSNet" : "SSC 2026", "warn",
+        "ARDS: 6 mL/kg PBW (range 4–8) with plateau ≤ 30 cmH₂O. SSC 2026 suggests 6–8 mL/kg PBW for sepsis-related hypoxemic failure without ARDS.");
+      if (v && v.vtkg != null && v.vtkg < 4) add("vt", "VT " + fmt(v.vtkg, 1) + " mL/kg PBW is below 4: check the height, sex and set volume.", "ARDSNet", "warn");
+      if (sp.pplat != null && isFinite(sp.pplat) && sp.pplat > 30) add("pplat", "Plateau " + fmt(sp.pplat, 0) + " cmH₂O > 30: lower VT in 1 mL/kg steps (down to 4 mL/kg PBW).", "ARDSNet", "warn");
+      if (v && v.dp != null && v.dp > 15) add("dp", "Driving pressure " + fmt(v.dp, 0) + " cmH₂O is high: consider lowering VT and reassess PEEP (higher driving pressure is linked to worse outcomes).", "", "");
+    } else if (mode === "niv") {
+      if (hypercap && ab.ph < 7.35) add("nivOpt", "Still acidotic on NIV: raise IPAP (pressure support) toward 20–30 cmH₂O, fix leak and asynchrony, and recheck the ABG in 1–2 h" +
+        (ab.ph < 7.25 ? "; pH < 7.25 despite optimal NIV → consider intubation" : "") + ".", "BTS/ICS 2016", ab.ph < 7.25 ? "crit" : "warn",
+        "BTS/ICS: start IPAP around 15 and increase to 20–30 cmH₂O within 10–30 minutes (faster with severe acidosis, higher in larger patients). Common causes of NIV failure: mask leak, too little pressure support, asynchrony.");
+      else if (!hypercap && ox && ox.grade !== "none" && !(c.rf && c.rf.type === 2))
+        add("hfnc", "Hypoxemic failure on NIV: HFNC is suggested over NIV; whichever is used, don't delay intubation if failing.", "ERS 2022", "warn",
+          "ERS 2022 conditional recommendations: HFNC over conventional O₂ and over NIV in acute hypoxemic respiratory failure. Prolonging noninvasive support in patients who are failing may delay intubation and worsen mortality.");
+    } else {
+      if (hypercap && ab.ph < 7.35) {
+        add("niv", "Acidotic hypercapnia: in a COPD exacerbation, start NIV if pH < 7.35 and pCO₂ > 45 persist after optimal medical therapy" +
+          (ab.ph <= 7.25 ? "; pH ≤ 7.25 is life-threatening, so involve ICU early" : "") + ".", "GOLD 2026; NICE", ab.ph <= 7.25 ? "crit" : "warn",
+          "GOLD lists respiratory acidosis (PaCO₂ ≥ 45 mmHg and pH ≤ 7.35) as an indication for NIV; NICE asks for NIV when acidotic hypercapnia is not improving after 1 h of optimal medical therapy.");
+      }
+      if (p === "met-acid" && ex === "resp-acid") add("fatigue", "pCO₂ above the Winter's range = failing respiratory compensation: assess for fatigue, sedation or weakness and prepare ventilatory support.", "", "warn",
+        "If the patient is intubated, set minute ventilation high enough to bring pCO₂ toward the expected value.");
+      if (!hypercap && !co2Risk && pf != null && pf <= 300 && ox && ox.grade !== "none" && !(mode === "mask" && sp.dev === "hfnc"))
+        add("hfnc", "Hypoxemic respiratory failure: HFNC is suggested over conventional oxygen (and over NIV).", "ERS 2022", "",
+          "ERS 2022 conditional recommendations. Watch for failure; prolonged failing noninvasive support may delay intubation.");
     }
-    if (p === "met-acid" && ex === "resp-acid") add("fatigue", "pCO₂ above the Winter's range = failing respiratory compensation: assess for fatigue, sedation or weakness and prepare ventilatory support.", "", "warn",
-      "If the patient is intubated, set minute ventilation high enough to bring pCO₂ toward the expected value; a 'normal' pCO₂ of 40 is too high in severe metabolic acidosis.");
+    if (hypercap && ab.ph < 7.35 && mode !== "mv") add("hypovent", "Look for the cause of hypoventilation: COPD/asthma, sedatives or opioids, neuromuscular weakness, obesity hypoventilation.", "", "");
+    else if (hypercap && mode !== "mv") add("chronicCO2", "Compensated hypercapnia: compare with baseline pCO₂ and avoid excess O₂.", "", "");
 
+    /* ---- Metabolic ---- */
     if (metAcid) {
       if (L != null && L > 2) add("cause", "Lactic acidosis likely (lactate " + fmt(L, 1) + "): look for shock or sepsis, hypoxia, ischemia, seizures, drugs (e.g. metformin); still check glucose/ketones and creatinine.", "", "",
         "Send Na and Cl (± albumin) when available to calculate the anion gap and look for a second process.");
@@ -911,7 +1163,8 @@ var ABG = (function () {
       else add("cause", "Find the cause: check lactate, glucose/ketones and creatinine; ask about diarrhea and toxins (methanol, ethylene glycol, salicylate).", "", "",
         "Send Na and Cl (± albumin) when available to calculate the anion gap.");
       if (ab.ph <= 7.2) add("bicarb", "Bicarbonate is not routine: consider it in septic shock with pH ≤ 7.2 and AKI stage 2–3; in DKA only if pH < 7.0.", "SSC 2026; ADA/EASD 2024", "warn",
-        "SSC 2026 makes this a conditional suggestion on very low-certainty evidence; the BICARICU-2 trial (JAMA 2025) found no mortality benefit from bicarbonate in severe metabolic acidemia with AKI. SSC 2026 suggests against bicarbonate to improve hemodynamics in hypoperfusion-induced lactic acidemia.");
+        "SSC 2026 makes this a conditional suggestion on very low-certainty evidence; BICARICU-2 (JAMA 2025) found no mortality benefit in severe metabolic acidemia with AKI. SSC 2026 suggests against bicarbonate to improve hemodynamics in hypoperfusion-induced lactic acidemia." +
+        (mode === "mv" ? " On the ventilator, bicarbonate generates CO₂: raise minute ventilation to clear it." : ""));
       else add("bicarb", "Bicarbonate is not indicated at this pH; treat the cause.", "SSC 2026", "",
         "SSC 2026 suggests against bicarbonate to improve hemodynamics or cut vasopressors in hypoperfusion-induced lactic acidemia.");
       if (c.def && !c.def.none && ab.ph <= 7.2) add("def", "The HCO₃ deficit is an estimate: if bicarbonate is given, give part and recheck the ABG.", "", "");
@@ -919,29 +1172,49 @@ var ABG = (function () {
     if (L != null && L > 2) add("lactate", "Lactate " + fmt(L, 1) + ": if sepsis is suspected, repeat lactate to guide resuscitation, with capillary refill time as an adjunct" +
       (L >= 4 ? "; for sepsis-induced hypoperfusion give ≥ 30 mL/kg IV crystalloid within 3 h" : "") + ".", "SSC 2026", L >= 4 ? "warn" : "",
       "SSC 2026 suggests measuring lactate, using serial lactate to guide resuscitation, and using capillary refill time as an adjunct. Aim for a falling lactate rather than normalization at any cost.");
-    if (p === "met-acid" && ex === "resp-alk") add("drive", "pCO₂ below the Winter's range: something else is driving breathing (sepsis, salicylate, liver disease, PE, pain or anxiety).", "", "");
-    if (metAlk) add("alk", "Look for vomiting/NG losses, diuretics, volume depletion, hypokalemia; check K⁺ and Mg. Chloride-responsive alkalosis corrects with IV 0.9% saline + K⁺.", "MSD Manual", "");
-    if (p === "resp-alk" || p === "mixed-alk") add("hypervent", "Find the driver of hyperventilation: hypoxemia, sepsis, PE, pain or anxiety, liver disease, salicylate, pregnancy.", "", "");
+    if (p === "met-acid" && ex === "resp-alk") add("drive", mode === "mv" ? "pCO₂ below the Winter's range on the ventilator: check the set rate and whether the patient is over-breathing (pain, agitation, fever, sepsis)."
+      : "pCO₂ below the Winter's range: something else is driving breathing (sepsis, salicylate, liver disease, PE, pain or anxiety).", "", "");
+    if (metAlk) add("alk", "Look for vomiting/NG losses, diuretics, volume depletion, hypokalemia; check K⁺ and Mg. Chloride-responsive alkalosis corrects with IV 0.9% saline + K⁺." +
+      (mode === "mv" && respAcid ? " After chronic hypercapnia, avoid over-ventilating (post-hypercapnic alkalosis)." : ""), "MSD Manual", "");
+    if ((p === "resp-alk" || p === "mixed-alk") && mode !== "mv") add("hypervent", "Find the driver of hyperventilation: hypoxemia, sepsis, PE, pain or anxiety, liver disease, salicylate, pregnancy.", "", "");
 
-    var ox = c.ox, r = c.r && !c.r.errors.length ? c.r : null;
-    var dev = r ? (r.level === "nc" ? " (≈ NC " + fmt(r.lpm, 1) + " L/min)" : r.level === "high" ? (r.fio2Req <= VENTURI_MAX ? " (Venturi mask or HFNC)" : " (HFNC or non-rebreather)") : "") : "";
+    /* ---- Oxygenation ---- */
+    var dev = r ? (r.level === "nc" && (mode === "nc" || mode === "ra") ? " (≈ NC " + fmt(r.lpm, 1) + " L/min)"
+      : r.level === "high" && (mode === "nc" || mode === "ra") ? (r.fio2Req <= VENTURI_MAX ? " (Venturi mask or HFNC)" : " (HFNC or non-rebreather)") : "") : "";
     var want = r && (r.level === "nc" || r.level === "high") ? " Desired FiO₂ ≈ " + Math.round(r.fio2Req) + "%" + dev + "." : "";
     var tgtNote = co2Risk && r && !r.custom ? "The desired FiO₂ is calculated for pO₂ " + Math.round(r.target) + " (age-based); for a CO₂ retainer tick the CO₂-retainer box or set a custom target of about 60." : "";
     if (ox) {
-      if ((!ox.onO2 && ox.grade !== "none") || ox.label === "uncorrected hypoxemia")
-        add("o2", "Titrate O₂ to SpO₂ " + spo2 + "." + want, "BTS 2017", ox.grade === "severe" ? "crit" : "warn", tgtNote);
-      else if (ox.label === "overcorrected hypoxemia")
-        add("o2", "Wean O₂ to SpO₂ " + spo2 + "; avoid hyperoxia." + want, "BTS 2017", "warn", tgtNote);
-      else if (ox.label === "corrected hypoxemia")
-        add("o2", "Keep O₂ titrated to SpO₂ " + spo2 + "; stop once the target holds on room air.", "BTS 2017", "", tgtNote);
+      var low = (!ox.onO2 && ox.grade !== "none") || ox.label === "uncorrected hypoxemia";
+      var high = ox.label === "overcorrected hypoxemia";
+      if (mode === "mv") {
+        var tgtMV = ardsRange ? "pO₂ 55–80 / SpO₂ 88–95%" : "the lowest FiO₂ that keeps SpO₂ in target";
+        if (low) add("o2", "Raise FiO₂ and/or PEEP" + (ardsRange ? " (use the ARDSNet PEEP/FiO₂ table; higher PEEP if moderate–severe ARDS)" : "") + "." + want, ardsRange ? "ARDSNet; ATS 2024" : "", "warn");
+        else if (high) add("o2", "Wean FiO₂ first, then PEEP, to " + tgtMV + "; avoid hyperoxia." + want, ardsRange ? "ARDSNet" : "UK-ROX 2025", "warn",
+          "UK-ROX (JAMA 2025, 16,500 ventilated adults): a conservative SpO₂ target of 90% did not lower 90-day mortality versus usual care, so either target is acceptable; avoid unnecessary hyperoxia.");
+        else if (ox.label === "corrected hypoxemia") add("o2", "Oxygenation adequate: keep FiO₂ at the lowest level that holds " + (ardsRange ? "pO₂ 55–80 / SpO₂ 88–95%" : "the SpO₂ target") + ".", ardsRange ? "ARDSNet" : "", "");
+      } else if (mode === "niv") {
+        var t2 = co2Risk ? "88–92% (all hypercapnic failure on NIV)" : spo2;
+        if (low) add("o2", "Raise FiO₂ and/or EPAP to SpO₂ " + t2 + "." + want, co2Risk ? "BTS/ICS 2016" : "BTS 2017", "warn");
+        else if (high) add("o2", "Wean FiO₂ to SpO₂ " + t2 + "; avoid hyperoxia." + want, co2Risk ? "BTS/ICS 2016" : "BTS 2017", "warn");
+        else if (ox.label === "corrected hypoxemia") add("o2", "Keep FiO₂ titrated to SpO₂ " + t2 + ".", co2Risk ? "BTS/ICS 2016" : "BTS 2017", "");
+      } else {
+        if (low) add("o2", "Titrate O₂ to SpO₂ " + spo2 + "." + want, "BTS 2017", ox.grade === "severe" ? "crit" : "warn", tgtNote);
+        else if (high) add("o2", "Wean O₂ to SpO₂ " + spo2 + "; avoid hyperoxia." + want, "BTS 2017", "warn", tgtNote);
+        else if (ox.label === "corrected hypoxemia") add("o2", "Keep O₂ titrated to SpO₂ " + spo2 + "; stop once the target holds on room air.", "BTS 2017", "", tgtNote);
+        if (mode === "mask" && (sp.dev === "mask" || sp.dev === "nrm") && (low || high)) S.o2.more = (S.o2.more ? S.o2.more + " " : "") + "FiO₂ on a simple or non-rebreather mask is only an estimate; a Venturi mask or HFNC gives a known FiO₂.";
+      }
     }
-    if (r && r.level === "over") add("shunt", "O₂ alone won't reach the target (shunt): needs positive pressure (CPAP/NIV or intubation with PEEP) and ICU review.", "", "crit");
+    if (r && r.level === "over") add("shunt", mode === "mv" ? "FiO₂ 100% won't reach the target (shunt): optimise PEEP, consider prone positioning for severe ARDS, and escalate (ECMO in selected severe cases)."
+      : "O₂ alone won't reach the target (shunt): needs positive pressure (CPAP/NIV or intubation with PEEP) and ICU review.", mode === "mv" ? "ATS 2024" : "", "crit");
     var type2 = c.rf && c.rf.type === 2;
-    if (c.g && c.g.pf <= 300 && !type2) {
-      add("ards", "P/F ≤ 300: if bilateral opacities not explained by heart failure or fluid overload, consider ARDS.", "Global ARDS definition 2023", "",
-        "The 2023 global definition uses P/F ≤ 300 (or SpO₂/FiO₂ ≤ 315 with SpO₂ ≤ 97%) on HFNO ≥ 30 L/min, NIV/CPAP ≥ 5 cmH₂O or invasive ventilation; in resource-limited settings no PEEP or flow minimum is required. Severity: mild ≤ 300, moderate ≤ 200, severe ≤ 100.");
-      if (c.g.pf <= 200 && c.g.onO2 && c.fio2Pct >= 40) add("ardsRx", "If ARDS: lung-protective ventilation (4–8 mL/kg PBW, plateau < 30); prone > 12 h/day if severe.", "ATS 2024", "",
-        "ATS 2024 also suggests corticosteroids, higher PEEP without prolonged recruitment maneuvers in moderate–severe ARDS, neuromuscular blockade in early severe ARDS, and VV-ECMO in selected severe cases.");
+    if (g && pf <= 300 && !(type2 && mode !== "mv")) {
+      if (ardsRange) add("ards", "P/F " + Math.round(pf) + g.ctx + " is in the " + ardsSev + " ARDS range: if bilateral opacities are not explained by heart failure or fluid overload, this is ARDS.", "Global ARDS definition 2023", "warn",
+        "2023 global definition: P/F ≤ 300 (or SpO₂/FiO₂ ≤ 315 with SpO₂ ≤ 97%) on HFNO ≥ 30 L/min, NIV/CPAP ≥ 5 cmH₂O or invasive ventilation. Severity: mild ≤ 300, moderate ≤ 200, severe ≤ 100.");
+      else add("ards", "P/F ≤ 300: if bilateral opacities not explained by heart failure or fluid overload, consider ARDS.", "Global ARDS definition 2023", "",
+        "The P/F criterion formally applies on HFNO ≥ 30 L/min, NIV/CPAP ≥ 5 cmH₂O or invasive ventilation; in resource-limited settings no PEEP or flow minimum is required.");
+      if (mode === "mv" && pf <= 200) add("ardsRx", "If ARDS: " + (S.vt ? "" : "VT 6 mL/kg PBW" + (v && v.pbw ? " (" + Math.round(6 * v.pbw) + " mL)" : "") + ", ") + "plateau ≤ 30, higher PEEP" + (pf <= 150 ? ", prone > 12 h/day if severe" : "") + ".", "ATS 2024; ARDSNet", "",
+        "ATS 2024 also suggests corticosteroids, neuromuscular blockade in early severe ARDS, and VV-ECMO in selected severe cases; it recommends against prolonged recruitment maneuvers.");
+      else if (mode !== "mv" && pf <= 200 && c.fio2Pct >= 40) add("ardsRx", "If ARDS and intubated: lung-protective ventilation (4–8 mL/kg PBW, plateau < 30); prone > 12 h/day if severe.", "ATS 2024", "");
     }
     return PRIORITY.filter(function (k) { return S[k]; }).map(function (k) { return S[k]; });
   }
@@ -1030,7 +1303,17 @@ var ABG = (function () {
     return L;
   }
 
-  /* m: { ph, paco2, pao2, hco3, tco2, be, so2, ab, ox, r, fio2Pct, def } — any may be null */
+  function desiredText(r, sp) {
+    var mode = sp ? sp.mode : "nc";
+    if (r.level === "over") return ">100% (not reachable with O2 alone)";
+    var v = r.level === "ra" ? "21%" : Math.round(r.fio2Req) + "%";
+    if (mode === "ra" || mode === "nc") return r.level === "ra" ? "21% (room air)" : r.level === "nc" ? v + " (NC " + fmt(r.lpm, 1) + " L/min)" : v + " (beyond nasal cannula)";
+    if (mode === "niv") return v + " (on NIV)";
+    if (mode === "mv") return v + " (on ventilator)";
+    return v + (sp && sp.dev ? " (" + (DEVICES[sp.dev] || "mask") + ")" : "");
+  }
+
+  /* m: { ph, paco2, pao2, hco3, tco2, be, so2, ab, ox, r, fio2Pct, def, support, vent } — any may be null */
   function message(m) {
     var blocks = [], v = [];
     var ab = m.ab && !m.ab.errors.length ? m.ab : null;
@@ -1046,27 +1329,30 @@ var ABG = (function () {
     if (m.lactate != null) v.push("Lactate " + n1(m.lactate) + " mmol/L" + arrow(m.lactate, null, 2));
     if (v.length) blocks.push(v);
 
+    if (m.support && m.fio2Pct != null) blocks.push(["Support: " + supportLine(m.support, m.fio2Pct)]);
     var ix = indices(m.pao2, m.paco2, m.fio2Pct), o = [];
     if (ix) { o.push("P/F Ratio: " + Math.round(ix.pf)); o.push("A-aDO₂: " + Math.round(ix.AaGrad) + " mmHg"); }
     if (o.length) blocks.push(o);
 
     var d = [], r = m.r && !m.r.errors.length ? m.r : null;
-    if (r) d.push("Desired FiO2: " + (r.level === "ra" ? "21% (room air)" : r.level === "over" ? ">100% (not reachable with O2 alone)" : Math.round(r.fio2Req) + "%"));
+    if (r) d.push("Desired FiO2: " + desiredText(r, m.support));
     if (m.def && !m.def.none) d.push("HCO3 deficit: " + Math.round(m.def.value));
     if (d.length) blocks.push(d);
 
+    var vl = ventLines(m.vent, m.support);
+    if (vl.length) blocks.push(["Ventilator:"].concat(vl));
     if (ab) {
       var cl = compensationLines(ab);
       // the template keeps "Actual …" as its own paragraph
       var gap = cl.indexOf("");
       if (gap > -1) { blocks.push(cl.slice(0, gap)); blocks.push(cl.slice(gap + 1)); } else blocks.push(cl);
     }
-    var g = gasExchange({ pao2: m.pao2, paco2: m.paco2, fio2Pct: m.fio2Pct, age: m.age, ox: m.ox });
+    var g = gasExchange({ pao2: m.pao2, paco2: m.paco2, fio2Pct: m.fio2Pct, age: m.age, ox: m.ox, support: m.support });
     var rf = respFailure(ab, m.pao2, m.paco2);
     var fi = fullInterpretation({ ab: ab, ox: m.ox, g: g, rf: rf });
     if (fi.length) blocks.push(["ABG Interpretation:"].concat(fi));
     if (ab || m.ox) {
-      var sg = suggestions({ ab: ab, ox: m.ox, r: r, g: g, rf: rf, lactate: m.lactate, def: m.def, retainer: m.retainer, mismatch: m.mismatch, paco2: m.paco2, fio2Pct: m.fio2Pct });
+      var sg = suggestions({ ab: ab, ox: m.ox, r: r, g: g, rf: rf, lactate: m.lactate, def: m.def, retainer: m.retainer, mismatch: m.mismatch, paco2: m.paco2, fio2Pct: m.fio2Pct, support: m.support, vent: m.vent });
       var lines = sg.slice(0, m.maxSugg || 7).map(function (x) { return "• " + x.text + (x.src ? " [" + x.src + "]" : ""); });
       if (!lines.length) lines = ["• No acid–base or oxygenation problem on this gas; correlate clinically."];
       blocks.push(["Suggestions:"].concat(lines));
@@ -1088,6 +1374,7 @@ var ABG = (function () {
   }
 
   return {
+    supportFio2: supportFio2, supportLine: supportLine, modeName: modeName, pbw: pbw, targetPco2: targetPco2, ventCalc: ventCalc, ventLines: ventLines, desiredText: desiredText, endExpPressure: endExpPressure, DEVICES: DEVICES,
     gasExchange: gasExchange, respFailure: respFailure, fullInterpretation: fullInterpretation, suggestions: suggestions,
     chartLine: chartLine, interpretation: interpretation, compensationLines: compensationLines, message: message,
     bicarbDeficit: bicarbDeficit, indices: indices, arrow: arrow, RANGE: RANGE,
@@ -1104,7 +1391,7 @@ if (typeof module !== "undefined") module.exports = ABG;
   "use strict";
   function $(id) { return document.getElementById(id); }
   var fmt = ABG.fmt;
-  var S = { customTarget: false, workOpen: false, vd: 0.5, msg: "" };
+  var S = { customTarget: false, workOpen: false, vd: 0.5, msg: "", mode: "nc", dev: "venturi", nivType: "bipap", sex: null };
   document.addEventListener("toggle", function (ev) {
     if (ev.target && ev.target.classList && ev.target.classList.contains("work")) S.workOpen = ev.target.open;
   }, true);
@@ -1161,6 +1448,47 @@ if (typeof module !== "undefined") module.exports = ABG;
     var c = ev.target.closest(".chip"); if (!c) return;
     $("i-fio2").value = c.getAttribute("data-f"); render();
   });
+  $("nc-chips").addEventListener("click", function (ev) {
+    var c = ev.target.closest(".chip"); if (!c) return;
+    $("i-ncflow").value = c.getAttribute("data-l"); render();
+  });
+  $("hf-chips").addEventListener("click", function (ev) {
+    var c = ev.target.closest(".chip"); if (!c) return;
+    $("i-hfflow").value = c.getAttribute("data-h"); render();
+  });
+  /* support mode + sub-options */
+  function setMode(m) {
+    S.mode = m;
+    document.querySelectorAll(".modes [data-mode]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-mode") === m)); });
+    document.querySelectorAll(".mpanel").forEach(function (p) { p.hidden = p.getAttribute("data-for") !== m; });
+    $("fio2-row").hidden = !(m === "mask" || m === "niv" || m === "mv");
+    $("fio2-lbl").innerHTML = m === "mv" ? "FiO<sub>2</sub> on the ventilator" : m === "niv" ? "FiO<sub>2</sub> on NIV" : "FiO<sub>2</sub> delivered";
+    $("vent-sec").hidden = $("vent-result").hidden = m !== "mv";
+    render();
+  }
+  document.querySelector(".modes").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-mode]"); if (b) setMode(b.getAttribute("data-mode"));
+  });
+  $("dev-chips").addEventListener("click", function (ev) {
+    var c = ev.target.closest("[data-dev]"); if (!c) return;
+    S.dev = c.getAttribute("data-dev");
+    document.querySelectorAll("#dev-chips [data-dev]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === c)); });
+    $("hf-row").hidden = S.dev !== "hfnc"; render();
+  });
+  document.querySelectorAll("[data-niv]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      S.nivType = b.getAttribute("data-niv");
+      document.querySelectorAll("[data-niv]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      $("ipap-cell").hidden = S.nivType === "cpap"; $("epap-lbl").textContent = S.nivType === "cpap" ? "CPAP" : "EPAP"; render();
+    });
+  });
+  document.querySelectorAll("[data-sex]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      S.sex = b.getAttribute("data-sex");
+      document.querySelectorAll("[data-sex]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      render();
+    });
+  });
   $("tgt-chips").addEventListener("click", function (ev) {
     var c = ev.target.closest(".chip"); if (!c) return;
     $("i-target").value = c.getAttribute("data-t"); render();
@@ -1169,16 +1497,23 @@ if (typeof module !== "undefined") module.exports = ABG;
     var b = ev.target.closest ? ev.target.closest("[data-vd]") : null; if (!b) return;
     S.vd = Number(b.getAttribute("data-vd")); render();
   });
-  function syncChips(fio2Pct, target) {
+  function syncChips(fio2Pct, target, ncFlow, hfFlow) {
     document.querySelectorAll("#fio2-chips .chip").forEach(function (c) {
       c.setAttribute("aria-pressed", String(fio2Pct != null && Math.abs(fio2Pct - Number(c.getAttribute("data-f"))) < 0.05));
+    });
+    document.querySelectorAll("#nc-chips .chip").forEach(function (c) {
+      c.setAttribute("aria-pressed", String(ncFlow != null && Math.abs(ncFlow - Number(c.getAttribute("data-l"))) < 0.05));
+    });
+    document.querySelectorAll("#hf-chips .chip").forEach(function (c) {
+      c.setAttribute("aria-pressed", String(hfFlow != null && Math.abs(hfFlow - Number(c.getAttribute("data-h"))) < 0.05));
     });
     document.querySelectorAll("#tgt-chips .chip").forEach(function (c) {
       c.setAttribute("aria-pressed", String(target != null && Math.abs(target - Number(c.getAttribute("data-t"))) < 0.05));
     });
   }
 
-  var FIELDS = ["i-ph", "i-paco2", "i-pao2", "i-hco3", "i-tco2", "i-be", "i-so2", "i-lac", "i-fio2", "i-age", "i-wt", "i-target"];
+  var FIELDS = ["i-ph", "i-paco2", "i-pao2", "i-hco3", "i-tco2", "i-be", "i-so2", "i-lac", "i-fio2", "i-age", "i-wt", "i-target",
+                "i-ncflow", "i-hfflow", "i-ipap", "i-epap", "i-peep", "i-vt", "i-rr", "i-pplat", "i-ht", "i-mawp", "i-pco2t"];
   FIELDS.forEach(function (id) { $(id).addEventListener("input", render); $(id).addEventListener("change", render); });
 
   /* ---------- helpers ---------- */
@@ -1195,21 +1530,36 @@ if (typeof module !== "undefined") module.exports = ABG;
     var phScaled = false;
     if (ok(ph) && ph >= 650 && ph <= 800) { ph = ph / 100; phScaled = true; }   // "732" → 7.32
     var fio2Raw = $("i-fio2").value.trim();
-    var fio2Pct = fio2Raw === "" ? null : (/^\d*[.,]?\d*$/.test(fio2Raw) ? ABG.parseFio2(fio2Raw) : NaN);
+    var setFio2 = fio2Raw === "" ? null : (/^\d*[.,]?\d*$/.test(fio2Raw) ? ABG.parseFio2(fio2Raw) : NaN);
+    var support = {
+      mode: S.mode, ncFlow: num("i-ncflow"), fio2Pct: setFio2, dev: S.dev, hfFlow: num("i-hfflow"),
+      nivType: S.nivType, ipap: num("i-ipap"), epap: num("i-epap"), peep: num("i-peep"), vt: num("i-vt"), rr: num("i-rr"),
+      pplat: num("i-pplat"), mawp: num("i-mawp"), height: num("i-ht"), sex: S.sex, pco2Target: num("i-pco2t")
+    };
+    var supBad = ["ncFlow", "hfFlow", "ipap", "epap", "peep", "vt", "rr", "pplat", "mawp", "height", "pco2Target"].some(function (k) { return support[k] != null && !isFinite(support[k]); });
+    var fio2Pct = S.mode === "ra" ? 21 : S.mode === "nc" ? (ok(support.ncFlow) && support.ncFlow > 0 ? ABG.ncToFio2(support.ncFlow) : (support.ncFlow == null ? null : NaN)) : setFio2;
     var target = S.customTarget ? num("i-target") : null;
 
     [["w-ph", ph], ["w-paco2", paco2], ["w-pao2", pao2], ["w-hco3", hco3], ["w-tco2", tco2], ["w-be", be], ["w-so2", so2], ["w-lac", lac],
-     ["w-age", age], ["w-wt", wt], ["w-fio2", fio2Pct], ["w-target", target]].forEach(function (p) {
+     ["w-age", age], ["w-wt", wt], ["w-fio2", setFio2], ["w-target", target], ["w-ncflow", support.ncFlow], ["w-hfflow", support.hfFlow],
+     ["w-ipap", support.ipap], ["w-epap", support.epap], ["w-peep", support.peep], ["w-vt", support.vt], ["w-rr", support.rr],
+     ["w-pplat", support.pplat], ["w-ht", support.height], ["w-mawp", support.mawp], ["w-pco2t", support.pco2Target]].forEach(function (p) {
       $(p[0]).classList.toggle("bad", p[1] != null && !isFinite(p[1]));
     });
-    syncChips(ok(fio2Pct) ? fio2Pct : null, ok(target) ? target : null);
+    $("w-fio2").classList.toggle("bad", ok(setFio2) && (setFio2 < 21 || setFio2 > 100));
+    syncChips(ok(setFio2) ? setFio2 : null, ok(target) ? target : null, ok(support.ncFlow) ? support.ncFlow : null, ok(support.hfFlow) ? support.hfFlow : null);
+    // mode hints
+    $("nc-hint").innerHTML = ok(support.ncFlow) && support.ncFlow > 0
+      ? "FiO<sub>2</sub> ≈ <b>" + fmt(fio2Pct, 0) + "%</b> (20 + 4 × " + fmt(support.ncFlow, 1) + ")" + (support.ncFlow > 6 ? ' · <span style="color:var(--warn)">above 6 L/min the estimate is unreliable; use HFNC or a mask</span>' : "")
+      : "FiO<sub>2</sub> ≈ 20% + 4% per L/min (valid for 1–6 L/min).";
+    $("dev-hint").innerHTML = S.dev === "venturi" ? "Venturi masks deliver a set FiO<sub>2</sub> (24–60%)."
+      : S.dev === "hfnc" ? "Enter the set flow and FiO<sub>2</sub>. ARDS criteria apply at ≥ 30 L/min."
+      : "FiO<sub>2</sub> on a " + (S.dev === "nrm" ? "non-rebreather" : "simple face mask") + " is an estimate; it varies with the breathing pattern.";
+    $("niv-hint").innerHTML = S.nivType === "bipap" && ok(support.ipap) && ok(support.epap) ? "Pressure support = IPAP − EPAP = <b>" + fmt(support.ipap - support.epap, 0) + " cmH₂O</b>" : "";
 
     // Hints
-    if (ok(fio2Pct)) {
-      var d = ABG.describeFio2(fio2Pct);
-      $("fio2-hint").innerHTML = "Read as <b>" + sub2(esc(d.long)) + "</b>" +
-        (fio2Raw.indexOf(".") > -1 && parseFloat(fio2Raw.replace(",", ".")) <= 1 ? " (entered as a fraction)" : "") + ".";
-    } else $("fio2-hint").innerHTML = "Room air, nasal cannula (L/min) or a set FiO<sub>2</sub>. Or type the % (28) or fraction (0.28).";
+    $("fio2-hint").innerHTML = ok(setFio2) ? "Read as <b>FiO<sub>2</sub> " + fmt(setFio2, 1) + "%</b>" + (fio2Raw.indexOf(".") > -1 && parseFloat(fio2Raw.replace(",", ".")) <= 1 ? " (entered as a fraction)" : "") + "."
+      : "Type the % (40) or fraction (0.4).";
     $("tgt-age-hint").innerHTML = ok(age) ? "Target = 104 − 0.4 × " + fmt(age, 1) + " = <b>" + fmt(ABG.ageTarget(age), 1) + " mmHg</b>" : "Target = 104 − 0.4 × age";
     var abHint = [];
     if (phScaled) abHint.push("pH read as <b>" + fmt(ph, 2) + "</b>");
@@ -1220,7 +1570,7 @@ if (typeof module !== "undefined") module.exports = ABG;
     var abBad = [ph, paco2, hco3].some(function (v) { return v != null && !isFinite(v); });
     var ab = abBad ? { errors: ["One of pH, pCO₂ or HCO₃ is not a number."], notes: [] } : ABG.acidBase({ ph: ph, paco2: paco2, hco3: hco3 });
     var ox = ABG.oxygenation({ pao2: ok(pao2) ? pao2 : null, fio2Pct: ok(fio2Pct) ? fio2Pct : null, age: ok(age) ? age : null });
-    var o2Bad = [pao2, paco2, fio2Pct, age, target].some(function (v) { return v != null && !isFinite(v); });
+    var o2Bad = [pao2, paco2, fio2Pct, age, target].some(function (v) { return v != null && !isFinite(v); }) || (S.mode === "nc" && supBad && !ok(fio2Pct));
     var r = o2Bad ? { errors: ["One of the entries is not a number."], warnings: [] }
       : ABG.calc({ pao2: pao2, paco2: paco2, fio2Pct: fio2Pct, age: age, target: S.customTarget ? (target == null ? undefined : target) : null });
     if (S.customTarget && target == null && r) r = null;
@@ -1236,22 +1586,24 @@ if (typeof module !== "undefined") module.exports = ABG;
     }
 
     var mismatch = !!((abOk && ab.mismatch) || tco2Note);
-    var g = ABG.gasExchange({ pao2: ok(pao2) ? pao2 : null, paco2: ok(paco2) ? paco2 : null, fio2Pct: ok(fio2Pct) ? fio2Pct : null, age: ok(age) ? age : null, ox: ox });
+    var g = ABG.gasExchange({ pao2: ok(pao2) ? pao2 : null, paco2: ok(paco2) ? paco2 : null, fio2Pct: ok(fio2Pct) ? fio2Pct : null, age: ok(age) ? age : null, ox: ox, support: support });
+    var vent = ABG.ventCalc(support, abOk ? ab : null, ok(paco2) ? paco2 : null, ok(pao2) ? pao2 : null, ok(fio2Pct) ? fio2Pct : null, retainer);
     var rf = ABG.respFailure(abOk ? ab : null, ok(pao2) ? pao2 : null, ok(paco2) ? paco2 : null);
     var rOk = r && !r.errors.length ? r : null;
     var sugg = (abOk || ox) ? ABG.suggestions({ ab: abOk ? ab : null, ox: ox, r: rOk, g: g, rf: rf, lactate: ok(lac) ? lac : null, def: def,
-      retainer: retainer, mismatch: mismatch, paco2: ok(paco2) ? paco2 : null, fio2Pct: ok(fio2Pct) ? fio2Pct : null }) : null;
+      retainer: retainer, mismatch: mismatch, paco2: ok(paco2) ? paco2 : null, fio2Pct: ok(fio2Pct) ? fio2Pct : null, support: support, vent: vent }) : null;
 
-    $("ab-result").innerHTML = abCard(ab, ox, { ph: ph, paco2: paco2, pao2: pao2, tco2: tco2, be: be, so2: so2, lac: lac }, tco2Note, g, rf);
+    $("ab-result").innerHTML = abCard(ab, ox, { ph: ph, paco2: paco2, pao2: pao2, tco2: tco2, be: be, so2: so2, lac: lac }, tco2Note, g, rf, ok(fio2Pct) ? ABG.supportLine(support, fio2Pct) : null);
+    $("vent-result").innerHTML = S.mode === "mv" ? ventCard(vent, support, abOk ? ab : null, paco2) : "";
     $("sug-result").innerHTML = sugCard(sugg);
-    $("result").innerHTML = o2Card(r, pao2, paco2, fio2Pct, age, target);
+    $("result").innerHTML = o2Card(r, pao2, paco2, fio2Pct, age, target, support);
     $("def-result").innerHTML = defCard(def, hUse, wt);
 
     S.msg = ABG.message({
       ph: ok(ph) ? ph : null, paco2: ok(paco2) ? paco2 : null, pao2: ok(pao2) ? pao2 : null, hco3: ok(hco3) ? hco3 : null,
       tco2: ok(tco2) ? tco2 : null, be: ok(be) ? be : null, so2: ok(so2) ? so2 : null, lactate: ok(lac) ? lac : null,
       ab: abOk ? ab : null, ox: ox, r: rOk, fio2Pct: ok(fio2Pct) ? fio2Pct : null, def: def,
-      age: ok(age) ? age : null, retainer: retainer, mismatch: mismatch
+      age: ok(age) ? age : null, retainer: retainer, mismatch: mismatch, support: support, vent: vent
     });
     $("msg").textContent = S.msg || "The message builds here as you enter values.";
     $("msg").classList.toggle("empty-msg", !S.msg);
@@ -1262,7 +1614,7 @@ if (typeof module !== "undefined") module.exports = ABG;
   function cell(k, v, f, cls) { return '<div><span class="k">' + k + '</span><span class="v">' + v + '</span><span class="f ' + (cls || "") + '">' + f + "</span></div>"; }
   function flag(v, lo, hi) { if (!ok(v)) return ["", ""]; if (lo != null && v < lo) return ["↓ low", "abn"]; if (hi != null && v > hi) return ["↑ high", "abn"]; return ["normal", ""]; }
 
-  function abCard(ab, ox, v, tco2Note, g, rf) {
+  function abCard(ab, ox, v, tco2Note, g, rf, supText) {
     if (!ab) {
       var oxOnly = ox ? '<div class="headline">' + cap(ox.label) + '</div><div class="oxline">' + sub2(ox.detail) + "</div>" : "";
       return '<div class="card"' + (ox ? ' data-tone="' + ox.tone + '"' : "") + '>' + oxOnly +
@@ -1318,16 +1670,18 @@ if (typeof module !== "undefined") module.exports = ABG;
     return '<div class="card" data-tone="' + tone + '">' +
       '<span class="kicker">' + phWord + " · " + PH + " " + fmt(ab.ph, 2) + "</span>" +
       '<div class="headline">' + esc(ABG.interpretation(ab)) + "</div>" + trad + oxLine + rfLine +
+      (supText ? '<div class="supl">On ' + sub2(esc(supText.charAt(0).toLowerCase() + supText.slice(1))) + "</div>" : "") +
       vals + comp + oxDetail + notes.join("") + "</div>";
   }
 
-  /* ---------- O2 requirement card ---------- */
-  function o2Card(r, pao2, paco2, fio2Pct, age, target) {
+  /* ---------- Oxygenation target card (mode-aware) ---------- */
+  function o2Card(r, pao2, paco2, fio2Pct, age, target, sp) {
+    var mode = sp ? sp.mode : "nc";
     if (!r) {
       var missing = [];
       if (pao2 == null) missing.push("pO<sub>2</sub>");
       if (paco2 == null) missing.push("pCO<sub>2</sub>");
-      if (fio2Pct == null) missing.push("FiO<sub>2</sub> at the time of the ABG");
+      if (fio2Pct == null) missing.push(mode === "nc" ? "Nasal cannula flow" : "FiO<sub>2</sub>");
       if (age == null && !S.customTarget) missing.push("Age (sets the target pO<sub>2</sub>)");
       if (S.customTarget && target == null) missing.push("Custom target pO<sub>2</sub>");
       return '<div class="card"><div class="empty">Still needed:<ol>' + missing.map(function (m) { return "<li>" + m + "</li>"; }).join("") + "</ol></div></div>";
@@ -1337,35 +1691,49 @@ if (typeof module !== "undefined") module.exports = ABG;
         r.errors.map(function (e) { return '<div class="note crit">' + sub2(e) + "</div>"; }).join("") + "</div>";
     }
     var tone, kicker, headline, readout, next, notes = [];
-    var now = r.current.short === "room air" ? "room air" : sub2(esc(r.current.short));
-    var lpm = fmt(r.lpm, 1), req = fmt(r.fio2Req, 1), reqR = Math.round(r.fio2Req);
-    if (r.level === "ra") {
-      tone = "ok"; kicker = "Room air";
-      headline = "Desired FiO<sub>2</sub> 21%: room air is enough";
-      readout = '<span class="num">21</span><span class="unit">% FiO<sub>2</sub></span><span class="side">calculated<b>' + req + "%</b>at or below room air</span>";
-      next = r.change === "down" ? "Now on " + now + ": wean toward room air" : "Now on room air: no supplemental O<sub>2</sub> needed";
-    } else if (r.level === "nc") {
-      tone = "inc"; kicker = "Nasal cannula";
-      headline = "Desired FiO<sub>2</sub> " + reqR + "% · NC " + lpm + " L/min";
-      readout = '<span class="num">' + reqR + '</span><span class="unit">% FiO<sub>2</sub></span><span class="side">nasal cannula<b>' + lpm + " L/min</b></span>";
-      next = r.change === "same" ? "Now on " + now + ": about the same, keep it"
-        : r.change === "up" ? "Now on " + now + ": increase to " + lpm + " L/min"
-        : "Now on " + now + ": wean to " + lpm + " L/min";
-      if (r.lpm < 1) notes.push('<div class="note">Below 1 L/min. Set the lowest flow your flowmeter allows, or trial room air with SpO<sub>2</sub> monitoring.</div>');
-    } else if (r.level === "high") {
-      tone = "warn"; kicker = "Beyond nasal cannula";
-      headline = "Desired FiO<sub>2</sub> " + reqR + "%";
-      readout = '<span class="num">' + reqR + '</span><span class="unit">% FiO<sub>2</sub></span><span class="side">NC formula gives<b>' + lpm + " L/min</b>above the 6 L/min limit</span>";
-      next = r.change === "same" ? "Now on " + now + ": about the same" : r.change === "up" ? "Now on " + now + ": increase to FiO<sub>2</sub> ≥ " + Math.ceil(r.fio2Req) + "%" : "Now on " + now + ": can come down to FiO<sub>2</sub> ≈ " + Math.ceil(r.fio2Req) + "%";
-      notes.push(r.fio2Req <= ABG.VENTURI_MAX
-        ? '<div class="note warn">Nasal cannula tops out near 44% (6 L/min). A <strong>Venturi mask</strong> set at ≥ ' + Math.ceil(r.fio2Req) + '% gives a fixed FiO<sub>2</sub> (masks go up to 60%), or use high-flow nasal cannula.</div>'
-        : '<div class="note warn">Above what a Venturi mask gives (60%). Needs <strong>high-flow nasal cannula</strong> or a non-rebreather mask, and reassessment for NIV or intubation.</div>');
-    } else {
+    var cur = fmt(fio2Pct, 0) + "%";
+    var now = mode === "ra" ? "room air" : mode === "nc" ? "NC " + fmt(sp.ncFlow, 1) + " L/min" : "FiO<sub>2</sub> " + cur + " on " + esc(ABG.modeName(sp));
+    var lpm = fmt(r.lpm, 1), req = fmt(r.fio2Req, 1), reqR = Math.round(r.fio2Req), need = Math.ceil(r.fio2Req);
+    var lowFlow = mode === "ra" || mode === "nc";
+    if (r.level === "over") {
       tone = "crit"; kicker = "Target not reachable";
-      headline = "O<sub>2</sub> alone won't reach pO<sub>2</sub> " + fmt(r.target, 0);
+      headline = "Even FiO<sub>2</sub> 100% won't reach pO<sub>2</sub> " + fmt(r.target, 0);
       readout = '<span class="num">&gt;100</span><span class="unit">% FiO<sub>2</sub></span><span class="side">calculated<b>' + fmt(r.fio2Req, 0) + "%</b></span>";
-      next = "Reassess now and escalate support";
-      notes.push('<div class="note crit">Even 100% O<sub>2</sub> would not reach the target at this a/A ratio (' + fmt(r.aA, 2) + "). This pattern suggests shunt physiology, where PEEP or positive pressure matters more than FiO<sub>2</sub>.</div>");
+      next = mode === "mv" ? "Optimise PEEP and recruitment; escalate" : "Needs positive pressure: NIV/CPAP or intubation with PEEP";
+      notes.push('<div class="note crit">At this a/A ratio (' + fmt(r.aA, 2) + ") oxygen alone cannot reach the target: shunt physiology, where PEEP matters more than FiO<sub>2</sub>.</div>");
+    } else if (lowFlow) {
+      if (r.level === "ra") {
+        tone = "ok"; kicker = "Room air";
+        headline = "Desired FiO<sub>2</sub> 21%: room air is enough";
+        readout = '<span class="num">21</span><span class="unit">% FiO<sub>2</sub></span><span class="side">calculated<b>' + req + "%</b>at or below room air</span>";
+        next = r.change === "down" ? "Now on " + now + ": wean toward room air" : "Now on room air: no supplemental O<sub>2</sub> needed";
+      } else if (r.level === "nc") {
+        tone = "inc"; kicker = "Nasal cannula";
+        headline = "Desired FiO<sub>2</sub> " + reqR + "% · NC " + lpm + " L/min";
+        readout = '<span class="num">' + reqR + '</span><span class="unit">% FiO<sub>2</sub></span><span class="side">nasal cannula<b>' + lpm + " L/min</b></span>";
+        next = r.change === "same" ? "Now on " + now + ": about the same, keep it" : r.change === "up" ? "Now on " + now + ": increase to " + lpm + " L/min" : "Now on " + now + ": wean to " + lpm + " L/min";
+        if (r.lpm < 1) notes.push('<div class="note">Below 1 L/min. Set the lowest flow your flowmeter allows, or trial room air with SpO<sub>2</sub> monitoring.</div>');
+      } else {
+        tone = "warn"; kicker = "Beyond nasal cannula";
+        headline = "Desired FiO<sub>2</sub> " + reqR + "%";
+        readout = '<span class="num">' + reqR + '</span><span class="unit">% FiO<sub>2</sub></span><span class="side">NC formula gives<b>' + lpm + " L/min</b>above the 6 L/min limit</span>";
+        next = "Now on " + now + ": step up to FiO<sub>2</sub> ≥ " + need + "%";
+        notes.push(r.fio2Req <= ABG.VENTURI_MAX
+          ? '<div class="note warn">Nasal cannula tops out near 44% (6 L/min). A <strong>Venturi mask</strong> set at ≥ ' + need + '% gives a fixed FiO<sub>2</sub> (up to 60%), or use <strong>HFNC</strong>.</div>'
+          : '<div class="note warn">Above what a Venturi mask gives (60%). Needs <strong>HFNC</strong> or a non-rebreather, and reassessment for NIV or intubation.</div>');
+      }
+    } else {
+      var where = mode === "mv" ? "on the ventilator" : mode === "niv" ? "on NIV" : "on " + esc(ABG.modeName(sp));
+      var d = r.level === "ra" ? 21 : reqR;
+      tone = r.change === "up" ? (d >= 60 ? "warn" : "inc") : r.change === "down" ? "ok" : "inc";
+      kicker = mode === "mv" ? "Ventilator FiO₂" : mode === "niv" ? "NIV FiO₂" : (ABG.DEVICES[sp.dev] || "Mask");
+      headline = "Desired FiO<sub>2</sub> " + d + "% " + where;
+      readout = '<span class="num">' + d + '</span><span class="unit">% FiO<sub>2</sub></span><span class="side">now<b>' + cur + "</b>" + (r.level === "ra" ? "calculated " + req + "%" : "") + "</span>";
+      next = r.change === "same" ? "About the same as now: keep FiO<sub>2</sub> " + cur : r.change === "up" ? "Increase FiO<sub>2</sub> from " + cur + " to ≈ " + need + "%" : "Wean FiO<sub>2</sub> from " + cur + " to ≈ " + (r.level === "ra" ? 21 : need) + "%";
+      if ((mode === "mv" || mode === "niv") && d >= 60) notes.push('<div class="note warn">High FiO<sub>2</sub>: oxygenation on positive pressure depends on ' + (mode === "mv" ? "PEEP" : "EPAP") + " as much as FiO<sub>2</sub>; optimise it rather than raising FiO<sub>2</sub> alone.</div>");
+      if (mode === "mask" && sp.dev === "venturi" && r.fio2Req > ABG.VENTURI_MAX) notes.push('<div class="note warn">Above what a Venturi mask gives (60%): move to <strong>HFNC</strong>, or NIV, and reassess.</div>');
+      if (mode === "mask" && (sp.dev === "mask" || sp.dev === "nrm")) notes.push('<div class="note">FiO<sub>2</sub> on this mask is an estimate, so the calculation is approximate; a Venturi mask or HFNC gives a known FiO<sub>2</sub>.</div>');
+      if (r.level === "ra" && (mode === "mv" || mode === "niv")) notes.push('<div class="note">The gas would reach the target even on 21%: set the lowest FiO<sub>2</sub> the device allows and look at weaning support.</div>');
     }
     r.warnings.forEach(function (w) { notes.push('<div class="note warn">' + sub2(w) + "</div>"); });
 
@@ -1416,6 +1784,35 @@ if (typeof module !== "undefined") module.exports = ABG;
       '<div class="readout"><span class="num">' + Math.round(def.value) + '</span><span class="unit">mEq</span><span class="side">' + def.factor + " × " + fmt(def.weight, 1) + " kg × (24 − " + fmt(def.hco3, 1) + ")</span></div>" +
       seg +
       '<div class="src">Estimate only. Bicarbonate therapy is debated; when it is given, part of the deficit is usually given first and the ABG rechecked.</div></div>';
+  }
+
+  /* ---------- ventilator card ---------- */
+  function ventCard(v, sp, ab, paco2) {
+    if (!v) return "";
+    var need = [];
+    if (!ok(sp.height) || !sp.sex) need.push("height and sex (for predicted body weight)");
+    if (!ok(sp.vt)) need.push("tidal volume");
+    if (!ok(sp.rr)) need.push("total RR");
+    var tiles = [];
+    function tile(k, val, sub, flagTxt, cls) { return '<div><span class="k">' + k + '</span><span class="v">' + val + (flagTxt ? '<span class="flag ' + cls + '">' + flagTxt + "</span>" : "") + '</span><span class="r">' + sub + "</span></div>"; }
+    if (v.pbw) tiles.push(tile("PBW", fmt(v.pbw, 0) + " <small>kg</small>", "6 mL/kg = " + Math.round(6 * v.pbw) + " mL (4–8: " + Math.round(4 * v.pbw) + "–" + Math.round(8 * v.pbw) + ")"));
+    if (v.vtkg != null) tiles.push(tile("VT per PBW", fmt(v.vtkg, 1) + " <small>mL/kg</small>", "lung-protective 4–8, ARDS ≈ 6", v.vtkg > 8 ? "high" : v.vtkg < 4 ? "low" : "ok", v.vtkg > 8 || v.vtkg < 4 ? "warn" : "ok"));
+    if (v.ve != null) tiles.push(tile("Minute ventilation", fmt(v.ve, 1) + " <small>L/min</small>", "VT × RR"));
+    if (v.dp != null) tiles.push(tile("Driving pressure", fmt(v.dp, 0) + " <small>cmH₂O</small>", "Pplat " + fmt(sp.pplat, 0) + " − PEEP " + fmt(sp.peep, 0), v.dp > 15 ? "high" : "", "warn"));
+    if (ok(sp.pplat)) tiles.push(tile("Plateau", fmt(sp.pplat, 0) + " <small>cmH₂O</small>", "goal ≤ 30", sp.pplat > 30 ? "> 30" : "ok", sp.pplat > 30 ? "warn" : "ok"));
+    if (v.oi != null) tiles.push(tile("Oxygenation index", fmt(v.oi, 1), "FiO₂ × MAP × 100 ÷ pO₂"));
+    var rrBox = "";
+    if (v.target) {
+      rrBox = '<div class="comp"><span class="t">Ventilation target</span>' +
+        '<span class="calc">Target pCO<sub>2</sub> ' + fmt(v.target.value, 0) + " mmHg</span>" +
+        '<span class="fm">' + sub2(esc(v.target.why)) + "</span>" +
+        (v.rrNeed != null ? '<span class="act ' + (v.rrNeed > 35 ? "warn" : "ok") + '">RR ≈ ' + Math.round(v.rrNeed) + "/min (now " + fmt(sp.rr, 0) + ")</span>" +
+          '<span class="why">New RR = RR × pCO<sub>2</sub> ÷ target = ' + fmt(sp.rr, 0) + " × " + fmt(paco2, 0) + " ÷ " + fmt(v.target.value, 0) + ", if VT and dead space stay the same." + (v.rrNeed > 35 ? " ARDSNet caps RR at 35." : "") + "</span>"
+          : '<span class="why">Enter the total RR to calculate the rate needed.</span>') + "</div>";
+    }
+    return '<div class="card" data-tone="inc">' + (tiles.length ? '<div class="idx">' + tiles.join("") + "</div>" : "") + rrBox +
+      (need.length ? '<div class="empty">For the full ventilator check, add ' + need.join(", ") + ".</div>" : "") +
+      '<div class="src">PBW (ARDSNet): men 50, women 45.5, + 0.91 × (height cm − 152.4).</div></div>';
   }
 
   /* ---------- suggestions card ---------- */
