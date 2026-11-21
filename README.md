@@ -1,8 +1,8 @@
-# TIMPEX ABG
+# TIMPEX Gas & Vent
 
-<img src="logo.svg" alt="TIMPEX ABG logo" width="120">
+<img src="logo.svg" alt="TIMPEX Gas & Vent logo" width="120">
 
-Bedside arterial blood gas reader for when electrolytes aren't back: uses only pH, PaCO₂, PaO₂, HCO₃ (optional), FiO₂ and age.
+Bedside blood gas and mechanical-ventilator assessment (formerly TIMPEX ABG). The ABG reader works without electrolytes: pH, PaCO₂, PaO₂, HCO₃ (optional), FiO₂ and age.
 
 - **Interpretation** in the form "Severe metabolic acidosis with concomitant respiratory alkalosis", from pH, pCO₂ and HCO₃ only. The traditional label (uncompensated / partially / fully compensated) is shown for reference.
 - **Compensation** written out line by line: Winter's formula, metabolic alkalosis formula, acute and chronic respiratory rules.
@@ -16,6 +16,8 @@ Bedside arterial blood gas reader for when electrolytes aren't back: uses only p
 - **Support modes**: room air, nasal cannula (L/min), mask/HFNC, NIV (BiPAP/CPAP) and mechanical ventilation, each with its own fields, desired FiO₂ wording and suggestions (BTS/ICS 2016, ERS 2022, ARDSNet, SSC 2026, ATS 2024, UK-ROX 2025).
 - **Ventilator reading** (ACVC, ACPC, PRVC, SIMV, PS): present settings (FiO₂, TV, BUR, I:E, peak flow, PEEP) and measured values (peak, plateau, mean airway pressure, total PEEP, VTE, VTi, Ftotal). Calculates PBW, VT/kg, driving pressure, static and dynamic compliance, airway resistance, auto-PEEP, time constant vs expiratory time, leak, minute ventilation vs predicted, ventilatory ratio, oxygenation index with normal value and grade, mechanical power, ARDSNet PEEP/FiO₂ tables and the rate needed for a target pCO₂ (ARDSNet pH rules, Winter's in metabolic acidosis, no faster rate during air trapping). The intubated message follows the bedside layout: settings, pressures, PBW, OI, mechanics and a ventilator interpretation (Amato NEJM 2015, Serpa Neto ICM 2018, Sinha AJRCCM 2019, ESICM 2023).
 
+- **Ventilator tab** (separate assessment): the same ventilator inputs, read on their own or linked to the ABG, with its own copy-ready message.
+- **Scalars**: add a photo of the ventilator screen (kept on the phone only, never uploaded), compare it with schematic drawings for the current mode, and mark what you see: auto-PEEP, ineffective efforts, double triggering, auto-triggering, flow starvation, early/delayed cycling, rise-time problems, reverse triggering, sawtooth (secretions), obstructive flow, leak. Findings feed the interpretation, suggestions and messages (Tobin, *Principles and Practice of Mechanical Ventilation* 3rd ed., ch. 6, 8, 30, 53; Akoumianaki, Chest 2013).
 Works offline once opened, and picks up updates on the next open when there is signal; install it from Safari (Share → Add to Home Screen) or Chrome (Install app).
 
 References: Berend K et al. N Engl J Med 2014;371:1434–45 · Shapiro BA et al. Clinical Application of Blood Gases, 5th ed. · Gilbert R, Keighley JF. Am Rev Respir Dis 1974;109:142–5.

@@ -1,7 +1,7 @@
 {
-  "name": "TIMPEX ABG",
-  "short_name": "TIMPEX ABG",
-  "description": "Bedside ABG interpretation: acid–base, compensation, oxygenation and oxygen requirement, from pH, PaCO2, PaO2 and HCO3.",
+  "name": "TIMPEX Gas & Vent",
+  "short_name": "TIMPEX G&V",
+  "description": "Blood gas and mechanical-ventilator assessment: acid–base, compensation, oxygenation, ventilator numbers and scalars, with copy-ready messages.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
