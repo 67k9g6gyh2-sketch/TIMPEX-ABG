@@ -4,11 +4,12 @@
 
 Bedside arterial blood gas reader for when electrolytes aren't back: uses only pH, PaCO₂, PaO₂, HCO₃ (optional), FiO₂ and age.
 
-- **Acid–base:** primary disorder; uncompensated / partially / fully compensated; expected-compensation check (Winter's formula, metabolic alkalosis rule, acute vs chronic respiratory rules) to flag mixed disorders.
-- **HCO₃ check:** calculates HCO₃ from pH and PaCO₂ and flags an entered value that doesn't match.
-- **Oxygenation:** mild / moderate / severe hypoxemia on room air (age-adjusted over 60); uncorrected / corrected / overcorrected on O₂.
-- **O₂ requirement:** a/A ratio method (target PaO₂ = 104 − 0.4 × age → FiO₂ needed → nasal cannula L/min), with A–a gradient, P/F ratio and full working.
-- **Copy summary:** one chart-ready line.
+- **Interpretation** in the form "Severe metabolic acidosis with concomitant respiratory alkalosis", from pH, pCO₂ and HCO₃ only. The traditional label (uncompensated / partially / fully compensated) is shown for reference.
+- **Compensation** written out line by line: Winter's formula, metabolic alkalosis formula, acute and chronic respiratory rules.
+- **Desired FiO₂** by the a/A ratio method (target pO₂ = 104 − 0.4 × age), with nasal cannula flow, P/F ratio and A-aDO₂.
+- **HCO₃ deficit** = 0.5 (or 0.4) × weight × (24 − HCO₃).
+- **Message to copy**: values with ⬇️/⬆️, P/F, A-aDO₂, desired FiO₂, HCO₃ deficit, compensation and interpretation.
+- Accepts TCO₂, BE and SO₂ from the printout; flags an HCO₃ or TCO₂ that doesn't fit pH and pCO₂.
 
 Works offline once opened; install it from Safari (Share → Add to Home Screen) or Chrome (Install app).
 
