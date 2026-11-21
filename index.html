@@ -642,7 +642,7 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
       <input type="file" id="sc-file" accept="image/*" multiple hidden>
       <div id="an-box" class="anbox" hidden>
         <div class="vsec" style="margin-top:14px">Read the photo automatically</div>
-        <div class="hint" style="margin-top:0">Box each tracing, tap its line, then tap its zero (flow) or PEEP (pressure) line. The app traces the waveform, splits it into breaths and checks each breath against the patterns below. Runs on this phone; nothing is uploaded.</div>
+        <div class="hint" style="margin-top:0">Drag a box around the flow tracing, then the pressure tracing, and tap <b>Read the photo</b>. The app finds each line and the zero axis by itself (even on a tilted photo), splits the waveform into breaths and checks every breath against the patterns below. Runs on this phone; nothing is uploaded.</div>
         <div id="an-photos" class="chips"></div>
         <div class="seg full antr" role="group" aria-label="Tracing" style="margin-top:10px">
           <button type="button" data-tr="flow" aria-pressed="true">Flow tracing</button>
@@ -661,8 +661,8 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
             <div class="inp" id="w-ansec"><input id="i-ansec" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">s</span></div>
           </div>
           <div>
-            <label class="lbl" for="i-antol">Line match <span class="opt" id="an-tolv">50%</span></label>
-            <input id="i-antol" type="range" min="20" max="90" value="50" class="range">
+            <label class="lbl" for="i-antol">Line match <span class="opt" id="an-tolv">55%</span></label>
+            <input id="i-antol" type="range" min="20" max="90" value="55" class="range">
           </div>
         </div>
         <div id="an-result"></div>
@@ -856,7 +856,7 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
         <li><b>Scalars</b>: add a photo of the ventilator screen. It is shown only on your phone (never uploaded or saved). Compare it with the schematic drawings for your mode and tap <b>Seen</b>; findings feed the interpretation, the suggestions and both messages. The drawings are schematic, not to scale.</li>
         <li><b>Flow–time</b>: expiratory flow not returning to zero → auto-PEEP; small expiratory bumps without a breath → ineffective efforts (often over-assistance with hyperinflation); two breaths with no exhalation between → double triggering (stacked volume); sawtooth → secretions or circuit water; low, long concave expiratory tail → flow limitation; abrupt end of inspiratory flow with a dip or second breath → early cycling. <i>Tobin ch. 53; Brochard &amp; Lellouche ch. 8; Leatherman ch. 30.</i></li>
         <li><b>Pressure–time</b>: concave (scalloped) rise in volume control → flow starvation; big dip before the breath → trigger delay or auto-PEEP; breaths with no dip, fast and regular → auto-triggering (leak, water, cardiac oscillation, sensitive trigger); end-inspiratory spike on PS → delayed cycling; initial spike → rise time too fast; slow rounded rise → too slow; mid-breath dip or a stacked breath after a machine breath → reverse triggering. <i>Tobin ch. 53; Mancebo ch. 6; Brochard &amp; Lellouche ch. 8; Akoumianaki, Chest 2013.</i></li>
-        <li><b>Automatic reading</b>: box a tracing and tap its line; the app follows that colour across the box (one point per pixel column), uses the zero-flow line or PEEP level you tap, splits the trace into breaths and tests each breath. Flow: expiratory flow still below zero and still returning when the next breath starts (auto-PEEP); a bump toward zero that falls back without a breath, or a small inspiratory blip (ineffective effort; within the first fifth of expiration = early cycling); an expiration far shorter than usual with most of the volume not exhaled (double triggering); fine oscillation on the expiratory limb (sawtooth); most of expiration spent at 10–45% of peak expiratory flow (obstruction). Pressure: dip before the breath (patient-triggered; deep = trigger delay); no dip on PS (auto-triggering); concave rise in volume control (flow starvation); dip during the machine breath; overshoot, end-inspiratory spike or slow rise in pressure modes; breaths far closer together than usual (double triggering). Each finding is reported as "n of N breaths" with a confidence, and marked on the photo.</li>
+        <li><b>Automatic reading</b>: drag a box around each tracing. The app finds the trace by its colour (grid, numbers, axes and glare are greyish and ignored), follows it across the box one pixel column at a time, finds the zero-flow axis (allowing for a tilted photo; otherwise the level where inspired and expired volumes balance) and the PEEP baseline, then splits the trace into breaths and tests each breath. Taps are optional corrections: tap the trace to re-pick its colour, or tap the zero/PEEP line. A small flow blip that lines up with a pressure breath is counted as a delivered breath, not a missed effort. Flow: expiratory flow still below zero and still returning when the next breath starts (auto-PEEP); a bump toward zero that falls back without a breath, or a small inspiratory blip (ineffective effort; within the first fifth of expiration = early cycling); an expiration far shorter than usual with most of the volume not exhaled (double triggering); fine oscillation on the expiratory limb (sawtooth); most of expiration spent at 10–45% of peak expiratory flow (obstruction). Pressure: dip before the breath (patient-triggered; deep = trigger delay); no dip on PS (auto-triggering); concave rise in volume control (flow starvation); dip during the machine breath; overshoot, end-inspiratory spike or slow rise in pressure modes; breaths far closer together than usual (double triggering). Each finding is reported as "n of N breaths" with a confidence, and marked on the photo.</li>
         <li><b>Limits</b>: one photo, no time scale unless you enter the seconds shown; screen glare, a tilted photo or overlapping curves reduce accuracy (the "line found in %" figure tells you). Leak on the volume curve and anything not listed are left to your eye. Tested on simulated screens: every pattern above detected, no false findings on 600 normal tracings. Always check the red marks against the photo.</li>
         <li><b>AI read (optional)</b>: sends the photo, the mode and the pattern definitions above to Anthropic's Claude using your own API key, as a second opinion. It is the only feature that sends data off the phone; the key is kept on the phone only if you tick "Remember".</li>
         <li><b>Volume–time</b>: expiratory volume ending above zero → leak (cuff, circuit, bronchopleural fistula). <i>Tobin ch. 53.</i></li>
@@ -914,7 +914,7 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
 
   <footer>
     <div class="disc"><b>Clinical decision aid.</b> For trained clinicians. It does not replace clinical judgment or your institution's protocols. Read the result with the patient and the history; recheck SpO₂ or the ABG after every change in oxygen.</div>
-    <div>TIMPEX Gas &amp; Vent · v10 · 21 Nov 2026 · <span id="app-hint"></span></div>
+    <div>TIMPEX Gas &amp; Vent · v11 · 22 Nov 2026 · <span id="app-hint"></span></div>
   </footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1697,7 +1697,7 @@ var ABG = (function () {
       else if (up && p[i] < b + 0.2 * Ap && p[i - 1] >= b + 0.2 * Ap) { if (br.length && br[br.length - 1].end == null) br[br.length - 1].end = i; up = false; }
     }
     br = br.filter(function (x) { return x.end != null; });
-    R.breaths = br.length; R.onsets = br.map(function (x) { return x.foot; });
+    R.breaths = br.length; R.onsets = br.map(function (x) { return x.foot; }); R.spans = br.map(function (x) { return [x.foot, x.end]; });
     if (br.length < 2) { R.error = "Fewer than two breaths found: widen the box or re-tap the line."; return R; }
     var cyc = []; for (var k = 1; k < br.length; k++) cyc.push(br[k].foot - br[k - 1].foot);
     var cs = cyc.slice().sort(function (a, b) { return a - b; });
@@ -1742,7 +1742,8 @@ var ABG = (function () {
     });
     // reverse triggering: machine-timed breath (no dip) with effort during it, or followed by a stacked breath
     if (CTRL.indexOf(vm) > -1) br.forEach(function (x, k) {
-      if (x.trig === false && (x.middip || (br[k + 1] && br[k + 1].stacked))) { c.p_rev++; R.events.push({ x: x.foot, type: "p_rev" }); }
+      var flat = x.dip < Math.max(0.02 * Ap, noise);   // clearly no effort before the breath
+      if (x.trig === false && flat && (x.middip || (br[k + 1] && br[k + 1].stacked))) { c.p_rev++; R.events.push({ x: x.foot, type: "p_rev" }); }
     });
     R.rate = rateOf(R.onsets, o.secsPerCol);
     var N = br.length;
@@ -1756,6 +1757,21 @@ var ABG = (function () {
     if (c.middip && !c.p_rev) R.notes.push("A dip during the breath in " + c.middip + " of " + N + " breaths: the patient is pulling during the machine breath (flow starvation or effort out of phase).");
     Object.keys(R.findings).forEach(function (k) { R.findings[k].conf = confOf(R.findings[k].n, R.findings[k].of); });
     return R;
+  }
+  // A flow "blip" that sits inside a pressure breath is a delivered (small) breath, not a missed effort.
+  // dx converts flow-box columns to pressure-box columns (same screen time axis).
+  function crossCheck(F, P, dx) {
+    if (!F || F.error || !P || P.error || !P.spans || !P.spans.length) return F;
+    var inBreath = function (xf) { var xp = xf + dx; return P.spans.some(function (sp) { return xp >= sp[0] - 4 && xp <= sp[1] + 4; }); };
+    var dropped = 0;
+    F.events = F.events.filter(function (e) { if ((e.type === "f_ineff" || e.type === "f_early") && inBreath(e.x)) { dropped++; return false; } return true; });
+    ["f_ineff", "f_early"].forEach(function (id) {
+      if (!F.findings[id]) return;
+      var n = F.events.filter(function (e) { return e.type === id; }).length;
+      if (!n) delete F.findings[id]; else { F.findings[id].n = n; F.findings[id].conf = confOf(n, F.findings[id].of); }
+    });
+    if (dropped) F.notes.push(dropped + " small flow blip" + (dropped > 1 ? "s" : "") + " lined up with a pressure breath, so counted as delivered breath" + (dropped > 1 ? "s" : "") + ", not missed efforts.");
+    return F;
   }
   // Combine flow and pressure reads into catalogue findings that apply to the mode
   function mergeReads(reads, vm) {
@@ -2258,7 +2274,7 @@ var ABG = (function () {
   }
 
   return {
-    VMODES: VMODES, isVC: isVC, analyzeFlow: analyzeFlow, analyzePaw: analyzePaw, mergeReads: mergeReads, movAvg: movAvg, SCALARS: SCALARS, scalarsFor: scalarsFor, scalarIds: scalarIds, scalarBlock: scalarBlock, ventMessage: ventMessage, isVentKey: isVentKey, parseIE: parseIE, peepTable: peepTable, oiGrade: oiGrade, ventInterp: ventInterp, ventBlocks: ventBlocks, desiredMV: desiredMV,
+    VMODES: VMODES, isVC: isVC, analyzeFlow: analyzeFlow, analyzePaw: analyzePaw, mergeReads: mergeReads, crossCheck: crossCheck, movAvg: movAvg, SCALARS: SCALARS, scalarsFor: scalarsFor, scalarIds: scalarIds, scalarBlock: scalarBlock, ventMessage: ventMessage, isVentKey: isVentKey, parseIE: parseIE, peepTable: peepTable, oiGrade: oiGrade, ventInterp: ventInterp, ventBlocks: ventBlocks, desiredMV: desiredMV,
     effectiveTarget: effectiveTarget, applyAdequacy: applyAdequacy, supportFio2: supportFio2, supportLine: supportLine, modeName: modeName, pbw: pbw, targetPco2: targetPco2, ventCalc: ventCalc, ventLines: ventLines, desiredText: desiredText, endExpPressure: endExpPressure, DEVICES: DEVICES,
     gasExchange: gasExchange, respFailure: respFailure, fullInterpretation: fullInterpretation, suggestions: suggestions,
     chartLine: chartLine, interpretation: interpretation, compensationLines: compensationLines, message: message,
@@ -2963,50 +2979,144 @@ if (typeof module !== "undefined") module.exports = ABG;
     var md = function (a) { a.sort(function (p, q) { return p - q; }); return a[Math.floor(a.length / 2)]; };
     return [md(rs), md(gs), md(bs)];
   }
-  function pickColour(tr, x, y) {   // the pixel near the tap that stands out most from the background
-    var T = S.an.t[tr], b = T.box, bg = bgOf(b), best = null, bd = -1;
-    for (var yy = Math.max(b.y0, y - 9); yy <= Math.min(b.y1, y + 9); yy++) for (var xx = Math.max(b.x0, x - 9); xx <= Math.min(b.x1, x + 9); xx++) {
-      var c = px(xx, yy), d = cdist(c, bg); if (d > bd) { bd = d; best = c; }
-    }
-    T.col = best; T.bg = bg; T.tap = [x, y];
+  function hsv(c) {
+    var r = c[0] / 255, g = c[1] / 255, b = c[2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, h = 0;
+    if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+    return [h, mx ? d / mx : 0, mx];
   }
-  // One y per column along the chosen colour, following the line from column to column
+  function isColour(c) { var h = hsv(c); return h[1] > 0.38 && h[2] > 0.38; }
+  // Trace colour: the most common strongly coloured hue in the box (grid, numbers, axes and glare are greyish)
+  function autoColour(b) {
+    var area = (b.x1 - b.x0 + 1) * (b.y1 - b.y0 + 1), st = Math.max(1, Math.round(Math.sqrt(area / 50000))), bins = [], n = 0;
+    for (var i = 0; i < 24; i++) bins.push({ n: 0, c: [] });
+    for (var y = b.y0; y <= b.y1; y += st) for (var x = b.x0; x <= b.x1; x += st) {
+      n++; var c = px(x, y), h = hsv(c);
+      if (h[1] > 0.38 && h[2] > 0.38) { var k = Math.floor(h[0] / 15) % 24; bins[k].n++; if (bins[k].c.length < 3000) bins[k].c.push(c); }
+    }
+    var best = -1, bs = 0;
+    for (var k2 = 0; k2 < 24; k2++) { var sc = bins[k2].n + 0.5 * (bins[(k2 + 23) % 24].n + bins[(k2 + 1) % 24].n); if (sc > bs) { bs = sc; best = k2; } }
+    if (best < 0 || bins[best].n < 0.003 * n) return null;
+    var P = bins[best].c, md = function (j) { var a = P.map(function (q) { return q[j]; }).sort(function (u, v) { return u - v; }); return a[Math.floor(a.length / 2)]; };
+    return [md(0), md(1), md(2)];
+  }
+  // A straight light line (axis) in the box, allowing a tilted photo (slope up to ±0.08); yHint narrows the search
+  function findAxis(b, yHint) {
+    var w = b.x1 - b.x0 + 1, h = b.y1 - b.y0 + 1, bgv = hsv(bgOf(b))[2], m = new Uint8Array(w * h);
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) { var hh = hsv(px(b.x0 + x, b.y0 + y)); if (hh[1] < 0.3 && hh[2] > Math.max(0.3, bgv + 0.15)) m[y * w + x] = 1; }
+    var xs = []; for (var xx = 0; xx < w; xx += 2) xs.push(xx);
+    var lo = 1, hi = h - 2;
+    if (yHint != null) { lo = Math.max(1, Math.round(yHint - b.y0 - 22)); hi = Math.min(h - 2, Math.round(yHint - b.y0 + 22)); }
+    var rows = [];   // best slope for each row
+    for (var y0 = lo; y0 <= hi; y0++) {
+      var bestR = null;
+      for (var si = -16; si <= 16; si++) {
+        var s = si * 0.005, cnt = 0;
+        for (var k = 0; k < xs.length; k++) { var x2 = xs[k], yy = Math.round(y0 + s * (x2 - w / 2)); if (yy < 1 || yy >= h - 1) continue; var i = yy * w + x2; if (m[i] || m[i - w] || m[i + w]) cnt++; }
+        if (!bestR || cnt > bestR.cnt) bestR = { cnt: cnt, y0: y0, s: s };
+      }
+      rows.push(bestR);
+    }
+    // candidate lines: local maxima over rows, at least 20% of the width
+    var cands = [];
+    rows.forEach(function (r, j) {
+      if (r.cnt < 0.2 * xs.length) return;
+      for (var q = Math.max(0, j - 3); q <= Math.min(rows.length - 1, j + 3); q++) if (rows[q].cnt > r.cnt) return;
+      if (cands.some(function (c) { return Math.abs(c.y0 - r.y0) < 4; })) return;
+      cands.push(r);
+    });
+    cands.sort(function (p, q) { return q.cnt - p.cnt; });
+    var out = cands.map(function (B) { return { s: B.s, frac: B.cnt / xs.length, at: function (x) { return b.y0 + B.y0 + B.s * (x - b.x0 - w / 2); } }; });
+    return out.length ? out : null;
+  }
+  // Zero flow without a visible axis: over whole breaths inspired ≈ expired volume, so zero sits near the mean of
+  // the (tilt-corrected) trace; a flat stretch near that level (end-expiratory pause) pins it more precisely.
+  function zeroFromTrace(ys, s) {
+    var v = ys.map(function (y, i) { return y - s * i; }), n = v.length, mean = 0;
+    v.forEach(function (q) { mean += q; }); mean /= n;
+    var srt = v.slice().sort(function (a, b) { return a - b; }), range = srt[Math.floor(0.95 * n)] - srt[Math.floor(0.05 * n)];
+    var hg = {}, bk = null, bn = 0;
+    v.forEach(function (q) { if (Math.abs(q - mean) <= 0.15 * range) { var k = Math.round(q / 2); hg[k] = (hg[k] || 0) + 1; } });
+    Object.keys(hg).forEach(function (k) { if (hg[k] > bn) { bn = hg[k]; bk = +k; } });
+    return bk != null && bn >= 0.08 * n ? bk * 2 : mean;
+  }
+  // One y per column along the trace colour; follows the line, skips stray labels or glare
   function extract(tr) {
-    var T = S.an.t[tr], b = T.box, tol = (+$("i-antol").value || 50) / 100;
-    var thr = Math.max(28, tol * cdist(T.col, T.bg)), hBox = b.y1 - b.y0, ys = [], prev = null, found = 0;
+    var T = S.an.t[tr], b = T.box, tol = (+$("i-antol").value || 55) / 100;
+    var thr = Math.max(28, tol * cdist(T.col, T.bg)), hBox = b.y1 - b.y0, cols = [], centers = [];
+    var gate = hsv(T.col)[1] > 0.3, hueT = hsv(T.col)[0];
+    var match = function (c) {
+      if (cdist(c, T.col) >= thr) return false;
+      if (!gate) return true;
+      var h = hsv(c), dh = Math.abs(h[0] - hueT); if (dh > 180) dh = 360 - dh;
+      return h[1] > 0.22 && dh < 40;
+    };
     for (var x = b.x0; x <= b.x1; x++) {
       var runs = [], cur = null;
-      for (var y = b.y0; y <= b.y1; y++) {
-        if (cdist(px(x, y), T.col) < thr) { if (cur && y - cur.e <= 2) cur.e = y; else { cur = { s: y, e: y }; runs.push(cur); } }
-      }
-      if (!runs.length) { ys.push(null); continue; }
-      var pick = runs[0];
-      if (prev == null) runs.forEach(function (r) { if (r.e - r.s > pick.e - pick.s) pick = r; });
-      else runs.forEach(function (r) { var dc = Math.min(Math.abs(r.s - prev), Math.abs(r.e - prev)), dp = Math.min(Math.abs(pick.s - prev), Math.abs(pick.e - prev)); if (dc < dp) pick = r; });
-      var yv = pick.e - pick.s > 0.2 * hBox && prev != null ? (Math.abs(pick.s - prev) > Math.abs(pick.e - prev) ? pick.s : pick.e) : (pick.s + pick.e) / 2;
-      ys.push(yv); prev = yv; found++;
+      for (var y = b.y0; y <= b.y1; y++) if (match(px(x, y))) { if (cur && y - cur.e <= 2) cur.e = y; else { cur = { s: y, e: y }; runs.push(cur); } }
+      cols.push(runs); runs.forEach(function (r) { centers.push((r.s + r.e) / 2); });
     }
-    // fill gaps by straight lines
+    centers.sort(function (u, v) { return u - v; });
+    var ref = centers.length ? centers[Math.floor(centers.length / 2)] : (b.y0 + b.y1) / 2;
+    var ys = [], prev = null, found = 0, miss = 0;
+    cols.forEach(function (runs) {
+      if (!runs.length) { ys.push(null); miss++; return; }
+      var at = prev != null ? prev : ref, pick = null, pd = Infinity;
+      runs.forEach(function (r) { var d = at < r.s ? r.s - at : at > r.e ? at - r.e : 0; if (d < pd) { pd = d; pick = r; } });
+      var long = pick.e - pick.s > 0.15 * hBox;
+      if (prev != null && pd > 0.3 * hBox && !long && miss < 6) { ys.push(null); miss++; return; }
+      var yv = long && prev != null ? (Math.abs(pick.s - prev) > Math.abs(pick.e - prev) ? pick.s : pick.e) : (pick.s + pick.e) / 2;
+      ys.push(yv); prev = yv; found++; miss = 0;
+    });
     var n = ys.length, i = 0;
     while (i < n) {
       if (ys[i] != null) { i++; continue; }
       var a = i - 1, z = i; while (z < n && ys[z] == null) z++;
-      for (var k = i; k < z; k++) ys[k] = a >= 0 && z < n ? ys[a] + (ys[z] - ys[a]) * (k - a) / (z - a) : a >= 0 ? ys[a] : z < n ? ys[z] : (b.y0 + b.y1) / 2;
+      for (var k = i; k < z; k++) ys[k] = a >= 0 && z < n ? ys[a] + (ys[z] - ys[a]) * (k - a) / (z - a) : a >= 0 ? ys[a] : z < n ? ys[z] : ref;
       i = z;
     }
-    return { ys: ys, coverage: n ? found / n : 0, x0: b.x0 };
+    var sm = ys.map(function (v, j) { var w5 = ys.slice(Math.max(0, j - 2), j + 3).sort(function (u, q) { return u - q; }); return w5[Math.floor(w5.length / 2)]; });
+    return { ys: sm, coverage: n ? found / n : 0, x0: b.x0 };
   }
-  function anStepOf(tr) { var T = S.an.t[tr]; return !T.box ? "box" : !T.col ? "line" : T.zero == null && !T.skip ? "zero" : "done"; }
+  // After a box: find the line colour, the trace, the tilt and the zero/baseline; taps only correct these
+  function setupTrace(tr) {
+    var T = S.an.t[tr], b = T.box; if (!b) return;
+    T.bg = bgOf(b);
+    if (!T.col) T.col = autoColour(b);
+    if (!T.col) { T.trace = null; return; }
+    T.trace = extract(tr);
+    var ys = T.trace.ys, srt = ys.slice().sort(function (u, v) { return u - v; });
+    var p10 = srt[Math.floor(0.1 * srt.length)], p90 = srt[Math.floor(0.9 * srt.length)], mid = (b.x0 + b.x1) / 2;
+    var axs = findAxis(b, T.zeroTap ? T.zeroTap[1] : null) || [], strong = axs.filter(function (a2) { return a2.frac >= 0.4; });
+    if (strong.length) AN.tilt = strong[0].s;
+    var tilt = strong.length ? strong[0].s : (AN.tilt || 0), ax = null;
+    T.zeroFn = null;
+    if (tr === "flow") {
+      // the axis is the candidate line that sits where the flow balances (inspired ≈ expired volume)
+      var est = zeroFromTrace(ys, tilt) + tilt * (mid - b.x0), rng = Math.max(10, p90 - p10);
+      if (T.zeroTap) ax = axs[0] || null;
+      else ax = axs.filter(function (a2) { return Math.abs(a2.at(mid) - est) <= 0.2 * rng && a2.at(mid) > p10 && a2.at(mid) < p90; })[0] || (strong[0] && strong[0].frac >= 0.6 && strong[0].at(mid) > p10 && strong[0].at(mid) < p90 ? strong[0] : null);
+      if (ax) { AN.tilt = ax.s; tilt = ax.s; }
+      if (ax) { T.zeroFn = ax.at; T.zeroHow = T.zeroTap ? "the axis you tapped" : "the flow axis"; }
+      else if (T.zeroTap) { var zt = T.zeroTap; T.zeroFn = function (x) { return zt[1] + tilt * (x - zt[0]); }; T.zeroHow = "your tap"; }
+      else { var c0 = zeroFromTrace(ys, tilt); T.zeroFn = function (x) { return c0 + tilt * (x - b.x0); }; T.zeroHow = "estimated; tap the zero line if it is off"; }
+    } else {
+      T.tiltP = tilt;
+      if (T.zeroTap) { var zp = T.zeroTap; T.zeroFn = function (x) { return zp[1] + tilt * (x - zp[0]); }; T.zeroHow = "your tap"; }
+      else T.zeroHow = "found automatically";
+    }
+  }
+  function anStepOf(tr) { var T = S.an.t[tr]; return !T.box ? "box" : !T.trace ? "line" : "done"; }
   function anUI() {
-    var tr = S.an.tr, st = anStepOf(tr), nm = TRN[tr];
+    var tr = S.an.tr, st = anStepOf(tr), nm = TRN[tr], other = tr === "flow" ? "paw" : "flow", T = S.an.t[tr];
     document.querySelectorAll("[data-tr]").forEach(function (b) { var k = b.getAttribute("data-tr"); b.setAttribute("aria-pressed", String(k === tr)); b.textContent = (k === "flow" ? "Flow" : "Pressure") + " tracing" + (anStepOf(k) === "done" ? " ✓" : ""); });
-    $("an-step").innerHTML = !AN.img ? "" : st === "box" ? "<b>1.</b> Drag a box around the " + nm + " tracing only (at least 3 breaths)."
-      : st === "line" ? "<b>2.</b> Tap on the " + nm + " line itself."
-      : st === "zero" ? (tr === "flow" ? "<b>3.</b> Tap the <b>zero-flow line</b> (the flow axis; flow is zero there)." : "<b>3.</b> Tap the <b>PEEP level</b> (the flat baseline between breaths), or let the app find it.")
-      : "Done. " + (anStepOf(tr === "flow" ? "paw" : "flow") === "done" ? "Tap <b>Read the photo</b>." : "Add the " + TRN[tr === "flow" ? "paw" : "flow"] + " tracing too for a fuller read, or tap <b>Read the photo</b>.");
+    $("an-step").innerHTML = !AN.img ? "" : st === "box" ? "Drag a box around the <b>" + nm + "</b> tracing only (at least 3 breaths). Drag with one finger on the photo."
+      : st === "line" ? "Could not find the " + nm + " line by its colour. <b>Tap on the " + nm + " line.</b>"
+      : "Found the " + nm + " line (pink)" + (tr === "flow" ? " and the zero line (dashed; " + T.zeroHow + ")" : T.zeroFn ? " and PEEP (dashed; your tap)" : "; PEEP is found automatically") +
+        ". " + (anStepOf(other) === "done" ? "Tap <b>Read the photo</b>." : "Tap <b>Read the photo</b>, or first switch to <b>" + (other === "flow" ? "Flow" : "Pressure") + " tracing</b> above and box it too.") +
+        '<span class="hint" style="display:block">Pink line wrong? Tap the ' + nm + " line. " + (tr === "flow" ? "Zero line wrong? Tap the zero line away from the tracing." : "Tap the PEEP level away from the tracing to set it.") + "</span>";
     $("an-cv").style.touchAction = st === "box" ? "none" : "pan-y";
     $("an-redo").textContent = "Redo " + nm;
-    $("an-skip").hidden = !(tr === "paw" && st === "zero");
+    $("an-skip").hidden = true;
     $("an-run").disabled = !(anStepOf("flow") === "done" || anStepOf("paw") === "done");
     $("an-tolv").textContent = $("i-antol").value + "%";
   }
@@ -3017,9 +3127,9 @@ if (typeof module !== "undefined") module.exports = ABG;
     ["flow", "paw"].forEach(function (tr) {
       var T = S.an.t[tr], col = TRC[tr]; if (!T.box) return; var b = T.box;
       x.save(); x.setLineDash([lw * 3, lw * 2]); x.lineWidth = lw; x.strokeStyle = col; x.strokeRect(b.x0, b.y0, b.x1 - b.x0, b.y1 - b.y0);
-      if (T.zero != null) { x.beginPath(); x.moveTo(b.x0, T.zero); x.lineTo(b.x1, T.zero); x.stroke(); }
+      if (T.zeroFn) { x.beginPath(); x.moveTo(b.x0, T.zeroFn(b.x0)); x.lineTo(b.x1, T.zeroFn(b.x1)); x.strokeStyle = "#ffffff"; x.stroke(); }
       x.restore();
-      x.font = "bold " + Math.round(lw * 7) + "px sans-serif"; x.fillStyle = col; x.fillText(tr === "flow" ? "FLOW" : "PRESSURE", b.x0 + lw * 2, b.y0 - lw * 2 > lw * 8 ? b.y0 - lw * 2 : b.y0 + lw * 8);
+      x.font = "bold " + Math.round(lw * 7) + "px sans-serif"; x.fillStyle = col; x.fillText(tr === "flow" ? "FLOW" : "PRESSURE", b.x0 + lw * 2, b.y0 + lw * 8);
       if (T.tap) { x.beginPath(); x.arc(T.tap[0], T.tap[1], lw * 4, 0, 7); x.lineWidth = lw; x.strokeStyle = col; x.stroke(); }
       if (T.trace) {
         x.beginPath(); T.trace.ys.forEach(function (y, i) { if (i) x.lineTo(T.trace.x0 + i, y); else x.moveTo(T.trace.x0, y); });
@@ -3033,50 +3143,83 @@ if (typeof module !== "undefined") module.exports = ABG;
     });
   }
   function cvPt(ev) { var c = $("an-cv"), r = c.getBoundingClientRect(); return [(ev.clientX - r.left) * AN.W / r.width, (ev.clientY - r.top) * AN.H / r.height]; }
+  // Box: drag (pointer events, page scrolling off while drawing). Corrections: ordinary taps (click), finger-sized
   $("an-cv").addEventListener("pointerdown", function (ev) {
-    if (!AN.img) return; var p = cvPt(ev), st = anStepOf(S.an.tr);
-    if (st === "box") { AN.drag = { x0: p[0], y0: p[1], x1: p[0], y1: p[1] }; try { $("an-cv").setPointerCapture(ev.pointerId); } catch (e) {} ev.preventDefault(); }
-    else AN.tap = { x: p[0], y: p[1], t: Date.now() };
+    if (!AN.img) return;
+    if (anStepOf(S.an.tr) !== "box") { AN.tapStart = { x: ev.clientX, y: ev.clientY, t: Date.now() }; return; }
+    var p = cvPt(ev); AN.drag = { x0: p[0], y0: p[1], x1: p[0], y1: p[1] };
+    try { $("an-cv").setPointerCapture(ev.pointerId); } catch (e) {}
+    ev.preventDefault();
   });
   $("an-cv").addEventListener("pointermove", function (ev) { if (!AN.drag) return; var p = cvPt(ev); AN.drag.x1 = p[0]; AN.drag.y1 = p[1]; anDraw(); ev.preventDefault(); });
-  $("an-cv").addEventListener("pointerup", function (ev) {
-    var tr = S.an.tr, T = S.an.t[tr], p = cvPt(ev);
-    if (AN.drag) {
-      var b = boxNorm(AN.drag); AN.drag = null;
-      if (b.x1 - b.x0 > AN.W * 0.15 && b.y1 - b.y0 > 12) { T.box = b; T.col = null; T.zero = null; T.skip = false; T.trace = null; }
-      anUI(); anDraw(); return;
-    }
-    if (!AN.tap || Math.abs(p[0] - AN.tap.x) > 12 || Math.abs(p[1] - AN.tap.y) > 12) { AN.tap = null; return; }
-    AN.tap = null; var st = anStepOf(tr), x = Math.round(p[0]), y = Math.round(p[1]);
-    if (st === "line") pickColour(tr, Math.min(T.box.x1, Math.max(T.box.x0, x)), Math.min(T.box.y1, Math.max(T.box.y0, y)));
-    else if (st === "zero") { T.zero = Math.min(T.box.y1, Math.max(T.box.y0, y)); if (tr === "flow" && anStepOf("paw") !== "done") { S.an.tr = "paw"; } }
+  function endDrag(ev) {
+    if (!AN.drag) return;
+    var tr = S.an.tr, T = S.an.t[tr];
+    if (ev && ev.type === "pointerup") { var p = cvPt(ev); AN.drag.x1 = p[0]; AN.drag.y1 = p[1]; }
+    var b = boxNorm(AN.drag); AN.drag = null; AN.skipClick = true; setTimeout(function () { AN.skipClick = false; }, 400);
+    if (b.x1 - b.x0 > AN.W * 0.15 && b.y1 - b.y0 > AN.H * 0.04) { S.an.t[tr] = { box: b }; S.an.marks = []; setupTrace(tr); }
     anUI(); anDraw();
-    if (anStepOf("flow") === "done" && (anStepOf("paw") === "done" || S.an.t.paw.box == null) && st === "zero") anRun();
+  }
+  $("an-cv").addEventListener("pointerup", function (ev) {
+    if (AN.drag) { endDrag(ev); return; }
+    var s0 = AN.tapStart; AN.tapStart = null;
+    // a finger tap: handle it here (some phones swallow the click that should follow)
+    if (s0 && Math.abs(ev.clientX - s0.x) < 10 && Math.abs(ev.clientY - s0.y) < 10 && Date.now() - s0.t < 800) { AN.tapAt = Date.now(); canvasTap(ev); }
   });
+  $("an-cv").addEventListener("pointercancel", endDrag);
+  $("an-cv").addEventListener("click", function (ev) {
+    if (AN.tapAt && Date.now() - AN.tapAt < 600) return;   // already handled on finger lift
+    canvasTap(ev);
+  });
+  function canvasTap(ev) {
+    if (!AN.img || AN.skipClick) return;
+    var tr = S.an.tr, T = S.an.t[tr]; if (!T.box) return;
+    var r = $("an-cv").getBoundingClientRect(), sc = AN.W / r.width, p = cvPt(ev), b = T.box;
+    var x = Math.round(Math.min(b.x1, Math.max(b.x0, p[0]))), y = Math.round(Math.min(b.y1, Math.max(b.y0, p[1])));
+    var R = Math.max(6, Math.round(12 * sc)), bg = T.bg || bgOf(b), bgv = hsv(bg)[2], col = null, dCol = Infinity, dAx = Infinity;
+    for (var yy = Math.max(b.y0, y - R); yy <= Math.min(b.y1, y + R); yy++) for (var xx = Math.max(b.x0, x - R); xx <= Math.min(b.x1, x + R); xx++) {
+      var cc = px(xx, yy), hh = hsv(cc), d2 = (xx - x) * (xx - x) + (yy - y) * (yy - y);
+      if (hh[1] > 0.38 && hh[2] > 0.38 && cdist(cc, bg) > 40) { if (d2 < dCol) { dCol = d2; col = cc; } }
+      else if (hh[1] < 0.3 && hh[2] > Math.max(0.3, bgv + 0.15)) { if (d2 < dAx) dAx = d2; }
+    }
+    // whichever is nearer the finger: the coloured trace (pick its colour) or a light line / empty spot (zero or PEEP)
+    if (col && dCol < dAx) { T.col = col; T.tap = [x, y]; toast("Line colour taken from your tap"); }
+    else { T.zeroTap = [x, y]; toast(tr === "flow" ? "Zero line set from your tap" : "PEEP level set from your tap"); }
+    S.an.marks = []; setupTrace(tr); anUI(); anDraw();
+  }
   document.querySelectorAll("[data-tr]").forEach(function (b) { b.addEventListener("click", function () { S.an.tr = b.getAttribute("data-tr"); anUI(); anDraw(); }); });
   $("an-redo").addEventListener("click", function () { S.an.t[S.an.tr] = {}; S.an.marks = []; anUI(); anDraw(); });
-  $("an-skip").addEventListener("click", function () { S.an.t.paw.skip = true; S.an.t.paw.zero = null; anUI(); anDraw(); anRun(); });
-  $("i-antol").addEventListener("input", function () { anUI(); });
-  $("an-run").addEventListener("click", anRun);
+  $("i-antol").addEventListener("change", function () { ["flow", "paw"].forEach(function (tr) { if (S.an.t[tr].box && S.an.t[tr].col) setupTrace(tr); }); anUI(); anDraw(); });
+  $("i-antol").addEventListener("input", function () { $("an-tolv").textContent = $("i-antol").value + "%"; });
+  // Run on click, and also on finger lift (some phones swallow the click right after drawing a box); never twice
+  var lastRun = 0, runDown = null;
+  function runOnce() { if (Date.now() - lastRun < 700 || $("an-run").disabled) return; lastRun = Date.now(); anRun(); }
+  $("an-run").addEventListener("click", runOnce);
+  $("an-run").addEventListener("pointerdown", function (ev) { runDown = ev.pointerType === "touch" ? [ev.clientX, ev.clientY] : null; });
+  $("an-run").addEventListener("pointerup", function (ev) { if (runDown && Math.abs(ev.clientX - runDown[0]) < 10 && Math.abs(ev.clientY - runDown[1]) < 10) runOnce(); runDown = null; });
   $("an-photos").addEventListener("click", function (ev) { var b = ev.target.closest("[data-anp]"); if (b) anLoad(+b.getAttribute("data-anp")); });
   var EVTAG = { f_trap: "Flow not back to zero", f_ineff: "Missed trigger", f_early: "Early cycling", f_double: "Double trigger", f_saw: "Sawtooth", p_dip: "Big trigger dip", p_scoop: "Scooped rise", p_over: "Overshoot", f_late: "End spike", p_slow: "Slow rise", p_rev: "Reverse trigger", middip: "Dip mid-breath" };
   function anRun() {
     if (!AN.data) return;
-    var vm = S.vmode, secs = num("i-ansec"), reads = [], cov = {}, marks = [], order = [];
+    var vm = S.vmode, secs = num("i-ansec"), reads = [], marks = [], order = [];
     ["flow", "paw"].forEach(function (tr) {
       if (anStepOf(tr) !== "done") return;
-      var T = S.an.t[tr], ex = extract(tr); T.trace = ex; cov[tr] = ex.coverage;
+      var T = S.an.t[tr], ex = T.trace, x0 = ex.x0;
       var spc = ok(secs) && secs > 0 ? secs / ex.ys.length : null, R;
-      if (tr === "flow") R = ABG.analyzeFlow(ex.ys.map(function (y) { return T.zero - y; }), { secsPerCol: spc, noise: 1.2 });
-      else {
-        var base = T.zero != null ? T.zero : T.box.y1;
-        R = ABG.analyzePaw(ex.ys.map(function (y) { return base - y; }), { vmode: vm, baseline: T.zero != null ? 0 : null, secsPerCol: spc, bur: ok(num("i-rr")) ? num("i-rr") : null, noise: 1.2 });
-      }
+      if (tr === "flow") R = ABG.analyzeFlow(ex.ys.map(function (y, i) { return T.zeroFn(x0 + i) - y; }), { secsPerCol: spc, noise: 1.2 });
+      else if (T.zeroFn) R = ABG.analyzePaw(ex.ys.map(function (y, i) { return T.zeroFn(x0 + i) - y; }), { vmode: vm, baseline: 0, secsPerCol: spc, bur: ok(num("i-rr")) ? num("i-rr") : null, noise: 1.2 });
+      else R = ABG.analyzePaw(ex.ys.map(function (y, i) { return T.box.y1 - (y - (T.tiltP || 0) * i); }), { vmode: vm, baseline: null, secsPerCol: spc, bur: ok(num("i-rr")) ? num("i-rr") : null, noise: 1.2 });
       R.coverage = ex.coverage; reads.push(R);
-      if (!R.error) R.events.forEach(function (e) { var y = ex.ys[e.x]; if (y != null) { if (order.indexOf(e.type) < 0) order.push(e.type); marks.push({ x: ex.x0 + e.x, y: y, k: order.indexOf(e.type) + 1, type: e.type }); } });
+      if (!R.error) R.events.forEach(function (e) { var y = ex.ys[e.x]; if (y != null) { if (order.indexOf(e.type) < 0) order.push(e.type); marks.push({ x: x0 + e.x, y: y, k: order.indexOf(e.type) + 1, type: e.type }); } });
     });
+    if (!reads.length) return;
+    var Fr = reads.filter(function (r) { return r.kind === "flow"; })[0], Pr = reads.filter(function (r) { return r.kind === "paw"; })[0];
+    if (Fr && Pr) {
+      ABG.crossCheck(Fr, Pr, S.an.t.flow.box.x0 - S.an.t.paw.box.x0);
+      var fx0 = S.an.t.flow.box.x0;
+      marks = marks.filter(function (m) { return !((m.type === "f_ineff" || m.type === "f_early") && m.x >= fx0 && !Fr.events.some(function (e) { return e.type === m.type && fx0 + e.x === m.x; })); });
+    }
     S.an.marks = marks; S.an.order = order; S.an.reads = reads;
-    // apply: replace earlier automatic findings with this read
     Object.keys(S.an.autoSet).forEach(function (k) { delete S.sc[k]; delete S.an.auto[k]; }); S.an.autoSet = {};
     var merged = ABG.mergeReads(reads, vm), nb = Math.max.apply(null, reads.map(function (r) { return r.breaths || 0; }).concat([0]));
     Object.keys(merged).forEach(function (id) { var m = merged[id]; if (!S.sc[id]) { S.sc[id] = true; S.an.autoSet[id] = true; } S.an.auto[id] = { n: m.n, of: m.of, conf: m.conf, how: "auto-read" }; });
@@ -3084,6 +3227,7 @@ if (typeof module !== "undefined") module.exports = ABG;
     S.an.info = reads.some(function (r) { return !r.error; }) ? "auto-read from photo, " + nb + " breaths" : "";
     $("an-result").innerHTML = anCard(reads, merged, order);
     anDraw(); renderScList(); render();
+    try { $("an-result").scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {}
   }
   function anCard(reads, merged, order) {
     var byId = {}; ABG.SCALARS.forEach(function (f) { byId[f.id] = f; });
