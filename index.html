@@ -313,6 +313,14 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
 .range { -webkit-appearance: auto; appearance: auto; height: 28px; background: transparent; border: 0; padding: 0; }
 .btn.small { color: var(--accent-ink); }
 .btn.ghost.small { color: var(--accent); }
+/* v12: DOPES checklist */
+details.dopes { gap: 0; border-left: 4px solid var(--crit); }
+details.dopes > summary { cursor: pointer; font: 500 14px/1.4 var(--font-body); color: var(--ink); list-style: none; }
+details.dopes > summary::-webkit-details-marker { display: none; }
+details.dopes > summary::after { content: " ▸"; color: var(--muted); }
+details.dopes[open] > summary::after { content: " ▾"; }
+details.dopes > summary b { color: var(--crit); font-family: var(--font-display); }
+ol.plain.dl { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -487,6 +495,14 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
             <label class="lbl" for="i-flow" id="l-flow">Peak flow rate</label>
             <div class="inp" id="w-flow"><input id="i-flow" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">L/min</span></div>
           </div>
+<div data-vms="acpc prvc">
+            <label class="lbl" for="i-ti" id="l-ti">Ti <span class="opt">set insp. time</span></label>
+            <div class="inp" id="w-ti"><input id="i-ti" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">s</span></div>
+          </div>
+          <div data-vms="psv">
+            <label class="lbl" for="i-ets" id="l-ets">Cycle-off <span class="opt">ETS</span></label>
+            <div class="inp" id="w-ets"><input id="i-ets" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">%</span></div>
+          </div>
           <div>
             <label class="lbl" for="i-peep" id="l-peep">PEEP</label>
             <div class="inp" id="w-peep"><input id="i-peep" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">cmH₂O</span></div>
@@ -523,7 +539,23 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
             <div class="inp" id="w-ftot"><input id="i-ftot" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">/min</span></div>
           </div>
         </div>
-        <div class="hint" id="mv-hint">Enter what the ventilator shows; blanks are skipped. Plateau needs an inspiratory hold, total PEEP an expiratory hold.</div>
+        <div class="hint" id="mv-hint">Enter what the ventilator shows; blanks are skipped. Plateau needs an inspiratory hold, total PEEP an expiratory hold. Volumes typed in litres and height in metres are converted.</div>
+        <h4 class="subh">Oximetry, drive and effort (optional)</h4>
+        <div class="grid2">
+          <div>
+            <label class="lbl" for="i-spo2" id="l-spo2">SpO₂ <span class="opt">pulse oximeter</span></label>
+            <div class="inp" id="w-spo2"><input id="i-spo2" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">%</span></div>
+          </div>
+          <div>
+            <label class="lbl" for="i-p01" id="l-p01">P0.1 <span class="opt">drive</span></label>
+            <div class="inp" id="w-p01"><input id="i-p01" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">cmH₂O</span></div>
+          </div>
+          <div>
+            <label class="lbl" for="i-pocc" id="l-pocc">ΔPocc <span class="opt">exp. occlusion drop</span></label>
+            <div class="inp" id="w-pocc"><input id="i-pocc" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">cmH₂O</span></div>
+          </div>
+          </div>
+        <div class="hint">SpO₂ gives S/F and the oxygen saturation index without a gas (valid when SpO₂ ≤ 97%). P0.1 and ΔPocc need a breathing patient: P0.1 from the ventilator's P0.1 maneuver; ΔPocc is the largest drop below PEEP during an end-expiratory hold while the patient makes one effort (enter the size of the drop).</div>
         <h4 class="subh">Predicted body weight and target</h4>
         <div class="grid2">
           <div>
@@ -624,6 +656,18 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
 
   <!-- ============ VENTILATOR ============ -->
   <section class="panel" id="p-vent" hidden>
+    <details class="box dopes" id="dopes">
+      <summary><b>Sudden desaturation, high pressures or low BP?</b> DOPES checklist</summary>
+      <ol class="plain dl">
+        <li><b>First</b>: disconnect from the ventilator and bag with 100% O₂. This lets stacked breaths out and takes the ventilator out of the equation.</li>
+        <li><b>D · Displaced tube</b>: tube depth at the teeth or lips, ETCO₂ waveform, chest rise and breath sounds on both sides (right mainstem?).</li>
+        <li><b>O · Obstruction</b>: pass a suction catheter; look for kinks, biting, a mucus plug or secretions.</li>
+        <li><b>P · Pneumothorax</b> and other lung causes (bronchospasm, pulmonary edema, collapse, embolism): unequal breath sounds, ultrasound (no lung sliding), chest X-ray; decompress a tension pneumothorax.</li>
+        <li><b>E · Equipment</b>: disconnection, leak, O₂ supply, ventilator fault. If bagging fixes it, suspect the machine or circuit.</li>
+        <li><b>S · Stacked breaths</b> (auto-PEEP), mainly asthma or COPD: disconnect, press on the chest to empty it, then a lower rate and a longer expiration.</li>
+      </ol>
+      <div class="hint" style="margin-top:6px"><b>Pressures point the way.</b> Peak up, plateau normal: airway or tube (O, bronchospasm). Peak and plateau both up: lung, pleura or chest wall (pneumothorax, mainstem tube, edema, collapse, abdominal distension, auto-PEEP). Low pressures or a low VTE: leak, disconnection or a displaced tube.</div>
+    </details>
     <div class="box">
       <h3>Ventilator settings and readings</h3>
       <div id="vent-slot"></div>
@@ -642,11 +686,12 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
       <input type="file" id="sc-file" accept="image/*" multiple hidden>
       <div id="an-box" class="anbox" hidden>
         <div class="vsec" style="margin-top:14px">Read the photo automatically</div>
-        <div class="hint" style="margin-top:0">Drag a box around the flow tracing, then the pressure tracing, and tap <b>Read the photo</b>. The app finds each line and the zero axis by itself (even on a tilted photo), splits the waveform into breaths and checks every breath against the patterns below. Runs on this phone; nothing is uploaded.</div>
+        <div class="hint" style="margin-top:0">Drag a box around the flow tracing, then the pressure tracing (and the volume tracing if shown), and tap <b>Read the photo</b>. The app finds each line and the zero axis by itself (even on a tilted photo), splits the waveform into breaths and checks every breath against the patterns below. Runs on this phone; nothing is uploaded.</div>
         <div id="an-photos" class="chips"></div>
         <div class="seg full antr" role="group" aria-label="Tracing" style="margin-top:10px">
-          <button type="button" data-tr="flow" aria-pressed="true">Flow tracing</button>
-          <button type="button" data-tr="paw" aria-pressed="false">Pressure tracing</button>
+          <button type="button" data-tr="flow" aria-pressed="true">Flow</button>
+          <button type="button" data-tr="paw" aria-pressed="false">Pressure</button>
+          <button type="button" data-tr="vol" aria-pressed="false">Volume</button>
         </div>
         <div class="anstep" id="an-step"></div>
         <div class="ancv"><canvas id="an-cv"></canvas></div>
@@ -845,6 +890,11 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
         <li><b>Mechanical power</b> (J/min): volume control 0.098 × RR × VT (L) × (peak − ½ × driving pressure); pressure control 0.098 × RR × VT × (ΔPinsp + PEEP). Above 17 J/min was linked to higher mortality. <i>Serpa Neto, ICM 2018; Chiumello, Crit Care 2020.</i></li>
         <li><b>PEEP/FiO₂ tables</b> (ARDSNet), shown when P/F ≤ 300. Higher PEEP without prolonged recruitment maneuvers is suggested in moderate–severe ARDS (<i>ATS 2024</i>); ESICM 2023 made no recommendation either way.</li>
         <li><b>RSBI</b> on pressure support = rate ÷ VT (L); &lt; 105 favours weaning. <i>Yang &amp; Tobin, NEJM 1991.</i></li>
+        <li><b>Entry checks</b>: a TV, VTE or VTi of 2 or less is read as litres (0.45 → 450 mL); a height of 1.2–2.3 as metres and 48–90 as inches. The app flags Ftotal below the set rate, a plateau above the peak, VTE ≥ 20% above the set TV in volume control (stacked breaths or a sensor error), and VTE ≥ 15% below it (leak).</li>
+        <li><b>Ti and Te without an I:E</b>: in pressure control from the set Ti; in volume control Ti ≈ TV ÷ peak flow, which assumes square-wave flow and no inspiratory pause (a decelerating ramp or a pause makes Ti longer). This lets the app check expiratory time against 3 time constants.</li>
+        <li><b>SpO₂/FiO₂</b> (needs SpO₂ ≤ 97%): intubated ARDS range ≤ 315; mild 235–315, moderate 148–235, severe ≤ 148. <i>Global definition, 2023.</i> <b>Oxygen saturation index</b> = FiO₂ × mean airway pressure × 100 ÷ SpO₂; bands 5–7.5 / 7.5–12.3 / ≥ 12.3 are pediatric (PALICC) and only a guide in adults.</li>
+        <li><b>Drive and effort</b> (a breathing patient): <b>P0.1</b>, the airway pressure drop 100 ms into an occluded breath. &gt; 3.5 cmH₂O detected high effort (80% sensitive, 77% specific); ≤ 1.0 detected low effort (100% sensitive, 92% specific). <i>Telias, AJRCCM 2020.</i> Values displayed by different ventilators are not interchangeable. <b>ΔPocc</b>: the largest drop below PEEP during an end-expiratory hold over one effort. Pmus ≈ ¾ × |ΔPocc| (&gt; 10 high, &gt; 15 excessive); dynamic transpulmonary driving pressure ≈ (peak − PEEP) + ⅔ × |ΔPocc| (&gt; 15 high, &gt; 20 excessive). <i>Bertoni, Crit Care 2019.</i> ΔPocc can underestimate effort when auto-PEEP is present. When lung and diaphragm protection conflict, the lung comes first. <i>Goligher, AJRCCM 2020.</i></li>
+        <li><b>Weaning screen</b> (shown on low support with a gas or SpO₂ and a breathing patient): P/F ≥ 150 (or SpO₂ &gt; 90% on FiO₂ ≤ 40%), PEEP ≤ 8, FiO₂ ≤ 40–50%, rate ≤ 35, VT &gt; 5 mL/kg, RSBI ≤ 105, pH ≥ 7.30, P0.1 not high. These are indicators, not prerequisites; the clinical items (cause improving, stable BP, awake, cough, secretions) are the user's to judge. SBT: 30 min on PS 5–8 gave more successful extubations than 2 h of T-piece (82% vs 74%). <i>Subirà, JAMA 2019.</i> Pressure augmentation for the first SBT (conditional) and preventive NIV after extubation for high-risk patients (strong). <i>ACCP/ATS 2017.</i> NIV over HFNC when at high risk of extubation failure; HFNC over conventional O₂ when at low risk. <i>ERS 2022.</i> Cuff-leak test if at high risk of stridor, with steroids if the leak is small. <i>ATS/CHEST 2017.</i></li>
       </ul>
       <div class="small">Measure plateau and total PEEP with a short hold in a passive patient; active breathing makes them unreliable.</div>
     </div>
@@ -857,9 +907,11 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
         <li><b>Flow–time</b>: expiratory flow not returning to zero → auto-PEEP; small expiratory bumps without a breath → ineffective efforts (often over-assistance with hyperinflation); two breaths with no exhalation between → double triggering (stacked volume); sawtooth → secretions or circuit water; low, long concave expiratory tail → flow limitation; abrupt end of inspiratory flow with a dip or second breath → early cycling. <i>Tobin ch. 53; Brochard &amp; Lellouche ch. 8; Leatherman ch. 30.</i></li>
         <li><b>Pressure–time</b>: concave (scalloped) rise in volume control → flow starvation; big dip before the breath → trigger delay or auto-PEEP; breaths with no dip, fast and regular → auto-triggering (leak, water, cardiac oscillation, sensitive trigger); end-inspiratory spike on PS → delayed cycling; initial spike → rise time too fast; slow rounded rise → too slow; mid-breath dip or a stacked breath after a machine breath → reverse triggering. <i>Tobin ch. 53; Mancebo ch. 6; Brochard &amp; Lellouche ch. 8; Akoumianaki, Chest 2013.</i></li>
         <li><b>Automatic reading</b>: drag a box around each tracing. The app finds the trace by its colour (grid, numbers, axes and glare are greyish and ignored), follows it across the box one pixel column at a time, finds the zero-flow axis (allowing for a tilted photo; otherwise the level where inspired and expired volumes balance) and the PEEP baseline, then splits the trace into breaths and tests each breath. Taps are optional corrections: tap the trace to re-pick its colour, or tap the zero/PEEP line. A small flow blip that lines up with a pressure breath is counted as a delivered breath, not a missed effort. Flow: expiratory flow still below zero and still returning when the next breath starts (auto-PEEP); a bump toward zero that falls back without a breath, or a small inspiratory blip (ineffective effort; within the first fifth of expiration = early cycling); an expiration far shorter than usual with most of the volume not exhaled (double triggering); fine oscillation on the expiratory limb (sawtooth); most of expiration spent at 10–45% of peak expiratory flow (obstruction). Pressure: dip before the breath (patient-triggered; deep = trigger delay); no dip on PS (auto-triggering); concave rise in volume control (flow starvation); dip during the machine breath; overshoot, end-inspiratory spike or slow rise in pressure modes; breaths far closer together than usual (double triggering). Each finding is reported as "n of N breaths" with a confidence, and marked on the photo.</li>
-        <li><b>Limits</b>: one photo, no time scale unless you enter the seconds shown; screen glare, a tilted photo or overlapping curves reduce accuracy (the "line found in %" figure tells you). Leak on the volume curve and anything not listed are left to your eye. Tested on simulated screens: every pattern above detected, no false findings on 600 normal tracings. Always check the red marks against the photo.</li>
+        <li><b>Limits</b>: one photo, no time scale unless you enter the seconds shown; screen glare, a tilted photo or overlapping curves reduce accuracy (the "line found in %" figure tells you). Anything not listed is left to your eye. Tested on simulated screens: every pattern above detected, no false findings on 600 normal tracings. Always check the red marks against the photo.</li>
         <li><b>AI read (optional)</b>: sends the photo, the mode and the pattern definitions above to Anthropic's Claude using your own API key, as a second opinion. It is the only feature that sends data off the phone; the key is kept on the phone only if you tick "Remember".</li>
-        <li><b>Volume–time</b>: expiratory volume ending above zero → leak (cuff, circuit, bronchopleural fistula). <i>Tobin ch. 53.</i></li>
+        <li><b>Volume–time</b>: expiratory volume ending on a flat plateau above zero and then reset → leak (cuff, circuit, bronchopleural fistula); volume still falling when the next breath starts → air trapping; one breath far larger than the rest → stacking (double triggering). The reader checks these on the volume tracing when you box it. <i>Tobin ch. 53.</i></li>
+        <li><b>Stress index</b> (volume control, passive machine-timed breaths with square-wave flow): the shape of the pressure rise, fitted as P = a·t<sup>b</sup> + c after the first quarter of inflation. b &gt; 1.1 (upward concavity) suggests tidal overdistension; b &lt; 0.9 (downward concavity) suggests tidal recruitment; ≈ 1 is linear. In patient-triggered breaths the same concave shape is read as flow starvation instead. A stiff chest wall can raise the index; treat a photo estimate as a prompt to look at the ventilator. <i>Ranieri, Anesthesiology 2000; Terragni, Anesthesiology 2013.</i></li>
+        <li><b>DOPES</b> (the card at the top of the Ventilator tab) for sudden deterioration: Displaced tube, Obstruction, Pneumothorax, Equipment failure, Stacked breaths; disconnect and bag first.</li>
         <li><b>Severe airflow obstruction</b> (air trapping, obstructive flow or high resistance with normal compliance): aim for plateau &lt; 30 (≤ 25 ideal) and pH ≥ 7.2. Plateau &gt; 30 → less minute ventilation; pH &lt; 7.2 with plateau &lt; 25 → more; pH &lt; 7.2 with plateau 25–30 → no change. The app does not advise a faster rate while air trapping is present. <i>Leatherman, Tobin ch. 30.</i></li>
         <li><b>Cycle-off on PS</b>: COPD often needs a higher cycle-off (around 50% or more of peak flow) to avoid delayed cycling and missed triggers; stiff, restrictive lungs often do better with a low threshold. <i>Brochard &amp; Lellouche ch. 8.</i></li>
       </ul>
@@ -905,6 +957,12 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
         <li>Sinha P, et al. Physiologic analysis and clinical performance of the ventilatory ratio in ARDS. Am J Respir Crit Care Med. 2019;199(3):333–41.</li>
         <li>Balzer F, et al. Predictors of survival in critically ill patients with ARDS: an observational study. BMC Anesthesiol. 2016;16:108.</li>
         <li>Emeriaud G, et al. Executive summary of the Second International Guidelines for the Diagnosis and Management of Pediatric ARDS (PALICC-2). Pediatr Crit Care Med. 2023;24(2):143–68.</li>
+        <li>Telias I, et al. Airway occlusion pressure as an estimate of respiratory drive and inspiratory effort during assisted ventilation. Am J Respir Crit Care Med. 2020;201(9):1086–98.</li>
+        <li>Bertoni M, et al. A novel non-invasive method to detect excessively high respiratory effort and dynamic transpulmonary driving pressure during mechanical ventilation. Crit Care. 2019;23:346.</li>
+        <li>Goligher EC, et al. Lung- and diaphragm-protective ventilation. Am J Respir Crit Care Med. 2020;202(7):950–61.</li>
+        <li>Ranieri VM, et al. Pressure–time curve predicts minimally injurious ventilatory strategy in an isolated rat lung model. Anesthesiology. 2000;93(5):1320–8. Terragni PP, et al. Accuracy of plateau pressure and stress index to identify injurious ventilation in patients with acute respiratory distress syndrome. Anesthesiology. 2013;119(4):880–9.</li>
+        <li>Ouellette DR, et al. Liberation from mechanical ventilation in critically ill adults: an official ACCP/ATS clinical practice guideline. Chest. 2017;151(1):166–80. Girard TD, et al. ATS/CHEST guideline (rehabilitation protocols, ventilator liberation protocols and cuff leak tests). Am J Respir Crit Care Med. 2017;195(1):120–33.</li>
+        <li>Subirà C, et al. Effect of pressure support vs T-piece ventilation strategies during spontaneous breathing trials on successful extubation. JAMA. 2019;321(22):2175–82.</li>
         <li>Yang KL, Tobin MJ. A prospective study of indexes predicting the outcome of trials of weaning from mechanical ventilation. N Engl J Med. 1991;324(21):1445–50.</li>
         <li>Gilbert R, Keighley JF. The arterial/alveolar oxygen tension ratio. Am Rev Respir Dis. 1974;109(1):142–5.</li>
         <li>Abbott i-STAT arterial reference ranges; MSD Manual Professional, Metabolic Alkalosis (2025).</li>
@@ -914,7 +972,7 @@ ol.sugg.nonum { list-style: none; padding-left: 0; }
 
   <footer>
     <div class="disc"><b>Clinical decision aid.</b> For trained clinicians. It does not replace clinical judgment or your institution's protocols. Read the result with the patient and the history; recheck SpO₂ or the ABG after every change in oxygen.</div>
-    <div>TIMPEX Gas &amp; Vent · v11 · 22 Nov 2026 · <span id="app-hint"></span></div>
+    <div>TIMPEX Gas &amp; Vent · v12 · 22 Nov 2026 · <span id="app-hint"></span></div>
   </footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1331,8 +1389,21 @@ var ABG = (function () {
   }
 
   function pos_(v) { return v != null && isFinite(v) && v > 0 ? v : null; }
+  // Fix common entry slips: volumes typed in litres, height in metres or inches. Returns a copy + notes.
+  function normalizeVent(s) {
+    if (!s) return { s: s, notes: [] };
+    var o = {}, notes = []; for (var k in s) o[k] = s[k];
+    ["vt", "vte", "vti"].forEach(function (k) {
+      var v = num_(o[k]); if (v != null && v > 0 && v <= 2) { o[k] = Math.round(v * 1000); notes.push((k === "vt" ? "TV" : k === "vte" ? "VTE" : "VTi") + " read as " + o[k] + " mL (typed in litres)"); }
+    });
+    var h = num_(o.height);
+    if (h != null && h >= 1.2 && h <= 2.3) { o.height = Math.round(h * 100); notes.push("Height read as " + o.height + " cm (typed in metres)"); }
+    else if (h != null && h >= 48 && h <= 90) { o.height = Math.round(h * 2.54); notes.push("Height read as " + o.height + " cm (typed in inches)"); }
+    return { s: o, notes: notes };
+  }
   function ventCalc(s, ab, paco2, pao2, fio2Pct, retainer) {
     if (!s || s.mode !== "mv") return null;
+    s = normalizeVent(s).s;
     var vm = VMODES[s.vmode] ? s.vmode : "acvc", o = { vmode: vm, pbw: pbw(s.height, s.sex) };
     var vte = pos_(s.vte), vti = pos_(s.vti), vtSet = isVC(vm) || vm === "prvc" ? pos_(s.vt) : null;
     var pinsp = vm === "acpc" || vm === "psv" ? pos_(s.pinsp) : null;
@@ -1354,6 +1425,7 @@ var ABG = (function () {
     o.peepEff = ptot != null && peep != null && ptot >= peep ? ptot : peep;
     if (ptot != null && peep != null) o.autoPeep = ptot - peep;
     if (ppl != null && o.peepEff != null && ppl < o.peepEff) o.badPlat = true;
+    if (ppk != null && ppl != null && ppl > ppk + 1) { o.badPeak = true; ppl = null; }
     if (ppl != null && o.peepEff != null && !o.badPlat) o.dp = ppl - o.peepEff;
     else if (o.badPlat) {}
     else if (vm === "acpc" && pinsp != null) { o.dp = pinsp; o.dpEst = "Pinsp"; }
@@ -1367,7 +1439,35 @@ var ABG = (function () {
       o.ie = s.ie;
       if (o.f != null) { var cyc = 60 / o.f; o.ti = cyc * s.ie.i / (s.ie.i + s.ie.e); o.te = cyc * s.ie.e / (s.ie.i + s.ie.e); }
     }
+    if (o.ie) o.tiSrc = "I:E " + o.ie.text;
+    // No I:E: pressure modes use the set inspiratory time; volume control uses TV ÷ peak flow (constant, square-wave flow)
+    if (!o.ie && vm !== "psv" && o.f != null) {
+      var cycD = 60 / o.f, tiD = null, how = "";
+      if (pos_(s.ti) != null && s.ti < 10) { tiD = s.ti; how = "set Ti"; }
+      else if (isVC(vm) && vtSet != null && pos_(s.flow) != null) { tiD = (vtSet / 1000) / (s.flow / 60); how = "TV ÷ peak flow"; }
+      if (tiD != null && tiD > 0 && tiD < cycD) { o.ti = tiD; o.te = cycD - tiD; o.tiSrc = how; o.ieDerived = "1:" + fmt(o.te / o.ti, 1); }
+      else if (tiD != null && tiD >= cycD) o.tiLong = { ti: tiD, cyc: cycD, how: how };
+    }
+    if (vm === "psv" && num_(s.ets) != null && s.ets > 0 && s.ets < 90) o.ets = s.ets;
     if (vte != null && vti != null && vti > 0) o.leak = (vti - vte) / vti * 100;
+    if (vte != null && vtSet != null && isVC(vm)) o.vtDiff = (vte - vtSet) / vtSet * 100;
+    if (ftot != null && bur != null && ftot < bur - 1) o.fLow = true;
+    // Effort and drive (assisted breathing): P0.1; end-expiratory occlusion ΔPocc → Pmus ≈ 0.75 × |ΔPocc|,
+    // dynamic transpulmonary driving pressure ≈ (peak − PEEP) + 0.66 × |ΔPocc| (Bertoni 2019)
+    var p01 = num_(s.p01); if (p01 != null) o.p01 = Math.abs(p01);
+    var pocc = num_(s.pocc);
+    if (pocc != null && pocc !== 0) {
+      o.pocc = -Math.abs(pocc); o.pmus = 0.75 * Math.abs(pocc);
+      var dpaw = ppk != null && peep != null ? ppk - peep : (vm === "psv" || vm === "acpc") && pinsp != null ? pinsp : null;
+      if (dpaw != null) o.dpl = dpaw + 0.66 * Math.abs(pocc);
+    }
+    // Pulse oximetry: SpO2/FiO2 and oxygen saturation index
+    var spo2 = num_(s.spo2);
+    if (spo2 != null && spo2 > 50 && spo2 <= 100 && fio2Pct) {
+      o.spo2 = spo2; o.sf = spo2 / (fio2Pct / 100);
+      if (pos_(s.mawp) != null && spo2 <= 97) o.osi = (fio2Pct / 100) * s.mawp * 100 / spo2;
+      if (spo2 <= 97) o.sfSev = o.sf <= 148 ? "severe" : o.sf <= 235 ? "moderate" : o.sf <= 315 ? "mild" : null;
+    }
     // Mechanical power, J/min: volume control 0.098·RR·VT·(Ppeak − ½·ΔP); pressure control 0.098·RR·VT·(ΔPinsp + PEEP)
     var vtL = o.vt != null ? o.vt / 1000 : null;
     if (vtL != null && o.f != null) {
@@ -1378,6 +1478,9 @@ var ABG = (function () {
     if (pos_(s.mawp) != null && fio2Pct != null && num_(pao2) != null && pao2 > 0) { o.oi = (fio2Pct / 100) * s.mawp * 100 / pao2; o.oiG = oiGrade(o.oi); }
     var pf = num_(pao2) != null && fio2Pct ? pao2 / (fio2Pct / 100) : null;
     o.pf = pf; o.ardsRange = pf != null && pf <= 300;
+    o.peep = peep; o.fio2Pct = fio2Pct;
+    if (pf == null && o.sf != null && o.spo2 <= 97 && o.sf <= 315) o.ardsRangeSF = true;   // global ARDS definition 2023
+    o.wean = weanScreen(o, s, ab, fio2Pct);
     if (o.ardsRange) o.peepTab = peepTable(fio2Pct);
     o.target = num_(s.pco2Target) != null ? { value: s.pco2Target, why: "custom" } : targetPco2(ab, retainer, o.ardsRange, num_(paco2));
     if (o.target && vm !== "psv" && o.f != null && num_(paco2) != null && o.target.value > 0) {
@@ -1386,6 +1489,46 @@ var ABG = (function () {
     }
     return o;
   }
+  // Readiness for a spontaneous breathing trial (numbers only; clinical items listed as reminders)
+  function weanScreen(o, s, ab, fio2Pct) {
+    var C = [], add = function (k, label, ok, val) { C.push({ k: k, label: label, ok: ok, val: val }); };
+    if (o.pf != null) add("ox", "Oxygenation: P/F ≥ 150", o.pf >= 150, "P/F " + Math.round(o.pf));
+    else if (o.spo2 != null && fio2Pct != null) add("ox", "Oxygenation: SpO₂ > 90% on FiO₂ ≤ 40%", o.spo2 > 90 && fio2Pct <= 40, "SpO₂ " + fmt(o.spo2, 0) + "% on " + fmt(fio2Pct, 0) + "%");
+    if (o.peep != null) add("peep", "PEEP ≤ 8", o.peep <= 8, "PEEP " + fmt(o.peep, 0));
+    if (fio2Pct != null) add("fio2", "FiO₂ ≤ 40–50%", fio2Pct <= 50, "FiO₂ " + fmt(fio2Pct, 0) + "%");
+    var ft = pos_(s.ftot); if (ft != null) add("rr", "Rate ≤ 35/min", ft <= 35, fmt(ft, 0) + "/min");
+    if (o.vtkg != null && pos_(s.vte) != null) add("vt", "VT > 5 mL/kg PBW", o.vtkg > 5, fmt(o.vtkg, 1) + " mL/kg");
+    if (o.rsbi != null) add("rsbi", "RSBI ≤ 105", o.rsbi <= 105, String(Math.round(o.rsbi)));
+    if (ab && !ab.errors.length) add("ph", "No significant respiratory acidosis (pH ≥ 7.30)", ab.ph >= 7.30, "pH " + fmt(ab.ph, 2));
+    if (o.p01 != null) add("p01", "P0.1 not high (≤ 3.5)", o.p01 <= 3.5, fmt(o.p01, 1));
+    var known = C.length, met = C.filter(function (c) { return c.ok; }).length;
+    var lowSupport = (o.vmode === "psv" && (pos_(s.pinsp) == null || s.pinsp <= 10)) || (o.peep != null && o.peep <= 8 && fio2Pct != null && fio2Pct <= 50);
+    var hasOx = C.some(function (c) { return c.k === "ox"; });
+    var spont = o.vmode === "psv" || (o.trig != null && o.trig >= 1);          // breathing on their own
+    var entryErr = !!(o.fLow || o.badPeak || o.badPlat || o.tiLong);
+    return { items: C, known: known, met: met, allMet: known >= 4 && met === known, relevant: lowSupport && hasOx && spont && !entryErr };
+  }
+  // Stress index (Ranieri 2000): during constant-flow, passive inflation P(t) = a·t^b + c.
+  // b > 1.1 upward concavity (tidal overdistension), b < 0.9 downward concavity (tidal recruitment), ≈ 1 linear.
+  // The fit skips the first 25% of inflation (the resistive step) and the last 5%; c is free, b by grid search.
+  function stressIndex(p, s0, s1) {
+    if (s1 - s0 < 12) return null;
+    var a0 = Math.round(s0 + 0.25 * (s1 - s0)), a1 = Math.round(s0 + 0.95 * (s1 - s0)), T = [], P = [];
+    for (var i = a0; i <= a1; i++) { T.push((i - s0) / (s1 - s0)); P.push(p[i]); }
+    if (T.length < 8 || !(P[P.length - 1] > P[0])) return null;
+    var best = null;
+    for (var bb = 0.5; bb <= 2.0001; bb += 0.01) {
+      var X = T.map(function (t) { return Math.pow(t, bb); }), mx = 0, my = 0, m = X.length;
+      for (var k = 0; k < m; k++) { mx += X[k]; my += P[k]; } mx /= m; my /= m;
+      var sxy = 0, sxx = 0; for (var k2 = 0; k2 < m; k2++) { sxy += (X[k2] - mx) * (P[k2] - my); sxx += (X[k2] - mx) * (X[k2] - mx); }
+      if (!(sxx > 0)) continue;
+      var aa = sxy / sxx, cc = my - aa * mx, sse = 0; if (!(aa > 0)) continue;
+      for (var k3 = 0; k3 < m; k3++) { var r = P[k3] - (aa * X[k3] + cc); sse += r * r; }
+      if (!best || sse < best.sse) best = { b: bb, sse: sse };
+    }
+    return best ? Math.round(best.b * 100) / 100 : null;
+  }
+
   // Kept for older callers: short summary lines
   function ventLines(v, s) {
     if (!v) return [];
@@ -1401,11 +1544,18 @@ var ABG = (function () {
   function ventInterp(v, sp, ab) {
     if (!v || !sp) return [];
     var L = [], add = function (key, text, tone, msg) { L.push({ key: key, text: text, tone: tone || "", msg: msg !== false }); };
-    var ppl = num_(sp.pplat), ppk = num_(sp.ppeak);
+    var ppl = v.badPeak ? null : num_(sp.pplat), ppk = num_(sp.ppeak);
     var p = ab ? ab.primary : null, ex = ab && ab.check ? ab.check.extra : null;
     var metAcid = p === "met-acid" || p === "mixed-acid" || ex === "met-acid";
     var stiff = v.cstat != null ? v.cstat < 40 : ppl != null && ppl > 30 ? true : null;
     if (v.badPlat) add("check", "Plateau is below PEEP: recheck the plateau (inspiratory hold) and PEEP entries.", "warn");
+    normalizeVent(sp).notes.forEach(function (t) { add("check", "Entry: " + t + ".", "", false); });
+    if (v.badPeak) add("check", "Plateau is above the peak pressure: recheck both (the plateau cannot exceed the peak).", "warn", false);
+    if (v.fLow) add("check", "Ftotal " + fmt(sp.ftot, 0) + " is below the set rate " + fmt(v.bur, 0) + ": in assist-control the total rate cannot be below BUR; recheck the entries.", "warn", false);
+    if (v.vtDiff != null && v.vtDiff >= 20) add("vtdiff", "VTE is " + fmt(v.vtDiff, 0) + "% above the set TV in volume control: breath stacking (double triggering), a flow-sensor error, or a mode with adaptive volume; check the screen.", "warn");
+    else if (v.vtDiff != null && v.vtDiff <= -15) add("vtdiff", "VTE is " + fmt(-v.vtDiff, 0) + "% below the set TV: leak (cuff, circuit, chest-tube air leak) or a flow-sensor error.", "warn");
+    if (v.tiLong) add("check", "Inspiratory time ≈ " + fmt(v.tiLong.ti, 1) + " s (" + v.tiLong.how + ") is longer than the breath cycle " + fmt(v.tiLong.cyc, 1) + " s at this rate: recheck TV, peak flow, Ti or rate.", "warn", false);
+    if (v.ieDerived && v.te != null) add("te0", "No I:E entered: Ti ≈ " + fmt(v.ti, 2) + " s from " + v.tiSrc + (v.tiSrc === "TV ÷ peak flow" ? " (assumes square-wave flow and no inspiratory pause)" : "") + ", so I:E ≈ " + v.ieDerived + ".", "", false);
     var resist = v.raw != null ? v.raw > 15 : v.gap != null ? v.gap > 10 : null;
     var cTxt = v.cstat != null ? " (Cstat " + fmt(v.cstat, 0) + " mL/cmH₂O" + (v.cstatEst ? ", estimated" : "") + ")" : "";
     var rTxt = v.gap != null ? " (peak − plateau " + fmt(v.gap, 0) + ")" : "";
@@ -1449,6 +1599,13 @@ var ABG = (function () {
     if (v.vr != null && v.vr >= 2) add("vr", "Ventilatory ratio " + fmt(v.vr, 1) + " (normal ≈ 1): high dead space or CO₂ production.", "warn");
     if (v.oi != null) add("oi", "Oxygenation index " + fmt(v.oi, 1) + ": " + v.oiG.label + (v.oi >= 15 ? "; ≥ 15 is linked to higher mortality in adult ARDS" : "") + ".", v.oiG.tone, false);
     if (v.mp != null && v.mp > 17) add("mp", "Mechanical power " + fmt(v.mp, 0) + " J/min is above 17 (linked to higher mortality).", "warn");
+    if (v.p01 != null) add("p01", "P0.1 " + fmt(v.p01, 1) + " cmH₂O: " + (v.p01 > 3.5 ? "high respiratory drive and likely high effort (> 3.5)." : v.p01 < 1 ? "low drive (< 1): likely over-assisted or oversedated; risk of diaphragm disuse." : "drive in the usual range (1–3.5)."), v.p01 > 3.5 || v.p01 < 1 ? "warn" : "ok");
+    if (v.pmus != null) add("pmus", "Occlusion ΔPocc −" + fmt(Math.abs(v.pocc), 0) + " → Pmus ≈ " + fmt(v.pmus, 0) + " cmH₂O" + (v.pmus > 15 ? ": excessive inspiratory effort (> 15)" : v.pmus > 10 ? ": high inspiratory effort (> 10)" : v.pmus < 3 ? ": very low effort (possible over-assistance)" : ": effort in an acceptable range") +
+      (v.dpl != null ? "; dynamic transpulmonary driving pressure ≈ " + fmt(v.dpl, 0) + (v.dpl > 20 ? " (> 20: excessive lung stress)" : v.dpl > 15 ? " (> 15: high lung stress)" : "") : "") + ".", v.pmus > 10 || (v.dpl != null && v.dpl > 15) || v.pmus < 3 ? "warn" : "ok");
+    if (v.sf != null && v.pf == null) add("sf", "SpO₂/FiO₂ " + Math.round(v.sf) + (v.spo2 > 97 ? " (SpO₂ > 97%: not valid for grading; wean FiO₂ and recheck)." : v.sfSev ? ": in the " + v.sfSev + " ARDS range by the global definition (S/F ≤ 315 with SpO₂ ≤ 97%)." : " (above 315)."), v.sfSev ? "warn" : "", v.spo2 <= 97);
+    if (v.osi != null) add("osi", "Oxygen saturation index " + fmt(v.osi, 1) + (v.osi >= 12.3 ? " (≥ 12.3, severe range in PALICC)" : v.osi >= 7.5 ? " (7.5–12.3, moderate range in PALICC)" : v.osi >= 5 ? " (5–7.5, mild range in PALICC)" : " (< 5)") + ".", v.osi >= 7.5 ? "warn" : "", false);
+    var si = sp.scalars && sp.scalars.si;
+    if (si && si.value != null) add("si", "Stress index ≈ " + fmt(si.value, 2) + " on " + si.n + " passive volume-control breaths (photo estimate): " + (si.verdict === "over" ? "upward concavity (> 1.1), suggests tidal overdistension." : si.verdict === "recruit" ? "downward concavity (< 0.9), suggests tidal recruitment (PEEP may be low)." : "straight rise (0.9–1.1), no sign of overdistension or tidal recruitment.") + (si.flowOk === false ? " Flow was not square, so the index is not valid here." : ""), si.verdict !== "ok" && si.flowOk !== false ? "warn" : "ok", si.flowOk !== false);
     if (v.rsbi != null) add("rsbi", "RSBI " + Math.round(v.rsbi) + (v.rsbi < 105 ? " (< 105): favours weaning if on minimal support." : " (≥ 105): rapid shallow breathing."), v.rsbi < 105 ? "ok" : "warn");
     if (v.peepTab && !v.peepTab.below && num_(sp.peep) != null)
       add("peeptab", "PEEP " + fmt(sp.peep, 0) + " at FiO₂ " + v.peepTab.fio2 + "%: ARDSNet lower-PEEP table " + rangeTxt(v.peepTab.lo) + ", higher-PEEP table " + rangeTxt(v.peepTab.hi) + ".", "", false);
@@ -1546,10 +1703,13 @@ var ABG = (function () {
     var ids = scalarIds(sp);
     var au = sp && sp.scalars && sp.scalars.auto ? sp.scalars.auto : {}, hdr = "Scalars:";
     if (sp && sp.scalars && sp.scalars.autoInfo) hdr = "Scalars (" + sp.scalars.autoInfo + "; confirm at the bedside):";
+    var si = sp && sp.scalars && sp.scalars.si, siL = si && si.value != null && si.flowOk !== false
+      ? "• Stress index ≈ " + fmt(si.value, 2) + " (" + si.n + " passive breaths): " + (si.verdict === "over" ? "upward concavity, tidal overdistension" : si.verdict === "recruit" ? "downward concavity, tidal recruitment" : "linear, no overdistension or tidal recruitment") : null;
     if (ids.length) return [hdr].concat(ids.map(function (id) {
       var a = au[id];
       return "• " + SC[id].title + (a ? " (" + a.how + (a.n != null ? " " + a.n + "/" + a.of + " breaths" : a.conf ? ", " + a.conf + " confidence" : "") + ")" : "") + ": " + lc(SC[id].means);
-    }));
+    })).concat(siL ? [siL] : []);
+    if (siL && sp.scalars.autoInfo && !sp.scalars.normal) return [hdr, "• No asynchrony pattern detected on the photo", siL];
     if (sp && sp.scalars && sp.scalars.autoInfo && !sp.scalars.normal) return [hdr, "• No asynchrony pattern detected on the photo"];
     if (sp && sp.scalars && sp.scalars.normal) return ["Scalars: no asynchrony, air trapping or leak seen"];
     return null;
@@ -1702,7 +1862,7 @@ var ABG = (function () {
     var cyc = []; for (var k = 1; k < br.length; k++) cyc.push(br[k].foot - br[k - 1].foot);
     var cs = cyc.slice().sort(function (a, b) { return a - b; });
     var medCyc = cs.length ? cs[Math.min(cs.length - 1, Math.floor(0.75 * cs.length))] : n / br.length;
-    var c = { trig: 0, nodip: 0, p_dip: 0, p_scoop: 0, p_over: 0, f_late: 0, p_slow: 0, f_double: 0, middip: 0, p_rev: 0 };
+    var c = { trig: 0, nodip: 0, p_dip: 0, p_scoop: 0, p_over: 0, f_late: 0, p_slow: 0, f_double: 0, middip: 0, p_rev: 0 }, sis = [];
     br.forEach(function (x, k) {
       var w = Math.max(4, Math.round(0.15 * medCyc)), lo = amin(p, Math.max(0, x.foot - w), Math.min(n - 1, x.foot + 2));
       x.dip = b - lo.v;
@@ -1713,11 +1873,15 @@ var ABG = (function () {
       var pk = amax(p, x.foot, x.end), len = x.end - x.foot;
       if (len < 6) return;
       if (isVC(vm)) {
-        // scooped rise: curve sags below the straight line from foot to peak
+        // scooped rise: curve sags below the straight line from foot to peak.
+        // In a patient-triggered breath this is flow starvation; in a passive (machine-timed) breath it is the
+        // stress-index shape (upward concavity = tidal overdistension), so passive breaths go to the stress index.
         var s0 = x.foot, s1 = pk.i, dsum = 0, dn = 0;
         if (s1 - s0 >= 6) {
           for (var q = Math.round(s0 + 0.2 * (s1 - s0)); q <= Math.round(s0 + 0.8 * (s1 - s0)); q++) { var line = p[s0] + (p[s1] - p[s0]) * (q - s0) / (s1 - s0); dsum += (line - p[q]) / Ap; dn++; }
-          if (dn && dsum / dn > 0.07) { c.p_scoop++; R.events.push({ x: Math.round((s0 + s1) / 2), type: "p_scoop" }); }
+          var passive = x.trig === false && x.dip < Math.max(0.02 * Ap, noise);
+          if (passive) { var si = stressIndex(p, s0, s1); if (si != null) { x.si = si; sis.push(si); } }
+          else if (dn && dsum / dn > 0.07) { c.p_scoop++; R.events.push({ x: Math.round((s0 + s1) / 2), type: "p_scoop" }); }
           // dip during the machine breath (patient effort mid-breath)
           var Wd = Math.max(4, Math.round(0.3 * (s1 - s0)));
           for (var q2 = s0 + 2; q2 < s1 - 1; q2++) {
@@ -1753,9 +1917,50 @@ var ABG = (function () {
     else if (vm !== "psv" && R.rate != null && o.bur && R.rate > o.bur + 2 && untrigShare >= 0.5) R.findings.p_auto = { n: c.nodip, of: known };
     else if (vm !== "psv" && untrigShare >= 0.8) R.notes.push("No trigger dip before most breaths: machine-timed breaths (or auto-triggering if the rate is above the set rate).");
     R.triggered = c.trig; R.untriggered = c.nodip;
+    if (sis.length >= 2) { var smd = median_(sis); R.si = { value: smd, n: sis.length, of: N, verdict: smd > 1.1 ? "over" : smd < 0.9 ? "recruit" : "ok" }; }
     [["p_dip", 1], ["p_scoop", 1], ["p_over", 1], ["f_late", 1], ["p_slow", 1], ["f_double", 1], ["p_rev", 1]].forEach(function (z) { if (c[z[0]]) R.findings[z[0]] = { n: c[z[0]], of: N }; });
     if (c.middip && !c.p_rev) R.notes.push("A dip during the breath in " + c.middip + " of " + N + " breaths: the patient is pulling during the machine breath (flow starvation or effort out of phase).");
     Object.keys(R.findings).forEach(function (k) { R.findings[k].conf = confOf(R.findings[k].n, R.findings[k].of); });
+    return R;
+  }
+  // Volume tracing (Tobin ch. 53): a flat expiratory plateau above zero that is reset at the next breath = leak;
+  // volume still falling when the next breath starts = air trapping; a breath far larger than the rest = stacking.
+  function analyzeVolume(raw, o) {
+    o = o || {};
+    var n = raw.length, R = { kind: "vol", findings: {}, events: [], notes: [] };
+    if (n < 40) { R.error = "The box is too narrow: include at least three breaths."; return R; }
+    var v = movAvg(raw, 3), noise = o.noise != null ? o.noise : 1.2, srt = v.slice().sort(function (a, b) { return a - b; });
+    var base = srt[Math.floor(0.03 * n)], p90 = srt[Math.floor(0.9 * n)], A = p90 - base;
+    if (!(A > 6 * noise)) { R.error = "No clear breaths on the volume tracing."; return R; }
+    var thr = base + 0.3 * A, lo = base + 0.15 * A, starts = [], up = v[0] > thr, i;
+    for (i = 1; i < n; i++) {
+      if (!up && v[i] > thr && v[i - 1] <= thr) {   // foot = lowest point since the previous peak (robust to noise)
+        var from = starts.length ? amax(v, starts[starts.length - 1], i).i : 0; starts.push(amin(v, from, i).i); up = true;
+      }
+      else if (up && v[i] < lo) up = false;
+    }
+    if (starts.length < 3) { R.error = "Fewer than three breaths on the volume tracing: widen the box."; return R; }
+    var br = []; for (var k = 0; k < starts.length; k++) { var e = k + 1 < starts.length ? starts[k + 1] : n - 1, pk = amax(v, starts[k], e); br.push({ s: starts[k], e: e, pk: pk.i, pv: pk.v - base, last: k + 1 === starts.length }); }
+    R.breaths = br.length;
+    var medPk = median_(br.map(function (b) { return b.pv; })), cnt = { v_leak: 0, f_trap: 0, f_double: 0 }, of = 0;
+    br.forEach(function (b) {
+      if (b.pv > 1.6 * medPk) { cnt.f_double++; R.events.push({ x: b.pk, type: "f_double" }); }
+      if (b.last) return;
+      var f0 = b.e, pre = f0, dur = f0 - b.pk; if (dur < 8) return;
+      of++;
+      // a reset: a near-vertical fall to the baseline just before the next breath
+      var L = Math.max(5, Math.round(0.1 * dur)), mx = amax(v, Math.max(b.pk + 1, f0 - L), f0);
+      if (mx.v - v[f0] > 0.12 * medPk) pre = mx.i;
+      var endLv = (v[pre] - base) / medPk, m = Math.max(3, Math.round(0.15 * (pre - b.pk))), slope = (v[pre] - v[Math.max(b.pk, pre - m)]) / medPk;
+      if (endLv <= 0.1) return;
+      if (slope < -0.04) { cnt.f_trap++; R.events.push({ x: pre, type: "f_trap" }); }
+      else { cnt.v_leak++; R.events.push({ x: pre, type: "v_leak" }); }
+    });
+    of = of || 1;
+    if (cnt.v_leak) R.findings.v_leak = { n: cnt.v_leak, of: of };
+    if (cnt.f_trap) R.findings.f_trap = { n: cnt.f_trap, of: of };
+    if (cnt.f_double) R.findings.f_double = { n: cnt.f_double, of: br.length };
+    Object.keys(R.findings).forEach(function (k3) { R.findings[k3].conf = confOf(R.findings[k3].n, R.findings[k3].of); });
     return R;
   }
   // A flow "blip" that sits inside a pressure breath is a delivered (small) breath, not a missed effort.
@@ -1790,13 +1995,16 @@ var ABG = (function () {
   // Message blocks for an intubated patient (user's layout)
   function ventBlocks(sp, v, fio2Pct, ab) {
     if (!sp || sp.mode !== "mv") return [];
-    v = v || {};
+    v = v || {}; var sp0 = sp; sp = normalizeVent(sp).s;
     var vm = VMODES[sp.vmode] ? sp.vmode : "acvc", B = [];
     var A = ["Present settings:", "Mode: " + VMODES[vm], "FiO₂: " + (fio2Pct != null ? fmt(fio2Pct, 0) + "%" : "—")];
     if ((isVC(vm) || vm === "prvc") && pos_(sp.vt) != null) A.push("TV: " + fmt(sp.vt, 0) + " mL" + (v.vtSetKg != null ? " (" + fmt(v.vtSetKg, 1) + " mL/kg PBW)" : ""));
     if ((vm === "acpc" || vm === "psv") && pos_(sp.pinsp) != null) A.push((vm === "psv" ? "PS: " : "Pinsp: ") + fmt(sp.pinsp, 0) + " cmH₂O above PEEP");
     if (vm !== "psv" && pos_(sp.rr) != null) A.push("BUR: " + fmt(sp.rr, 0) + "/min");
     if (v.ie) A.push("I:E: " + v.ie.text);
+    else if (v.ieDerived) A.push("I:E: ≈ " + v.ieDerived + " (calculated from " + v.tiSrc + ")");
+    if (vm !== "psv" && pos_(sp.ti) != null) A.push("Ti: " + fmt(sp.ti, 2) + " s");
+    if (v.ets != null) A.push("Cycle-off (ETS): " + fmt(v.ets, 0) + "%");
     if (isVC(vm) && pos_(sp.flow) != null) A.push("Peak flow rate: " + fmt(sp.flow, 0) + " L/min");
     if (num_(sp.peep) != null) A.push("PEEP: " + fmt(sp.peep, 0) + " cmH₂O");
     B.push(A);
@@ -1809,11 +2017,13 @@ var ABG = (function () {
     if (pos_(sp.vti) != null) P.push("VTi: " + fmt(sp.vti, 0) + " mL" + (v.leak != null && v.leak >= 10 ? " (VTE " + fmt(v.leak, 0) + "% lower: leak?)" : ""));
     if (pos_(sp.ftot) != null) P.push("Ftotal: " + fmt(sp.ftot, 0) + "/min" + (v.trig != null && v.trig >= 2 && vm !== "psv" ? " (" + fmt(v.trig, 0) + " above BUR)" : ""));
     if (v.dp != null) P.push("Driving pressure: " + fmt(v.dp, 0) + " cmH₂O" + (v.dp > 15 ? " " + UP : "") + (v.dpEst ? " (≈ " + v.dpEst + "; confirm with a plateau)" : " (goal ≤ 15)"));
-    else P.push(v.badPlat ? "Driving pressure: check entries (plateau below PEEP)" : "Driving pressure: needs plateau pressure (inspiratory hold)");
+    else P.push(v.badPlat ? "Driving pressure: check entries (plateau below PEEP)" : v.badPeak ? "Driving pressure: check entries (plateau above peak)" : "Driving pressure: needs plateau pressure (inspiratory hold)");
     B.push(P);
     var C = [];
     if (v.pbw) C.push("PBW " + fmt(v.pbw, 1) + " kg (6 mL/kg = " + Math.round(6 * v.pbw) + " mL)");
     if (v.oi != null) C.push("Oxygenation index: " + fmt(v.oi, 1) + " (Normal Value: < 4); interpretation: " + v.oiG.label + (v.oi >= 15 ? "; ≥ 15 is linked to higher mortality in adult ARDS" : ""));
+    if (v.sf != null) C.push("SpO₂/FiO₂: " + Math.round(v.sf) + " (SpO₂ " + fmt(v.spo2, 0) + "%)" + (v.spo2 > 97 ? "; not valid above 97%" : v.sfSev ? " " + DOWN + "; " + v.sfSev + " ARDS range if the global definition applies (≤ 315)" : ""));
+    if (v.osi != null) C.push("Oxygen saturation index: " + fmt(v.osi, 1) + " (Normal Value: < 5)");
     if (C.length) B.push(C);
     var M = ["Mechanics"];
     if (v.cstat != null) M.push("Static compliance: " + fmt(v.cstat, 0) + " mL/cmH₂O" + (v.cstat < 40 ? " " + DOWN : "") + (v.cstatEst ? " (estimated; normal 40–100)" : " (normal 40–100)"));
@@ -1825,17 +2035,26 @@ var ABG = (function () {
     if (v.mp != null) M.push("Mechanical power: " + fmt(v.mp, 0) + " J/min" + (v.mp > 17 ? " " + UP : "") + " (> 17 linked to higher mortality)");
     if (v.rsbi != null) M.push("RSBI: " + Math.round(v.rsbi) + " (< 105 favours weaning)");
     if (M.length > 1) B.push(M);
+    var E = ["Effort and drive"];
+    if (v.p01 != null) E.push("P0.1: " + fmt(v.p01, 1) + " cmH₂O" + (v.p01 > 3.5 ? " " + UP : v.p01 < 1 ? " " + DOWN : "") + " (usual 1–3.5)");
+    if (v.pmus != null) E.push("ΔPocc: −" + fmt(Math.abs(v.pocc), 0) + " cmH₂O → Pmus ≈ " + fmt(v.pmus, 0) + (v.pmus > 10 ? " " + UP : "") + " (> 10 high)" + (v.dpl != null ? "; ΔPL,dyn ≈ " + fmt(v.dpl, 0) + (v.dpl > 15 ? " " + UP : "") + " (> 15 high)" : ""));
+    if (E.length > 1) B.push(E);
     var I = ventInterp(v, sp, ab).filter(function (x) { return x.msg; }).map(function (x) { return x.text; });
     if (I.length) B.push(["Ventilator interpretation:"].concat(I));
-    var SB = scalarBlock(sp);
+    var SB = scalarBlock(sp0);
     if (SB) B.push(SB);
+    var W = v.wean;
+    if (W && W.known >= 3 && W.relevant && (vm === "psv" || W.allMet)) {
+      B.push(["Weaning screen (numbers only):"].concat(W.items.map(function (c) { return (c.ok ? "✓ " : "✗ ") + c.label + " (" + c.val + ")"; }))
+        .concat([W.allMet ? "Meets the numeric criteria; also needs: cause improving, stable without or on low-dose vasopressors, awake, good cough, manageable secretions." : "Not yet: " + W.items.filter(function (c) { return !c.ok; }).map(function (c) { return c.label; }).join("; ") + "."]));
+    }
     return B;
   }
-  var VENT_KEYS = ["rr", "vdrive", "shunt", "o2", "pplat", "vt", "dp", "autopeep", "raw", "leak", "ards", "ardsRx", "peep", "psv", "ie", "flow", "mp"];
+  var VENT_KEYS = ["vcheck", "vtdiff", "rr", "vdrive", "effort", "shunt", "o2", "pplat", "vt", "dp", "autopeep", "raw", "leak", "si", "ards", "ardsSF", "ardsRx", "peep", "psv", "wean", "extub", "ie", "flow", "mp"];
   function isVentKey(k) { return VENT_KEYS.indexOf(k) > -1 || k.indexOf("sc_") === 0; }
   // m: { support (vent fields, scalars), vent, fio2Pct, linked, ph, paco2, pao2, ab, ox, g, rf, r, tgt, retainer }
   function ventMessage(m) {
-    var sp = Object.assign({}, m.support || {}, { mode: "mv" });
+    var sp = Object.assign({}, normalizeVent(m.support || {}).s, { mode: "mv" });
     var B = [["Ventilator assessment"]];
     var ab = m.linked && m.ab && !m.ab.errors.length ? m.ab : null;
     if (m.linked && m.ph != null && m.paco2 != null && m.pao2 != null) {
@@ -1913,9 +2132,9 @@ var ABG = (function () {
      Sources: BTS 2017 oxygen guideline; GOLD 2026 + NICE QS10 (NIV); SSC 2026 (bicarbonate, lactate);
      BICARICU-2 (JAMA 2025); ADA/EASD/JBDS 2024 hyperglycaemic crises; Global ARDS definition 2023;
      ATS 2024 ARDS guideline; MSD Manual (metabolic alkalosis). */
-  var PRIORITY = ["check", "sev", "mixed", "niv", "nivOpt", "fatigue", "rr", "vdrive", "shunt", "o2", "pplat", "vt", "dp", "autopeep", "raw", "leak",
+  var PRIORITY = ["check", "vcheck", "vtdiff", "sev", "mixed", "niv", "nivOpt", "fatigue", "rr", "vdrive", "effort", "shunt", "o2", "pplat", "vt", "dp", "autopeep", "raw", "leak", "si",
                   "sc_f_trap", "sc_f_double", "sc_p_scoop", "sc_f_ineff", "sc_p_rev", "sc_p_auto", "sc_v_leak", "sc_f_saw", "sc_f_early", "sc_f_late", "sc_p_dip", "sc_f_obstr", "sc_p_over", "sc_p_slow",
-                  "ards", "ardsRx", "peep", "hfnc", "bicarb", "cause", "lactate", "psv", "ie", "flow", "mp", "drive", "alk", "hypervent", "hypovent", "chronicCO2", "def"];
+                  "ards", "ardsSF", "ardsRx", "peep", "hfnc", "bicarb", "cause", "lactate", "psv", "wean", "extub", "ie", "flow", "mp", "drive", "alk", "hypervent", "hypovent", "chronicCO2", "def"];
   // Each suggestion: short text (message) + optional detail (app) + source tag. Mode-aware: ra, nc, mask, niv, mv.
   function suggestions(c) {
     var S = {}, add = function (key, text, src, tone, more) { if (!S[key]) S[key] = { key: key, text: text, src: src || "", tone: tone || "", more: more || "" }; };
@@ -2005,6 +2224,35 @@ var ABG = (function () {
       if (resist) add("raw", "High airway resistance (" + (v.raw != null ? "Raw " + fmt(v.raw, 0) + " cmH₂O/L/s, " : "") + "peak − plateau " + fmt(v.gap, 0) + "): suction, check the tube for kinks or biting, bronchodilator if wheezy.", "", "warn",
         "High peak with a normal plateau points to the airway or tube rather than the lung. Resistance from peak − plateau ÷ flow is valid with constant (square-wave) flow in volume control.");
       if (v && v.leak != null && v.leak >= 10) add("leak", "VTE is " + fmt(v.leak, 0) + "% lower than VTi: look for a leak (cuff pressure, circuit, chest-tube air leak).", "", "warn");
+      else if (v && v.vtDiff != null && v.vtDiff <= -15) add("leak", "VTE is " + fmt(-v.vtDiff, 0) + "% below the set TV: look for a leak (cuff pressure, circuit, chest-tube air leak) or recalibrate the flow sensor.", "", "warn");
+      if (v && v.vtDiff != null && v.vtDiff >= 20) add("vtdiff", "VTE " + fmt(sp.vte, 0) + " mL is " + fmt(v.vtDiff, 0) + "% above the set TV " + fmt(sp.vt, 0) + " mL: look for double triggering (stacked breaths) on the screen and check the flow sensor; base the mL/kg on what the patient actually gets.", "", "warn");
+      if (v && (v.fLow || v.badPeak || v.tiLong)) add("vcheck", "Recheck the ventilator entries: " + [v.fLow ? "Ftotal is below the set rate" : "", v.badPeak ? "plateau is above the peak" : "", v.tiLong ? "inspiratory time is longer than the breath cycle" : ""].filter(Boolean).join("; ") + ".", "", "warn");
+      // Effort and drive
+      if (v && (v.p01 != null || v.pmus != null)) {
+        var hiEff = (v.p01 != null && v.p01 > 3.5) || (v.pmus != null && v.pmus > 10), hiLung = v.dpl != null && v.dpl > 15, loEff = (v.p01 != null && v.p01 < 1) || (v.pmus != null && v.pmus < 3);
+        if (hiEff || hiLung) add("effort", "High " + (hiEff ? "drive/effort" : "lung stress") + " (" + [v.p01 != null ? "P0.1 " + fmt(v.p01, 1) : "", v.pmus != null ? "Pmus ≈ " + fmt(v.pmus, 0) : "", v.dpl != null ? "ΔPL,dyn ≈ " + fmt(v.dpl, 0) : ""].filter(Boolean).join(", ") +
+          "): treat the cause (pain, anxiety, acidosis, hypoxemia, fever, asynchrony); if it persists, raise support" + (vm === "psv" ? " or return to a controlled mode" : "") + ", and in ARDS keep the lung stress down (sedation if needed).", "Telias AJRCCM 2020; Bertoni Crit Care 2019; Goligher AJRCCM 2020", "warn",
+          "P0.1 > 3.5 cmH₂O detected high effort (80% sensitive, 77% specific). From an end-expiratory occlusion: Pmus ≈ ¾ × |ΔPocc|; ΔPL,dyn ≈ (peak − PEEP) + ⅔ × |ΔPocc|. Ventilator-displayed P0.1 differs between brands; when lung and diaphragm protection conflict, protect the lung first.");
+        else if (loEff) add("effort", "Low drive/effort (" + [v.p01 != null ? "P0.1 " + fmt(v.p01, 1) : "", v.pmus != null ? "Pmus ≈ " + fmt(v.pmus, 0) : ""].filter(Boolean).join(", ") + "): likely over-assisted or oversedated; " + (vm === "psv" ? "lower PS" : "lighten sedation and allow assisted breathing") + " to avoid diaphragm disuse, if gas exchange and lung stress allow.", "Telias AJRCCM 2020; Goligher AJRCCM 2020", "",
+          "P0.1 ≤ 1.0 cmH₂O detected low effort (100% sensitive, 92% specific). Weak effort over days is linked to diaphragm atrophy.");
+      }
+      // Stress index from the photo (passive, constant-flow breaths)
+      var siS = sp.scalars && sp.scalars.si;
+      if (siS && siS.value != null && siS.flowOk !== false && siS.verdict !== "ok") add("si", siS.verdict === "over"
+        ? "Stress index ≈ " + fmt(siS.value, 2) + " (upward concavity) suggests tidal overdistension: lower VT or PEEP and recheck plateau and driving pressure."
+        : "Stress index ≈ " + fmt(siS.value, 2) + " (downward concavity) suggests tidal recruitment: a higher PEEP may help if driving pressure falls and BP holds.", "Ranieri, Anesthesiology 2000; Terragni, Anesthesiology 2013", "",
+        "Valid only for passive breaths with constant (square-wave) flow in volume control; a stiff chest wall or abdomen can also raise it. A photo estimate: confirm on the ventilator.");
+      // Global ARDS definition by SpO2/FiO2 when there is no PaO2
+      if (v && v.sfSev && pf == null) add("ardsSF", "SpO₂/FiO₂ " + Math.round(v.sf) + " (SpO₂ " + fmt(v.spo2, 0) + "%) is in the " + v.sfSev + " ARDS range: if bilateral opacities are not explained by heart failure or fluid overload, treat as ARDS (VT 6 mL/kg PBW" + (v.pbw ? " = " + Math.round(6 * v.pbw) + " mL" : "") + ", plateau ≤ 30); confirm with an ABG.", "Global ARDS definition 2023", "warn");
+      // Weaning and extubation
+      var W = v && v.wean;
+      if (W && W.relevant && W.allMet && W.known >= 4) {
+        add("wean", "Passes the numeric weaning screen: if the cause is improving, BP is stable on no or low-dose vasopressors, and the patient is awake with a good cough, do a spontaneous breathing trial (30 min on PS 5–8 with PEEP ≤ 5, or T-piece).", "ACCP/ATS 2017; Subirà JAMA 2019", "ok",
+          "Stop the trial for RR > 35, SpO₂ < 90%, HR > 140 or a 20% change, SBP > 180 or < 90, agitation, sweating or rising work of breathing. A 30-minute PS trial gave more successful extubations than a 2-hour T-piece trial (82% vs 74%).");
+        add("extub", "If the trial is passed: extubate straight to NIV when at high risk (hypercapnia, COPD, heart failure, other serious comorbidity); otherwise HFNC is reasonable. Cuff-leak test if at high risk of stridor (steroids at least 4 h before extubation if the leak is small).", "ACCP/ATS 2017; ERS 2022", "",
+          "ACCP/ATS: preventive NIV for high-risk patients ventilated > 24 h (strong recommendation). ERS 2022: NIV over HFNC when at high risk of extubation failure; HFNC over conventional oxygen when at low risk.");
+      } else if (W && W.relevant && vm === "psv" && W.known >= 3 && !W.allMet)
+        add("wean", "Not ready for a breathing trial yet: " + W.items.filter(function (c) { return !c.ok; }).map(function (c) { return c.label + " (" + c.val + ")"; }).join("; ") + ".", "ACCP/ATS 2017", "");
       if (ardsRange && v && v.peepTab && !v.peepTab.below && num_(sp.peep) != null) {
         var tb = v.peepTab;
         if (pf <= 200 && sp.peep < tb.hi[0]) add("peep", "Moderate–severe ARDS range: higher PEEP is suggested (ARDSNet higher-PEEP table at FiO₂ " + tb.fio2 + "%: " + rangeTxt(tb.hi) + "; now " + fmt(sp.peep, 0) + "), without prolonged recruitment maneuvers; watch BP and driving pressure.", "ATS 2024", "",
@@ -2017,6 +2265,7 @@ var ABG = (function () {
         var f = SC[id], txt = f.action;
         if (id === "f_trap" && v && v.autoPeep != null) txt = "auto-PEEP measured " + fmt(Math.max(0, v.autoPeep), 0) + " cmH₂O; " + txt.replace(/^measure total PEEP with an expiratory hold; /, "");
         if (id === "f_double" && ardsRange) txt += " In ARDS the stacked breath defeats low-VT ventilation, so fix it rather than ignore it.";
+        if (v && v.ets != null && (id === "f_ineff" || id === "f_late" || id === "f_early")) txt += " Cycle-off now " + fmt(v.ets, 0) + "%" + ((id === "f_ineff" || id === "f_late") && v.ets < 40 ? ": try 40–60%." : id === "f_early" && v.ets > 30 ? ": try lower (10–25%)." : ".");
         add("sc_" + id, f.title + " on the scalars: " + txt, f.src, f.tone, f.means);
       });
       if (v && v.mp != null && v.mp > 17) add("mp", "Mechanical power " + fmt(v.mp, 0) + " J/min (> 17 is linked to higher mortality): reduce its parts (VT, driving pressure, RR) where the pH allows.", "Serpa Neto, ICM 2018", "",
@@ -2274,7 +2523,7 @@ var ABG = (function () {
   }
 
   return {
-    VMODES: VMODES, isVC: isVC, analyzeFlow: analyzeFlow, analyzePaw: analyzePaw, mergeReads: mergeReads, crossCheck: crossCheck, movAvg: movAvg, SCALARS: SCALARS, scalarsFor: scalarsFor, scalarIds: scalarIds, scalarBlock: scalarBlock, ventMessage: ventMessage, isVentKey: isVentKey, parseIE: parseIE, peepTable: peepTable, oiGrade: oiGrade, ventInterp: ventInterp, ventBlocks: ventBlocks, desiredMV: desiredMV,
+    VMODES: VMODES, isVC: isVC, analyzeFlow: analyzeFlow, analyzePaw: analyzePaw, analyzeVolume: analyzeVolume, mergeReads: mergeReads, crossCheck: crossCheck, normalizeVent: normalizeVent, stressIndex: stressIndex, weanScreen: weanScreen, movAvg: movAvg, SCALARS: SCALARS, scalarsFor: scalarsFor, scalarIds: scalarIds, scalarBlock: scalarBlock, ventMessage: ventMessage, isVentKey: isVentKey, parseIE: parseIE, peepTable: peepTable, oiGrade: oiGrade, ventInterp: ventInterp, ventBlocks: ventBlocks, desiredMV: desiredMV,
     effectiveTarget: effectiveTarget, applyAdequacy: applyAdequacy, supportFio2: supportFio2, supportLine: supportLine, modeName: modeName, pbw: pbw, targetPco2: targetPco2, ventCalc: ventCalc, ventLines: ventLines, desiredText: desiredText, endExpPressure: endExpPressure, DEVICES: DEVICES,
     gasExchange: gasExchange, respFailure: respFailure, fullInterpretation: fullInterpretation, suggestions: suggestions,
     chartLine: chartLine, interpretation: interpretation, compensationLines: compensationLines, message: message,
@@ -2293,7 +2542,7 @@ if (typeof module !== "undefined") module.exports = ABG;
   function $(id) { return document.getElementById(id); }
   var fmt = ABG.fmt;
   var S = { customTarget: false, workOpen: false, vd: 0.5, msg: "", mode: "nc", dev: "venturi", nivType: "bipap", sex: null, vmode: "acvc", tab: "calc", sc: {}, scNormal: false, photos: [], vmsg: "",
-    an: { idx: -1, tr: "flow", t: { flow: {}, paw: {} }, reads: null, auto: {}, autoSet: {}, info: "" }, aiModel: "claude-sonnet-5-5" };
+    an: { idx: -1, tr: "flow", t: { flow: {}, paw: {}, vol: {} }, reads: null, auto: {}, autoSet: {}, info: "", si: null }, aiModel: "claude-sonnet-5-5" };
   document.addEventListener("toggle", function (ev) {
     if (ev.target && ev.target.classList && ev.target.classList.contains("work")) S.workOpen = ev.target.open;
   }, true);
@@ -2440,7 +2689,7 @@ if (typeof module !== "undefined") module.exports = ABG;
 
   var FIELDS = ["i-ph", "i-paco2", "i-pao2", "i-hco3", "i-tco2", "i-be", "i-so2", "i-lac", "i-fio2", "i-age", "i-wt", "i-target",
                 "i-ncflow", "i-hfflow", "i-ipap", "i-epap", "i-peep", "i-vt", "i-rr", "i-pplat", "i-ht", "i-mawp", "i-pco2t",
-                "i-pinsp", "i-ie", "i-flow", "i-ppeak", "i-peeptot", "i-vte", "i-vti", "i-ftot"];
+                "i-pinsp", "i-ie", "i-flow", "i-ppeak", "i-peeptot", "i-vte", "i-vti", "i-ftot", "i-ti", "i-ets", "i-spo2", "i-p01", "i-pocc"];
   FIELDS.forEach(function (id) { $(id).addEventListener("input", render); $(id).addEventListener("change", render); });
 
   /* ---------- helpers ---------- */
@@ -2463,13 +2712,14 @@ if (typeof module !== "undefined") module.exports = ABG;
       nivType: S.nivType, ipap: num("i-ipap"), epap: num("i-epap"), peep: num("i-peep"), vt: num("i-vt"), rr: num("i-rr"),
       pplat: num("i-pplat"), mawp: num("i-mawp"), height: num("i-ht"), sex: S.sex, pco2Target: num("i-pco2t"),
       vmode: S.vmode, pinsp: num("i-pinsp"), ie: ABG.parseIE($("i-ie").value), flow: num("i-flow"), ppeak: num("i-ppeak"),
-      peeptot: num("i-peeptot"), vte: num("i-vte"), vti: num("i-vti"), ftot: num("i-ftot")
+      peeptot: num("i-peeptot"), vte: num("i-vte"), vti: num("i-vti"), ftot: num("i-ftot"),
+      ti: num("i-ti"), ets: num("i-ets"), spo2: num("i-spo2"), p01: num("i-p01"), pocc: num("i-pocc")
     };
     var autoNotes = {}; Object.keys(S.an.auto).forEach(function (k) { if (S.sc[k]) autoNotes[k] = S.an.auto[k]; });
-    support.scalars = { ids: Object.keys(S.sc).filter(function (k) { return S.sc[k]; }), normal: S.scNormal, auto: autoNotes, autoInfo: S.an.info || "" };
+    support.scalars = { ids: Object.keys(S.sc).filter(function (k) { return S.sc[k]; }), normal: S.scNormal, auto: autoNotes, autoInfo: S.an.info || "", si: S.an.si || null };
     var ieBad = support.ie != null && typeof support.ie !== "object";
     if (ieBad) support.ie = null;
-    var supBad = ["ncFlow", "hfFlow", "ipap", "epap", "peep", "vt", "rr", "pplat", "mawp", "height", "pco2Target", "pinsp", "flow", "ppeak", "peeptot", "vte", "vti", "ftot"].some(function (k) { return support[k] != null && !isFinite(support[k]); });
+    var supBad = ["ncFlow", "hfFlow", "ipap", "epap", "peep", "vt", "rr", "pplat", "mawp", "height", "pco2Target", "pinsp", "flow", "ppeak", "peeptot", "vte", "vti", "ftot", "ti", "ets", "spo2", "p01", "pocc"].some(function (k) { return support[k] != null && !isFinite(support[k]); });
     if (S.mode === "nc" && support.ncFlow === 0) support.mode = "ra";   // 0 L/min = room air
     var fio2Pct = support.mode === "ra" ? 21 : S.mode === "nc" ? (ok(support.ncFlow) && support.ncFlow > 0 ? ABG.ncToFio2(support.ncFlow) : (support.ncFlow == null ? null : NaN)) : setFio2;
     var target = S.customTarget ? num("i-target") : null;
@@ -2479,7 +2729,7 @@ if (typeof module !== "undefined") module.exports = ABG;
      ["w-ipap", support.ipap], ["w-epap", support.epap], ["w-peep", support.peep], ["w-vt", support.vt], ["w-rr", support.rr],
      ["w-pplat", support.pplat], ["w-ht", support.height], ["w-mawp", support.mawp], ["w-pco2t", support.pco2Target],
      ["w-pinsp", support.pinsp], ["w-flow", support.flow], ["w-ppeak", support.ppeak], ["w-peeptot", support.peeptot], ["w-vte", support.vte],
-     ["w-vti", support.vti], ["w-ftot", support.ftot]].forEach(function (p) {
+     ["w-vti", support.vti], ["w-ftot", support.ftot], ["w-ti", support.ti], ["w-ets", support.ets], ["w-spo2", support.spo2], ["w-p01", support.p01], ["w-pocc", support.pocc]].forEach(function (p) {
       $(p[0]).classList.toggle("bad", p[1] != null && !isFinite(p[1]));
     });
     $("w-ie").classList.toggle("bad", ieBad);
@@ -2504,7 +2754,7 @@ if (typeof module !== "undefined") module.exports = ABG;
     if (ok(support.ppeak) && ok(support.pplat) && support.pplat > support.ppeak) hints.push('<span style="color:var(--warn)">Plateau is higher than peak: check the entries.</span>');
     if (ok(support.peeptot) && ok(support.peep) && support.peeptot < support.peep) hints.push('<span style="color:var(--warn)">Total PEEP is below set PEEP: check the entries.</span>');
     if (ieBad) hints.push('<span style="color:var(--warn)">Type I:E as 1:2 (or just 2).</span>');
-    $("mv-hint").innerHTML = hints.length ? hints.join(" ") : "Enter what the ventilator shows; blanks are skipped. Plateau needs an inspiratory hold, total PEEP an expiratory hold.";
+    $("mv-hint").innerHTML = hints.length ? hints.join(" ") : "Enter what the ventilator shows; blanks are skipped. Plateau needs an inspiratory hold, total PEEP an expiratory hold. Volumes typed in litres and height in metres are converted.";
     $("niv-hint").innerHTML = S.nivType === "bipap" && ok(support.ipap) && ok(support.epap) ? "Pressure support = IPAP − EPAP = <b>" + fmt(support.ipap - support.epap, 0) + " cmH₂O</b>" : "";
 
     // Hints
@@ -2580,7 +2830,7 @@ if (typeof module !== "undefined") module.exports = ABG;
     var vsugAll = ABG.suggestions({ ab: lab, ox: linked ? ox : null, r: linked ? rOk : null, g: linked ? g : null, rf: linked ? rf : null, retainer: retainer,
       paco2: linked && ok(paco2) ? paco2 : null, pao2: linked && ok(pao2) ? pao2 : null, fio2Pct: vFi, support: vsp, vent: vv, tgt: linked ? tgt : null });
     var vsug = vsugAll.filter(function (x) { return ABG.isVentKey(x.key); });
-    var ventIn = ["vt", "pinsp", "rr", "flow", "peep", "ppeak", "pplat", "mawp", "peeptot", "vte", "vti", "ftot", "height"].some(function (k) { return ok(vsp[k]); }) || !!vsp.ie || vsp.scalars.ids.length || S.scNormal;
+    var ventIn = ["vt", "pinsp", "rr", "flow", "peep", "ppeak", "pplat", "mawp", "peeptot", "vte", "vti", "ftot", "height", "spo2", "p01", "pocc", "ti", "ets"].some(function (k) { return ok(vsp[k]); }) || !!vsp.ie || vsp.scalars.ids.length || S.scNormal || !!vsp.scalars.autoInfo;
     $("vsug-result").innerHTML = ventIn ? sugCard(vsug, 10) : '<div class="card"><div class="empty">Suggestions appear once ventilator values or scalar findings are entered.</div></div>';
     S.vmsg = ventIn ? ABG.ventMessage({ support: vsp, vent: vv, fio2Pct: vFi, linked: linked, ph: ok(ph) ? ph : null, paco2: ok(paco2) ? paco2 : null, pao2: ok(pao2) ? pao2 : null,
       ab: lab, ox: ox, g: g, rf: rf, r: rOk, tgt: tgt, retainer: retainer }) : "";
@@ -2950,9 +3200,9 @@ if (typeof module !== "undefined") module.exports = ABG;
 
   /* ---------- automatic photo reader (on this phone) ---------- */
   var AN = { img: null, data: null, W: 0, H: 0, drag: null };
-  var TRN = { flow: "flow", paw: "pressure" }, TRC = { flow: "#2f7de1", paw: "#e0a21b" };
+  var TRN = { flow: "flow", paw: "pressure", vol: "volume" }, TRC = { flow: "#2f7de1", paw: "#e0a21b", vol: "#2ea36f" }, TRK = ["flow", "paw", "vol"], TRL = { flow: "Flow", paw: "Pressure", vol: "Volume" };
   function anReset(all) {
-    S.an.t = { flow: {}, paw: {} }; S.an.reads = null; S.an.tr = "flow";
+    S.an.t = { flow: {}, paw: {}, vol: {} }; S.an.reads = null; S.an.tr = "flow"; S.an.si = null;
     Object.keys(S.an.autoSet).forEach(function (k) { delete S.sc[k]; }); S.an.autoSet = {}; S.an.auto = {}; S.an.info = "";
     if (all) { S.an.idx = -1; AN.img = null; AN.data = null; }
     $("an-result").innerHTML = ""; anUI(); anDraw(); renderScList(); render();
@@ -2965,7 +3215,7 @@ if (typeof module !== "undefined") module.exports = ABG;
       var off = document.createElement("canvas"); off.width = W; off.height = H;
       var x = off.getContext("2d"); x.drawImage(im, 0, 0, W, H);
       AN.img = im; AN.W = W; AN.H = H; AN.data = x.getImageData(0, 0, W, H).data;
-      S.an.t = { flow: {}, paw: {} }; S.an.reads = null; S.an.tr = "flow"; $("an-result").innerHTML = "";
+      S.an.t = { flow: {}, paw: {}, vol: {} }; S.an.reads = null; S.an.tr = "flow"; S.an.si = null; $("an-result").innerHTML = "";
       renderPhotos(); anUI(); anDraw();
     };
     im.src = S.photos[i];
@@ -3107,29 +3357,30 @@ if (typeof module !== "undefined") module.exports = ABG;
   }
   function anStepOf(tr) { var T = S.an.t[tr]; return !T.box ? "box" : !T.trace ? "line" : "done"; }
   function anUI() {
-    var tr = S.an.tr, st = anStepOf(tr), nm = TRN[tr], other = tr === "flow" ? "paw" : "flow", T = S.an.t[tr];
-    document.querySelectorAll("[data-tr]").forEach(function (b) { var k = b.getAttribute("data-tr"); b.setAttribute("aria-pressed", String(k === tr)); b.textContent = (k === "flow" ? "Flow" : "Pressure") + " tracing" + (anStepOf(k) === "done" ? " ✓" : ""); });
+    var tr = S.an.tr, st = anStepOf(tr), nm = TRN[tr], T = S.an.t[tr];
+    var other = TRK.filter(function (k) { return k !== tr && anStepOf(k) !== "done" && k !== "vol"; })[0] || null;
+    document.querySelectorAll("[data-tr]").forEach(function (b) { var k = b.getAttribute("data-tr"); b.setAttribute("aria-pressed", String(k === tr)); b.textContent = TRL[k] + (anStepOf(k) === "done" ? " ✓" : ""); });
     $("an-step").innerHTML = !AN.img ? "" : st === "box" ? "Drag a box around the <b>" + nm + "</b> tracing only (at least 3 breaths). Drag with one finger on the photo."
       : st === "line" ? "Could not find the " + nm + " line by its colour. <b>Tap on the " + nm + " line.</b>"
-      : "Found the " + nm + " line (pink)" + (tr === "flow" ? " and the zero line (dashed; " + T.zeroHow + ")" : T.zeroFn ? " and PEEP (dashed; your tap)" : "; PEEP is found automatically") +
-        ". " + (anStepOf(other) === "done" ? "Tap <b>Read the photo</b>." : "Tap <b>Read the photo</b>, or first switch to <b>" + (other === "flow" ? "Flow" : "Pressure") + " tracing</b> above and box it too.") +
-        '<span class="hint" style="display:block">Pink line wrong? Tap the ' + nm + " line. " + (tr === "flow" ? "Zero line wrong? Tap the zero line away from the tracing." : "Tap the PEEP level away from the tracing to set it.") + "</span>";
+      : "Found the " + nm + " line (pink)" + (tr === "flow" ? " and the zero line (dashed; " + T.zeroHow + ")" : tr === "vol" ? (T.zeroFn ? " and the zero-volume line (dashed; your tap)" : "; the zero-volume line is found automatically") : T.zeroFn ? " and PEEP (dashed; your tap)" : "; PEEP is found automatically") +
+        ". " + (!other ? "Tap <b>Read the photo</b>." : "Tap <b>Read the photo</b>, or first switch to <b>" + TRL[other] + "</b> above and box it too.") +
+        '<span class="hint" style="display:block">Pink line wrong? Tap the ' + nm + " line. " + (tr === "flow" ? "Zero line wrong? Tap the zero line away from the tracing." : tr === "vol" ? "Tap the zero-volume level away from the tracing to set it." : "Tap the PEEP level away from the tracing to set it.") + "</span>";
     $("an-cv").style.touchAction = st === "box" ? "none" : "pan-y";
     $("an-redo").textContent = "Redo " + nm;
     $("an-skip").hidden = true;
-    $("an-run").disabled = !(anStepOf("flow") === "done" || anStepOf("paw") === "done");
+    $("an-run").disabled = !TRK.some(function (k) { return anStepOf(k) === "done"; });
     $("an-tolv").textContent = $("i-antol").value + "%";
   }
   function anDraw() {
     var c = $("an-cv"); if (!AN.img) { c.width = c.width; return; }
     var x = c.getContext("2d"), lw = Math.max(2, AN.W / 320);
     x.drawImage(AN.img, 0, 0, AN.W, AN.H);
-    ["flow", "paw"].forEach(function (tr) {
+    TRK.forEach(function (tr) {
       var T = S.an.t[tr], col = TRC[tr]; if (!T.box) return; var b = T.box;
       x.save(); x.setLineDash([lw * 3, lw * 2]); x.lineWidth = lw; x.strokeStyle = col; x.strokeRect(b.x0, b.y0, b.x1 - b.x0, b.y1 - b.y0);
       if (T.zeroFn) { x.beginPath(); x.moveTo(b.x0, T.zeroFn(b.x0)); x.lineTo(b.x1, T.zeroFn(b.x1)); x.strokeStyle = "#ffffff"; x.stroke(); }
       x.restore();
-      x.font = "bold " + Math.round(lw * 7) + "px sans-serif"; x.fillStyle = col; x.fillText(tr === "flow" ? "FLOW" : "PRESSURE", b.x0 + lw * 2, b.y0 + lw * 8);
+      x.font = "bold " + Math.round(lw * 7) + "px sans-serif"; x.fillStyle = col; x.fillText(TRL[tr].toUpperCase(), b.x0 + lw * 2, b.y0 + lw * 8);
       if (T.tap) { x.beginPath(); x.arc(T.tap[0], T.tap[1], lw * 4, 0, 7); x.lineWidth = lw; x.strokeStyle = col; x.stroke(); }
       if (T.trace) {
         x.beginPath(); T.trace.ys.forEach(function (y, i) { if (i) x.lineTo(T.trace.x0 + i, y); else x.moveTo(T.trace.x0, y); });
@@ -3184,12 +3435,12 @@ if (typeof module !== "undefined") module.exports = ABG;
     }
     // whichever is nearer the finger: the coloured trace (pick its colour) or a light line / empty spot (zero or PEEP)
     if (col && dCol < dAx) { T.col = col; T.tap = [x, y]; toast("Line colour taken from your tap"); }
-    else { T.zeroTap = [x, y]; toast(tr === "flow" ? "Zero line set from your tap" : "PEEP level set from your tap"); }
+    else { T.zeroTap = [x, y]; toast(tr === "flow" ? "Zero line set from your tap" : tr === "vol" ? "Zero-volume level set from your tap" : "PEEP level set from your tap"); }
     S.an.marks = []; setupTrace(tr); anUI(); anDraw();
   }
   document.querySelectorAll("[data-tr]").forEach(function (b) { b.addEventListener("click", function () { S.an.tr = b.getAttribute("data-tr"); anUI(); anDraw(); }); });
   $("an-redo").addEventListener("click", function () { S.an.t[S.an.tr] = {}; S.an.marks = []; anUI(); anDraw(); });
-  $("i-antol").addEventListener("change", function () { ["flow", "paw"].forEach(function (tr) { if (S.an.t[tr].box && S.an.t[tr].col) setupTrace(tr); }); anUI(); anDraw(); });
+  $("i-antol").addEventListener("change", function () { TRK.forEach(function (tr) { if (S.an.t[tr].box && S.an.t[tr].col) setupTrace(tr); }); anUI(); anDraw(); });
   $("i-antol").addEventListener("input", function () { $("an-tolv").textContent = $("i-antol").value + "%"; });
   // Run on click, and also on finger lift (some phones swallow the click right after drawing a box); never twice
   var lastRun = 0, runDown = null;
@@ -3198,15 +3449,16 @@ if (typeof module !== "undefined") module.exports = ABG;
   $("an-run").addEventListener("pointerdown", function (ev) { runDown = ev.pointerType === "touch" ? [ev.clientX, ev.clientY] : null; });
   $("an-run").addEventListener("pointerup", function (ev) { if (runDown && Math.abs(ev.clientX - runDown[0]) < 10 && Math.abs(ev.clientY - runDown[1]) < 10) runOnce(); runDown = null; });
   $("an-photos").addEventListener("click", function (ev) { var b = ev.target.closest("[data-anp]"); if (b) anLoad(+b.getAttribute("data-anp")); });
-  var EVTAG = { f_trap: "Flow not back to zero", f_ineff: "Missed trigger", f_early: "Early cycling", f_double: "Double trigger", f_saw: "Sawtooth", p_dip: "Big trigger dip", p_scoop: "Scooped rise", p_over: "Overshoot", f_late: "End spike", p_slow: "Slow rise", p_rev: "Reverse trigger", middip: "Dip mid-breath" };
+  var EVTAG = { v_leak: "Volume not back to zero", f_trap: "Flow not back to zero", f_ineff: "Missed trigger", f_early: "Early cycling", f_double: "Double trigger", f_saw: "Sawtooth", p_dip: "Big trigger dip", p_scoop: "Scooped rise", p_over: "Overshoot", f_late: "End spike", p_slow: "Slow rise", p_rev: "Reverse trigger", middip: "Dip mid-breath" };
   function anRun() {
     if (!AN.data) return;
     var vm = S.vmode, secs = num("i-ansec"), reads = [], marks = [], order = [];
-    ["flow", "paw"].forEach(function (tr) {
+    TRK.forEach(function (tr) {
       if (anStepOf(tr) !== "done") return;
       var T = S.an.t[tr], ex = T.trace, x0 = ex.x0;
       var spc = ok(secs) && secs > 0 ? secs / ex.ys.length : null, R;
       if (tr === "flow") R = ABG.analyzeFlow(ex.ys.map(function (y, i) { return T.zeroFn(x0 + i) - y; }), { secsPerCol: spc, noise: 1.2 });
+      else if (tr === "vol") R = ABG.analyzeVolume(ex.ys.map(function (y, i) { return T.zeroFn ? T.zeroFn(x0 + i) - y : T.box.y1 - (y - (T.tiltP || 0) * i); }), { noise: 1.2 });
       else if (T.zeroFn) R = ABG.analyzePaw(ex.ys.map(function (y, i) { return T.zeroFn(x0 + i) - y; }), { vmode: vm, baseline: 0, secsPerCol: spc, bur: ok(num("i-rr")) ? num("i-rr") : null, noise: 1.2 });
       else R = ABG.analyzePaw(ex.ys.map(function (y, i) { return T.box.y1 - (y - (T.tiltP || 0) * i); }), { vmode: vm, baseline: null, secsPerCol: spc, bur: ok(num("i-rr")) ? num("i-rr") : null, noise: 1.2 });
       R.coverage = ex.coverage; reads.push(R);
@@ -3220,6 +3472,7 @@ if (typeof module !== "undefined") module.exports = ABG;
       marks = marks.filter(function (m) { return !((m.type === "f_ineff" || m.type === "f_early") && m.x >= fx0 && !Fr.events.some(function (e) { return e.type === m.type && fx0 + e.x === m.x; })); });
     }
     S.an.marks = marks; S.an.order = order; S.an.reads = reads;
+    S.an.si = Pr && !Pr.error && Pr.si && (vm === "acvc" || vm === "simv") ? { value: Pr.si.value, n: Pr.si.n, of: Pr.si.of, verdict: Pr.si.verdict, flowOk: Fr && !Fr.error && Fr.shape ? Fr.shape === "square" : null } : null;
     Object.keys(S.an.autoSet).forEach(function (k) { delete S.sc[k]; delete S.an.auto[k]; }); S.an.autoSet = {};
     var merged = ABG.mergeReads(reads, vm), nb = Math.max.apply(null, reads.map(function (r) { return r.breaths || 0; }).concat([0]));
     Object.keys(merged).forEach(function (id) { var m = merged[id]; if (!S.sc[id]) { S.sc[id] = true; S.an.autoSet[id] = true; } S.an.auto[id] = { n: m.n, of: m.of, conf: m.conf, how: "auto-read" }; });
@@ -3233,7 +3486,7 @@ if (typeof module !== "undefined") module.exports = ABG;
     var byId = {}; ABG.SCALARS.forEach(function (f) { byId[f.id] = f; });
     var vm = S.vmode, pcMode = vm === "acpc" || vm === "prvc" || vm === "psv", rows = [];
     reads.forEach(function (R) {
-      var nm = R.kind === "flow" ? "Flow" : "Pressure";
+      var nm = R.kind === "flow" ? "Flow" : R.kind === "vol" ? "Volume" : "Pressure";
       if (R.error) { rows.push('<li class="warn"><span class="st">' + nm + ": " + esc(R.error) + "</span></li>"); return; }
       var info = R.breaths + " breaths read · line found in " + Math.round(R.coverage * 100) + "% of the box" + (R.rate ? " · ≈ " + Math.round(R.rate) + " breaths/min" : "");
       if (R.kind === "flow" && R.shape) info += " · inspiratory flow " + (R.shape === "square" ? "square (volume control)" : R.shape === "decelerating" ? "decelerating (pressure-type)" : "mixed shape");
@@ -3243,13 +3496,16 @@ if (typeof module !== "undefined") module.exports = ABG;
       if (R.kind === "flow" && R.shape === "decelerating" && !pcMode) rows.push('<li class="warn"><span class="st">The flow looks decelerating (pressure-type) but the mode is set to ' + ABG.VMODES[vm] + ".</span><span class=\"sm\">Check the mode above; the pattern list depends on it.</span></li>");
       if (R.kind === "flow" && R.shape === "square" && pcMode) rows.push('<li class="warn"><span class="st">The flow looks square (volume control) but the mode is set to ' + ABG.VMODES[vm] + ".</span></li>");
       R.notes.forEach(function (nt) { rows.push('<li><span class="sm">' + esc(nt) + "</span></li>"); });
+      if (R.kind === "paw" && S.an.si) { var si = S.an.si;
+        rows.push('<li class="' + (si.verdict !== "ok" && si.flowOk !== false ? "warn" : "") + '"><span class="st">Stress index ≈ ' + fmt(si.value, 2) + " (" + si.n + " passive breaths)</span><span class=\"sm\">" +
+          (si.flowOk === false ? "Inspiratory flow is not square, so the index does not apply." : si.verdict === "over" ? "Upward concavity (> 1.1): tidal overdistension." : si.verdict === "recruit" ? "Downward concavity (< 0.9): tidal recruitment." : "Linear rise (0.9–1.1).") + (si.flowOk == null ? " Box the flow tracing too to confirm square-wave flow." : "") + "</span></li>"); }
     });
     var ids = Object.keys(merged);
     var fl = ids.length ? ids.map(function (id) {
       var m = merged[id], f = byId[id], k = order.indexOf(id) + 1;
       return '<li class="' + (m.conf === "low" ? "" : "warn") + '"><span class="st">' + (k ? '<b class="mk">' + k + "</b> " : "") + esc(f.title) + " — " + m.n + " of " + m.of + " breaths</span>" +
         '<span class="sm">' + sub2(esc(f.means)) + " <b>Confidence: " + m.conf + ".</b></span><span class=\"ss\">" + esc(f.src) + "</span></li>";
-    }).join("") : '<li class="ok"><span class="st">No asynchrony pattern detected on the tracing(s) read.</span><span class="sm">Patterns the reader cannot judge from one photo (e.g. leak on the volume curve) still need your eye: use the list below.</span></li>';
+    }).join("") : '<li class="ok"><span class="st">No asynchrony pattern detected on the tracing(s) read.</span><span class="sm">Patterns the reader cannot judge from one photo still need your eye: use the list below.' + (S.an.t.vol.box ? "" : " Box the volume tracing too to check for a leak.") + '</span></li>';
     var other = order.filter(function (t) { return ids.indexOf(t) < 0; }).map(function (t) { return (order.indexOf(t) + 1) + " = " + (EVTAG[t] || t); });
     return '<div class="card" data-tone="' + (ids.length ? "warn" : "ok") + '"><ol class="sugg nonum">' + fl + "</ol>" +
       (rows.length ? '<div class="vsec">What was read</div><ul class="vint">' + rows.join("").replace(/<span class="st">/g, "<b>").replace(/<\/span><span class="sm">/g, "</b> ").replace(/<span class="sm">/g, "").replace(/<\/span>/g, "") + "</ul>" : "") +
@@ -3373,7 +3629,7 @@ if (typeof module !== "undefined") module.exports = ABG;
     if (v.vtkg != null) T1.push(tile("VT per PBW", fmt(v.vtkg, 1) + " <small>mL/kg</small>", (v.vtSrc || "VT") + " " + fmt(v.vt, 0) + " mL · protective 4–8", v.vtkg > 8 ? "high" : v.vtkg < 4 ? "low" : "ok", v.vtkg > 8 || v.vtkg < 4 ? "warn" : "ok"));
     if (v.f != null) T1.push(tile(vm === "psv" ? "Total RR" : "Rate", fmt(v.f, 0) + " <small>/min</small>", v.trig != null ? "Ftotal " + fmt(sp.ftot, 0) + " vs BUR " + fmt(v.bur, 0) + (v.trig >= 2 ? " (+" + fmt(v.trig, 0) + " triggered)" : "") : v.fSrc === "BUR" ? "set rate (no Ftotal)" : "Ftotal", v.f > 30 ? "high" : "", "warn"));
     if (v.ve != null) T1.push(tile("Minute ventilation", fmt(v.ve, 1) + " <small>L/min</small>", v.vePred ? "predicted " + fmt(v.vePred, 1) + " (100 mL/kg PBW)" : "VT × rate", v.vePred && v.ve / v.vePred >= 1.5 ? fmt(v.ve / v.vePred, 1) + "×" : "", "warn"));
-    if (v.te != null) T1.push(tile("Ti / Te", fmt(v.ti, 2) + " / " + fmt(v.te, 2) + " <small>s</small>", "from I:E " + v.ie.text + " at " + fmt(v.f, 0) + "/min", v.ie.i > v.ie.e ? "inverse" : "", "warn"));
+    if (v.te != null) T1.push(tile("Ti / Te", fmt(v.ti, 2) + " / " + fmt(v.te, 2) + " <small>s</small>", (v.ie ? "from I:E " + v.ie.text : "from " + esc(v.tiSrc) + " (I:E ≈ " + v.ieDerived + ")") + " at " + fmt(v.f, 0) + "/min", v.ie && v.ie.i > v.ie.e ? "inverse" : v.ieDerived ? "calc." : "", v.ie ? "warn" : ""));
     if (v.leak != null) T1.push(tile("Leak", fmt(v.leak, 0) + " <small>%</small>", "(VTi − VTE) ÷ VTi", v.leak >= 10 ? "leak?" : v.leak <= -10 ? "check" : "ok", Math.abs(v.leak) >= 10 ? "warn" : "ok"));
     if (v.rsbi != null) T1.push(tile("RSBI", Math.round(v.rsbi), "RR ÷ VT (L); < 105 favours weaning", v.rsbi >= 105 ? "≥ 105" : "ok", v.rsbi >= 105 ? "warn" : "ok"));
     if (ok(sp.ppeak)) T2.push(tile("Peak pressure", fmt(sp.ppeak, 0) + " <small>cmH₂O</small>", "airway + elastic pressure", sp.ppeak > 35 ? "> 35" : "", "warn"));
@@ -3389,7 +3645,16 @@ if (typeof module !== "undefined") module.exports = ABG;
     if (v.oi != null) T4.push(tile("Oxygenation index", fmt(v.oi, 1), "normal < 4 · " + v.oiG.label, v.oi >= 16 ? "≥ 16" : v.oi >= 8 ? "8–16" : v.oi >= 4 ? "4–8" : "ok", v.oi >= 8 ? "warn" : "ok"));
     if (v.vr != null) T4.push(tile("Ventilatory ratio", fmt(v.vr, 1), "normal ≈ 1; higher = dead space", v.vr >= 2 ? "high" : "", "warn"));
     if (v.mp != null) T4.push(tile("Mechanical power", fmt(v.mp, 0) + " <small>J/min</small>", "> 17 linked to higher mortality", v.mp > 17 ? "> 17" : "ok", v.mp > 17 ? "warn" : "ok"));
+    if (v.sf != null) T4.push(tile("SpO₂/FiO₂", Math.round(v.sf), v.spo2 > 97 ? "SpO₂ > 97%: not valid for grading" : "ARDS ≤ 315 · moderate ≤ 235 · severe ≤ 148", v.spo2 > 97 ? "" : v.sfSev || "ok", v.sfSev ? "warn" : "ok"));
+    if (v.osi != null) T4.push(tile("O₂ saturation index", fmt(v.osi, 1), "FiO₂ × MAP × 100 ÷ SpO₂ · normal < 5", v.osi >= 12.3 ? "≥ 12.3" : v.osi >= 7.5 ? "7.5–12.3" : v.osi >= 5 ? "5–7.5" : "ok", v.osi >= 7.5 ? "warn" : "ok"));
     if (v.peepTab && !v.peepTab.below) T4.push(tile("PEEP/FiO₂ table", fmt(sp.peep, 0) + " <small>at " + v.peepTab.fio2 + "%</small>", "ARDSNet lower " + v.peepTab.lo.join("–").replace(/^(\d+)–\1$/, "$1") + " · higher " + v.peepTab.hi.join("–").replace(/^(\d+)–\1$/, "$1")));
+    var T5 = [];
+    if (v.p01 != null) T5.push(tile("P0.1", fmt(v.p01, 1) + " <small>cmH₂O</small>", "drive · usual 1–3.5", v.p01 > 3.5 ? "high" : v.p01 < 1 ? "low" : "ok", v.p01 > 3.5 || v.p01 < 1 ? "warn" : "ok"));
+    if (v.pmus != null) T5.push(tile("Pmus (from ΔPocc)", "≈ " + fmt(v.pmus, 0) + " <small>cmH₂O</small>", "¾ × |ΔPocc| (" + fmt(Math.abs(v.pocc), 0) + ") · > 10 high", v.pmus > 15 ? "> 15" : v.pmus > 10 ? "high" : v.pmus < 3 ? "low" : "ok", v.pmus > 10 || v.pmus < 3 ? "warn" : "ok"));
+    if (v.dpl != null) T5.push(tile("ΔPL,dyn", "≈ " + fmt(v.dpl, 0) + " <small>cmH₂O</small>", "(peak − PEEP) + ⅔ × |ΔPocc| · > 15 high", v.dpl > 20 ? "> 20" : v.dpl > 15 ? "high" : "ok", v.dpl > 15 ? "warn" : "ok"));
+    var W = v.wean, wBox = "";
+    if (W && W.known >= 3 && W.relevant) wBox = '<div class="vsec">Weaning screen (numbers only)</div><ul class="vint">' + W.items.map(function (c) { return '<li class="' + (c.ok ? "ok" : "warn") + '">' + (c.ok ? "✓ " : "✗ ") + sub2(esc(c.label)) + " <small>(" + sub2(esc(c.val)) + ")</small></li>"; }).join("") +
+      '<li class="' + (W.allMet ? "ok" : "") + '">' + (W.allMet ? "Meets the numbers for a spontaneous breathing trial. Also check: cause improving, BP stable on no or low-dose vasopressors, awake and following commands, good cough, manageable secretions." : "Not ready on the numbers yet.") + "</li></ul>";
     var interp = ABG.ventInterp(v, sp, ab);
     var list = interp.length ? '<div class="vsec">Interpretation</div><ul class="vint">' + interp.map(function (x) { return '<li class="' + x.tone + '">' + sub2(esc(x.text)) + "</li>"; }).join("") + "</ul>" : "";
     var rrBox = "";
@@ -3401,9 +3666,9 @@ if (typeof module !== "undefined") module.exports = ABG;
           '<span class="why">Rate × pCO<sub>2</sub> ÷ target = ' + fmt(v.f, 0) + " × " + fmt(paco2, 0) + " ÷ " + fmt(v.target.value, 0) + (v.fSrc === "Ftotal" ? " (using Ftotal)" : "") + ", if VT and dead space stay the same." + (v.veNeed != null ? " Minute ventilation needed ≈ " + fmt(v.veNeed, 1) + " L/min." : "") + "</span>"
           : '<span class="why">Enter BUR or Ftotal to calculate the rate needed.</span>') + "</div>";
     }
-    return '<div class="card" data-tone="inc">' + grid("Volumes and rate", T1) + grid("Pressures", T2) + grid("Mechanics", T3) + grid("Gas exchange and load", T4) + list + rrBox +
+    return '<div class="card" data-tone="inc">' + grid("Volumes and rate", T1) + grid("Pressures", T2) + grid("Mechanics", T3) + grid("Gas exchange and load", T4) + grid("Drive and effort", T5) + list + rrBox + wBox +
       (need.length ? '<div class="empty">For a fuller check, add ' + need.join("; ") + ".</div>" : "") +
-      '<div class="src">PBW (ARDSNet): men 50, women 45.5, + 0.91 × (height cm − 152.4). Resistance assumes constant (square-wave) flow in volume control. Mechanical power: volume control 0.098 × RR × VT × (peak − ½ × driving pressure); pressure control 0.098 × RR × VT × (ΔPinsp + PEEP).</div></div>';
+      '<div class="src">PBW (ARDSNet): men 50, women 45.5, + 0.91 × (height cm − 152.4). Resistance assumes constant (square-wave) flow in volume control. Pmus ≈ ¾ × |ΔPocc| and ΔPL,dyn ≈ (peak − PEEP) + ⅔ × |ΔPocc| (Bertoni 2019). Mechanical power: volume control 0.098 × RR × VT × (peak − ½ × driving pressure); pressure control 0.098 × RR × VT × (ΔPinsp + PEEP).</div></div>';
   }
 
   /* ---------- suggestions card ---------- */
@@ -3435,10 +3700,10 @@ if (typeof module !== "undefined") module.exports = ABG;
   }
   $("b-copy").addEventListener("click", function () { copyText(S.msg); });
   $("vb-copy").addEventListener("click", function () { copyText(S.vmsg); });
-  var VENT_FIELDS = ["i-vt", "i-pinsp", "i-rr", "i-ie", "i-flow", "i-peep", "i-ppeak", "i-pplat", "i-mawp", "i-peeptot", "i-vte", "i-vti", "i-ftot", "i-ht", "i-pco2t"];
+  var VENT_FIELDS = ["i-vt", "i-pinsp", "i-rr", "i-ie", "i-flow", "i-peep", "i-ppeak", "i-pplat", "i-mawp", "i-peeptot", "i-vte", "i-vti", "i-ftot", "i-ht", "i-pco2t", "i-ti", "i-ets", "i-spo2", "i-p01", "i-pocc"];
   function clearScalars() {
     S.sc = {}; S.scNormal = false; $("sc-normal").checked = false;
-    S.an = { idx: -1, tr: "flow", t: { flow: {}, paw: {} }, reads: null, auto: {}, autoSet: {}, info: "" }; $("an-result").innerHTML = ""; $("ai-result").innerHTML = "";
+    S.an = { idx: -1, tr: "flow", t: { flow: {}, paw: {}, vol: {} }, reads: null, auto: {}, autoSet: {}, info: "", si: null }; $("an-result").innerHTML = ""; $("ai-result").innerHTML = "";
     S.photos.forEach(function (u) { try { URL.revokeObjectURL(u); } catch (e) {} }); S.photos = [];
     renderPhotos(); renderScList();
   }
