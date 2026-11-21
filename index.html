@@ -467,11 +467,11 @@ ol.sugg .ss { display: inline-block; font: 700 11px/1.2 var(--font-display); let
           <div class="row">
             <span class="lbl" id="tgt-lbl">Target pO<sub>2</sub> for desired FiO<sub>2</sub></span>
             <div class="seg" role="group" aria-labelledby="tgt-lbl">
-              <button type="button" id="t-age" aria-pressed="true">By age</button>
+              <button type="button" id="t-age" aria-pressed="true">Auto</button>
               <button type="button" id="t-custom" aria-pressed="false">Custom</button>
             </div>
           </div>
-          <div class="hint" id="tgt-age-hint">Target = 104 − 0.4 × age</div>
+          <div class="hint" id="tgt-age-hint">Auto: 104 − 0.4 × age; pO₂ 60 if CO₂ retention; pO₂ 65 if ventilated with P/F ≤ 300.</div>
           <div id="tgt-custom-row" hidden style="margin-top:6px">
             <div class="inline-row">
               <div class="inp" id="w-target"><input id="i-target" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—" aria-label="Custom target pO2"><span class="u">mmHg</span></div>
@@ -611,7 +611,8 @@ ol.sugg .ss { display: inline-block; font: 700 11px/1.2 var(--font-display); let
         <li><b>Mask / HFNC</b>: enter the set FiO₂ (Venturi, HFNC) or an estimate (simple mask, non-rebreather). HFNC at ≥ 30 L/min counts for the ARDS P/F criterion.</li>
         <li><b>NIV</b>: BiPAP (IPAP/EPAP, pressure support = IPAP − EPAP) or CPAP. EPAP ≥ 5 counts for the ARDS P/F criterion. Hypercapnic patients on NIV: SpO₂ 88–92%; if still acidotic, raise IPAP toward 20–30 cmH₂O, fix leak, recheck the ABG in 1–2 h. <i>BTS/ICS 2016.</i> Hypoxemic failure: HFNC is suggested over NIV. <i>ERS 2022.</i></li>
         <li><b>Ventilator</b>: predicted body weight (men 50, women 45.5, + 0.91 × (height cm − 152.4)), VT per kg PBW, minute ventilation, driving pressure (Pplat − PEEP), oxygenation index (FiO₂ × mean airway pressure × 100 ÷ pO₂).</li>
-        <li><b>Target pCO₂ on the ventilator</b>: Winter's value in metabolic acidosis; expected compensation in metabolic alkalosis; otherwise the pCO₂ that gives pH 7.40 (7.38 for chronic hypercapnia) at the current HCO₃. RR needed = RR × pCO₂ ÷ target, assuming VT and dead space stay the same. You can type your own target.</li>
+        <li><b>Target pCO₂ on the ventilator</b>: with P/F ≤ 300 the ARDSNet rule comes first (pH 7.30–7.45 accepted; if pH &lt; 7.30 aim for pH 7.30 but not below pCO₂ 25). Otherwise the Winter's value in metabolic acidosis, expected compensation in metabolic alkalosis, or the pCO₂ that gives pH 7.40 (7.38 for chronic hypercapnia) at the current HCO₃. RR needed = RR × pCO₂ ÷ target, assuming VT and dead space stay the same. You can type your own target.</li>
+        <li><b>Target pO₂ for the desired FiO₂ (Auto)</b>: 104 − 0.4 × age (your sheet); pO₂ 60 when there is CO₂ retention (box ticked, or respiratory acidosis with pCO₂ &gt; 45 when not ventilated), matching SpO₂ 88–92%; pO₂ 65 when ventilated with P/F ≤ 300 (ARDSNet goal 55–80). If pO₂ is already adequate or inside the target window (55–65 for CO₂ retention, 55–80 for ARDSNet), the app says "keep" instead of changing the oxygen. Choose Custom to override.</li>
         <li><b>Ventilator goals</b> (ARDSNet): VT 6 mL/kg PBW (4–8), plateau ≤ 30, pH 7.30–7.45, RR ≤ 35, pO₂ 55–80 or SpO₂ 88–95% in ARDS. Without ARDS, SSC 2026 suggests 6–8 mL/kg PBW. Oxygen targets outside ARDS: UK-ROX (JAMA 2025) found no mortality difference between SpO₂ 90% and usual care; avoid unnecessary hyperoxia.</li>
       </ul>
     </div>
@@ -639,13 +640,14 @@ ol.sugg .ss { display: inline-block; font: 700 11px/1.2 var(--font-display); let
         <li>Jung B, et al. Sodium bicarbonate for severe metabolic acidemia and acute kidney injury: the BICARICU-2 randomized clinical trial. JAMA. 2025.</li>
         <li>Umpierrez GE, et al. Hyperglycaemic crises in adults with diabetes: a consensus report. Diabetologia. 2024;67(8):1455–79.</li>
         <li>Matthay MA, et al. A new global definition of acute respiratory distress syndrome. Am J Respir Crit Care Med. 2024;209(1):37–47.</li>
-        <li>Qadir N, et al. An update on management of adult patients with ARDS: an official ATS clinical practice guideline. Am J Respir Crit Care Med. 2024.</li>
+        <li>Qadir N, et al. An update on management of adult patients with ARDS: an official ATS clinical practice guideline. Am J Respir Crit Care Med. 2024;209(1):24–36.</li>
         <li>Davidson AC, et al. BTS/ICS guideline for the ventilatory management of acute hypercapnic respiratory failure in adults. Thorax. 2016;71(Suppl 2):ii1–35.</li>
         <li>Oczkowski S, et al. ERS clinical practice guidelines: high-flow nasal cannula in acute respiratory failure. Eur Respir J. 2022;59(4):2101574.</li>
         <li>NIH NHLBI ARDS Network. Lower tidal volume ventilation protocol (ARDSNet).</li>
         <li>Martin DS, et al. Conservative oxygen therapy in mechanically ventilated critically ill adults: the UK-ROX randomized clinical trial. JAMA. 2025;334(5):398–408.</li>
         <li>Berend K, de Vries APJ, Gans ROB. Physiological approach to assessment of acid–base disturbances. N Engl J Med. 2014;371(15):1434–45.</li>
-        <li>Shapiro BA, Peruzzi WT, Kozelowski-Templin R. Clinical Application of Blood Gases. 5th ed. Mosby; 1994.</li>
+        <li>Shapiro BA, Harrison RA, Cane RD, Kozelowski-Templin R. Clinical Application of Blood Gases. 5th ed. Mosby; 1994.</li>
+        <li>Amato MBP, et al. Driving pressure and survival in the acute respiratory distress syndrome. N Engl J Med. 2015;372(8):747–55.</li>
         <li>Gilbert R, Keighley JF. The arterial/alveolar oxygen tension ratio. Am Rev Respir Dis. 1974;109(1):142–5.</li>
         <li>Abbott i-STAT arterial reference ranges; MSD Manual Professional, Metabolic Alkalosis (2025).</li>
       </ul>
@@ -654,7 +656,7 @@ ol.sugg .ss { display: inline-block; font: 700 11px/1.2 var(--font-display); let
 
   <footer>
     <div class="disc"><b>Clinical decision aid.</b> For trained clinicians. It does not replace clinical judgment or your institution's protocols. Read the result with the patient and the history; recheck SpO₂ or the ABG after every change in oxygen.</div>
-    <div>TIMPEX ABG · v6 · 21 Nov 2026 · <span id="app-hint"></span></div>
+    <div>TIMPEX ABG · v7 · 21 Nov 2026 · <span id="app-hint"></span></div>
   </footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -751,7 +753,7 @@ var ABG = (function () {
     r.change = Math.abs(diff) < 1 ? "same" : diff > 0 ? "up" : "down";
 
     if (age != null && isFinite(age) && age < 18 && !custom) r.warnings.push("The age-based target (104 − 0.4 × age) is an adult formula. Use a custom target for children.");
-    if (paco2 > 45 && !custom) r.warnings.push("pCO₂ is " + fmt(paco2, 0) + ". If the patient is at risk of hypercapnic respiratory failure (e.g. COPD), the usual aim is SpO₂ 88–92% (pO₂ roughly 55–65). Switch the target to Custom if that applies.");
+    if (paco2 > 45 && !custom) r.warnings.push("pCO₂ is " + fmt(paco2, 0) + ". If the patient is at risk of CO₂ retention (e.g. COPD), tick the CO₂-retention box: the aim becomes SpO₂ 88–92% (pO₂ about 60).");
     return r;
   }
 
@@ -984,9 +986,30 @@ var ABG = (function () {
     if (num_(s.peep) != null) parts.push("PEEP " + fmt(s.peep, 0));
     if (num_(s.vt) != null) parts.push("VT " + fmt(s.vt, 0) + " mL");
     if (num_(s.rr) != null) parts.push("RR " + fmt(s.rr, 0));
-    return "Mechanical ventilation: " + parts.join(", ");
+    return "Ventilator (" + parts.join(", ") + ")";
   }
   function modeName(s) { return !s ? "" : s.mode === "niv" ? "NIV" : s.mode === "mv" ? "ventilator" : s.mode === "mask" ? (DEVICES[s.dev] || "mask") : s.mode === "nc" ? "nasal cannula" : "room air"; }
+
+  // Which pO2 the desired-FiO2 calculation aims for
+  function effectiveTarget(o) { // { custom, age, retainer, hypercap, mode, pf }
+    if (o.custom != null && isFinite(o.custom)) return { value: o.custom, why: "custom target", kind: "custom" };
+    if (o.retainer) return { value: 60, why: "CO₂ retainer: SpO₂ 88–92% ≈ pO₂ 55–65", kind: "co2" };
+    if (o.mode === "mv" && o.pf != null && o.pf <= 300) return { value: 65, why: "ventilated with P/F ≤ 300: ARDSNet pO₂ 55–80", kind: "ards" };
+    if (o.hypercap && o.mode !== "mv") return { value: 60, why: "hypercapnia: SpO₂ 88–92% ≈ pO₂ 55–65", kind: "co2" };
+    if (o.age != null && isFinite(o.age)) return { value: ageTarget(o.age), why: "age-based: 104 − 0.4 × age", kind: "age" };
+    return null;
+  }
+  // Don't advise more oxygen when pO2 is already adequate (unless the user set a custom target)
+  function applyAdequacy(r, ox, tgt, pao2) {
+    if (!r || r.errors.length || !tgt || tgt.kind === "custom" || pao2 == null) return r;
+    var limit = tgt.kind === "age" ? (ox ? ox.mildLimit : 80) : 55;
+    r.adequateLimit = limit;
+    var cur = r.fio2Pct != null ? r.fio2Pct : r.fio2;
+    var winHi = tgt.kind === "ards" ? 80 : tgt.kind === "co2" ? 65 : null;   // inside the target window: keep
+    if (winHi != null && pao2 >= 55 && pao2 <= winHi && r.change !== "same") { r.change = "same"; r.adequate = true; r.inWindow = "55–" + winHi; return r; }
+    if (pao2 >= limit && (r.change === "up" || (cur != null && r.fio2Req > cur))) { r.change = "same"; r.adequate = true; }
+    return r;
+  }
 
   // ARDSNet predicted body weight
   function pbw(heightCm, sex) {
@@ -995,9 +1018,13 @@ var ABG = (function () {
   }
   // pCO2 to aim for on the ventilator: expected compensation for metabolic disorders;
   // otherwise the pCO2 that gives pH 7.40 (7.38 for chronic hypercapnia / CO2 retainers) at the current HCO3.
-  function targetPco2(ab, retainer) {
+  function targetPco2(ab, retainer, ardsRange, paco2) {
     if (!ab || ab.errors.length) return null;
     var p = ab.primary, ex = ab.check ? ab.check.extra : null, h = ab.hco3;
+    if (ardsRange) {   // ARDSNet: pH goal 7.30–7.45; raise RR until pH > 7.30 or pCO2 < 25 (RR max 35)
+      if (ab.ph < 7.30) return { value: Math.max(25, Math.pow(10, 9 - 7.30) * h / 24), why: "ARDSNet: pH ≥ 7.30, pCO₂ not below 25" };
+      if (ab.ph <= 7.45 && paco2 != null) return { value: paco2, why: "pH within the ARDSNet goal 7.30–7.45" };
+    }
     if (p === "met-acid" || p === "mixed-acid" || ex === "met-acid")
       return { value: 1.5 * h + 8, why: "Winter's expected pCO₂ for HCO₃ " + fmt(h, 1) };
     if (p === "met-alk") return { value: 0.7 * h + 20, why: "expected compensation for HCO₃ " + fmt(h, 1) };
@@ -1012,7 +1039,9 @@ var ABG = (function () {
     if (num_(s.vt) != null && num_(s.rr) != null) o.ve = s.vt * s.rr / 1000;
     if (num_(s.pplat) != null && num_(s.peep) != null) o.dp = s.pplat - s.peep;
     if (num_(s.mawp) != null && fio2Pct != null && num_(pao2) != null) o.oi = (fio2Pct / 100) * s.mawp * 100 / pao2;
-    o.target = num_(s.pco2Target) != null ? { value: s.pco2Target, why: "custom" } : targetPco2(ab, retainer);
+    var pf = num_(pao2) != null && fio2Pct ? pao2 / (fio2Pct / 100) : null;
+    o.ardsRange = pf != null && pf <= 300;
+    o.target = num_(s.pco2Target) != null ? { value: s.pco2Target, why: "custom" } : targetPco2(ab, retainer, o.ardsRange, num_(paco2));
     if (o.target && num_(s.rr) != null && num_(paco2) != null) o.rrNeed = s.rr * paco2 / o.target.value;
     return o;
   }
@@ -1131,7 +1160,8 @@ var ABG = (function () {
         "ARDS: 6 mL/kg PBW (range 4–8) with plateau ≤ 30 cmH₂O. SSC 2026 suggests 6–8 mL/kg PBW for sepsis-related hypoxemic failure without ARDS.");
       if (v && v.vtkg != null && v.vtkg < 4) add("vt", "VT " + fmt(v.vtkg, 1) + " mL/kg PBW is below 4: check the height, sex and set volume.", "ARDSNet", "warn");
       if (sp.pplat != null && isFinite(sp.pplat) && sp.pplat > 30) add("pplat", "Plateau " + fmt(sp.pplat, 0) + " cmH₂O > 30: lower VT in 1 mL/kg steps (down to 4 mL/kg PBW).", "ARDSNet", "warn");
-      if (v && v.dp != null && v.dp > 15) add("dp", "Driving pressure " + fmt(v.dp, 0) + " cmH₂O is high: consider lowering VT and reassess PEEP (higher driving pressure is linked to worse outcomes).", "", "");
+      if (v && v.dp != null && v.dp > 15) add("dp", "Driving pressure " + fmt(v.dp, 0) + " cmH₂O is high: consider lowering VT and reassess PEEP.", "Amato, NEJM 2015", "",
+        "Driving pressure (Pplat − PEEP) was the ventilation variable most strongly associated with survival in ARDS; about 15 cmH₂O is the commonly used upper limit. This is observational evidence, not a guideline target.");
     } else if (mode === "niv") {
       if (hypercap && ab.ph < 7.35) add("nivOpt", "Still acidotic on NIV: raise IPAP (pressure support) toward 20–30 cmH₂O, fix leak and asynchrony, and recheck the ABG in 1–2 h" +
         (ab.ph < 7.25 ? "; pH < 7.25 despite optimal NIV → consider intubation" : "") + ".", "BTS/ICS 2016", ab.ph < 7.25 ? "crit" : "warn",
@@ -1182,15 +1212,20 @@ var ABG = (function () {
     var dev = r ? (r.level === "nc" && (mode === "nc" || mode === "ra") ? " (≈ NC " + fmt(r.lpm, 1) + " L/min)"
       : r.level === "high" && (mode === "nc" || mode === "ra") ? (r.fio2Req <= VENTURI_MAX ? " (Venturi mask or HFNC)" : " (HFNC or non-rebreather)") : "") : "";
     var want = r && (r.level === "nc" || r.level === "high") ? " Desired FiO₂ ≈ " + Math.round(r.fio2Req) + "%" + dev + "." : "";
-    var tgtNote = co2Risk && r && !r.custom ? "The desired FiO₂ is calculated for pO₂ " + Math.round(r.target) + " (age-based); for a CO₂ retainer tick the CO₂-retainer box or set a custom target of about 60." : "";
+    var tgtNote = c.tgt ? "Desired FiO₂ is calculated for pO₂ " + Math.round(c.tgt.value) + " (" + c.tgt.why + ")." : "";
+    if (r && r.adequate) want = " pO₂ is already adequate, so no increase is needed.";
     if (ox) {
       var low = (!ox.onO2 && ox.grade !== "none") || ox.label === "uncorrected hypoxemia";
       var high = ox.label === "overcorrected hypoxemia";
-      if (mode === "mv") {
-        var tgtMV = ardsRange ? "pO₂ 55–80 / SpO₂ 88–95%" : "the lowest FiO₂ that keeps SpO₂ in target";
+      if (mode === "mv" && ardsRange && c.pao2 != null) {
+        if (c.pao2 < 55) add("o2", "pO₂ below the ARDSNet goal (55–80): raise FiO₂ and/or PEEP using the PEEP/FiO₂ table." + want, "ARDSNet; ATS 2024", "warn", tgtNote);
+        else if (c.pao2 <= 80) add("o2", "pO₂ " + fmt(c.pao2, 0) + " is within the ARDSNet goal (55–80): keep FiO₂/PEEP, wean FiO₂ when stable.", "ARDSNet", "", tgtNote);
+        else add("o2", "pO₂ " + fmt(c.pao2, 0) + " is above the ARDSNet goal (55–80): wean FiO₂ first, then PEEP." + want, "ARDSNet", "warn", tgtNote);
+      } else if (mode === "mv") {
+        var tgtMV = "the lowest FiO₂ that keeps SpO₂ in target";
         if (low) add("o2", "Raise FiO₂ and/or PEEP" + (ardsRange ? " (use the ARDSNet PEEP/FiO₂ table; higher PEEP if moderate–severe ARDS)" : "") + "." + want, ardsRange ? "ARDSNet; ATS 2024" : "", "warn");
-        else if (high) add("o2", "Wean FiO₂ first, then PEEP, to " + tgtMV + "; avoid hyperoxia." + want, ardsRange ? "ARDSNet" : "UK-ROX 2025", "warn",
-          "UK-ROX (JAMA 2025, 16,500 ventilated adults): a conservative SpO₂ target of 90% did not lower 90-day mortality versus usual care, so either target is acceptable; avoid unnecessary hyperoxia.");
+        else if (high) add("o2", "Wean FiO₂ first, then PEEP, to " + tgtMV + "; avoid hyperoxia." + want, "UK-ROX 2025; SSC 2026", "warn",
+          "UK-ROX (JAMA 2025, 16,500 ventilated adults): a conservative SpO₂ target of 90% did not lower 90-day mortality versus usual care. SSC 2026 panelists target SpO₂ about 90–96%. Avoid unnecessary hyperoxia.");
         else if (ox.label === "corrected hypoxemia") add("o2", "Oxygenation adequate: keep FiO₂ at the lowest level that holds " + (ardsRange ? "pO₂ 55–80 / SpO₂ 88–95%" : "the SpO₂ target") + ".", ardsRange ? "ARDSNet" : "", "");
       } else if (mode === "niv") {
         var t2 = co2Risk ? "88–92% (all hypercapnic failure on NIV)" : spo2;
@@ -1303,14 +1338,20 @@ var ABG = (function () {
     return L;
   }
 
-  function desiredText(r, sp) {
+  function desiredText(r, sp, tgt, pao2) {
     var mode = sp ? sp.mode : "nc";
     if (r.level === "over") return ">100% (not reachable with O2 alone)";
+    if (r.adequate) {
+      var curF = fmt(r.fio2Pct, 0) + "%";
+      return mode === "ra" ? "21% (room air; pO₂ " + fmt(pao2, 0) + " adequate)"
+        : curF + " (keep" + (mode === "nc" && sp.ncFlow != null ? " NC " + fmt(sp.ncFlow, 1) + " L/min" : "") + "; pO₂ " + fmt(pao2, 0) + (r.inWindow ? " within " + r.inWindow : " adequate") + ")";
+    }
+    var forT = tgt && tgt.kind !== "age" ? " for pO₂ " + fmt(tgt.value, 0) : "";
     var v = r.level === "ra" ? "21%" : Math.round(r.fio2Req) + "%";
-    if (mode === "ra" || mode === "nc") return r.level === "ra" ? "21% (room air)" : r.level === "nc" ? v + " (NC " + fmt(r.lpm, 1) + " L/min)" : v + " (beyond nasal cannula)";
-    if (mode === "niv") return v + " (on NIV)";
-    if (mode === "mv") return v + " (on ventilator)";
-    return v + (sp && sp.dev ? " (" + (DEVICES[sp.dev] || "mask") + ")" : "");
+    if (mode === "ra" || mode === "nc") return r.level === "ra" ? "21% (room air)" : v + forT + (r.level === "nc" ? " (NC " + fmt(r.lpm, 1) + " L/min)" : " (beyond nasal cannula)");
+    if (mode === "niv") return v + forT + " (on NIV)";
+    if (mode === "mv") return v + forT + " (on ventilator)";
+    return v + forT + (sp && sp.dev ? " (" + (DEVICES[sp.dev] || "mask") + ")" : "");
   }
 
   /* m: { ph, paco2, pao2, hco3, tco2, be, so2, ab, ox, r, fio2Pct, def, support, vent } — any may be null */
@@ -1335,7 +1376,7 @@ var ABG = (function () {
     if (o.length) blocks.push(o);
 
     var d = [], r = m.r && !m.r.errors.length ? m.r : null;
-    if (r) d.push("Desired FiO2: " + desiredText(r, m.support));
+    if (r) d.push("Desired FiO2: " + desiredText(r, m.support, m.tgt, m.pao2));
     if (m.def && !m.def.none) d.push("HCO3 deficit: " + Math.round(m.def.value));
     if (d.length) blocks.push(d);
 
@@ -1352,7 +1393,7 @@ var ABG = (function () {
     var fi = fullInterpretation({ ab: ab, ox: m.ox, g: g, rf: rf });
     if (fi.length) blocks.push(["ABG Interpretation:"].concat(fi));
     if (ab || m.ox) {
-      var sg = suggestions({ ab: ab, ox: m.ox, r: r, g: g, rf: rf, lactate: m.lactate, def: m.def, retainer: m.retainer, mismatch: m.mismatch, paco2: m.paco2, fio2Pct: m.fio2Pct, support: m.support, vent: m.vent });
+      var sg = suggestions({ ab: ab, ox: m.ox, r: r, g: g, rf: rf, lactate: m.lactate, def: m.def, retainer: m.retainer, mismatch: m.mismatch, paco2: m.paco2, pao2: m.pao2, fio2Pct: m.fio2Pct, support: m.support, vent: m.vent, tgt: m.tgt });
       var lines = sg.slice(0, m.maxSugg || 7).map(function (x) { return "• " + x.text + (x.src ? " [" + x.src + "]" : ""); });
       if (!lines.length) lines = ["• No acid–base or oxygenation problem on this gas; correlate clinically."];
       blocks.push(["Suggestions:"].concat(lines));
@@ -1374,7 +1415,7 @@ var ABG = (function () {
   }
 
   return {
-    supportFio2: supportFio2, supportLine: supportLine, modeName: modeName, pbw: pbw, targetPco2: targetPco2, ventCalc: ventCalc, ventLines: ventLines, desiredText: desiredText, endExpPressure: endExpPressure, DEVICES: DEVICES,
+    effectiveTarget: effectiveTarget, applyAdequacy: applyAdequacy, supportFio2: supportFio2, supportLine: supportLine, modeName: modeName, pbw: pbw, targetPco2: targetPco2, ventCalc: ventCalc, ventLines: ventLines, desiredText: desiredText, endExpPressure: endExpPressure, DEVICES: DEVICES,
     gasExchange: gasExchange, respFailure: respFailure, fullInterpretation: fullInterpretation, suggestions: suggestions,
     chartLine: chartLine, interpretation: interpretation, compensationLines: compensationLines, message: message,
     bicarbDeficit: bicarbDeficit, indices: indices, arrow: arrow, RANGE: RANGE,
@@ -1427,17 +1468,12 @@ if (typeof module !== "undefined") module.exports = ABG;
     $("t-custom").setAttribute("aria-pressed", String(custom));
     $("tgt-age-hint").hidden = custom;
     $("tgt-custom-row").hidden = !custom;
-    if (custom && $("i-target").value === "" && !S.autoTarget) { try { $("i-target").focus(); } catch (e) {} }
+    if (custom && $("i-target").value === "") { try { $("i-target").focus(); } catch (e) {} }
     render();
   }
-  $("t-age").addEventListener("click", function () { S.autoTarget = false; setTargetMode(false); });
-  // CO2 retainer: switch the desired-FiO2 target to 60 (visible on screen) and the SpO2 target to 88–92%
-  $("i-retainer").addEventListener("change", function () {
-    var on = $("i-retainer").checked;
-    if (on && (!S.customTarget || $("i-target").value === "")) { $("i-target").value = "60"; S.autoTarget = true; setTargetMode(true); return; }
-    if (!on && S.autoTarget && $("i-target").value === "60") { S.autoTarget = false; $("i-target").value = ""; setTargetMode(false); return; }
-    render();
-  });
+  $("t-age").addEventListener("click", function () { setTargetMode(false); });
+  // CO2 retainer feeds the Auto target (pO2 60) and the SpO2 target (88–92%)
+  $("i-retainer").addEventListener("change", render);
   $("t-custom").addEventListener("click", function () { setTargetMode(true); });
   $("be-sign").addEventListener("click", function () {
     var el = $("i-be"), v = el.value.trim().replace(/^[−–]/, "-");
@@ -1537,7 +1573,8 @@ if (typeof module !== "undefined") module.exports = ABG;
       pplat: num("i-pplat"), mawp: num("i-mawp"), height: num("i-ht"), sex: S.sex, pco2Target: num("i-pco2t")
     };
     var supBad = ["ncFlow", "hfFlow", "ipap", "epap", "peep", "vt", "rr", "pplat", "mawp", "height", "pco2Target"].some(function (k) { return support[k] != null && !isFinite(support[k]); });
-    var fio2Pct = S.mode === "ra" ? 21 : S.mode === "nc" ? (ok(support.ncFlow) && support.ncFlow > 0 ? ABG.ncToFio2(support.ncFlow) : (support.ncFlow == null ? null : NaN)) : setFio2;
+    if (S.mode === "nc" && support.ncFlow === 0) support.mode = "ra";   // 0 L/min = room air
+    var fio2Pct = support.mode === "ra" ? 21 : S.mode === "nc" ? (ok(support.ncFlow) && support.ncFlow > 0 ? ABG.ncToFio2(support.ncFlow) : (support.ncFlow == null ? null : NaN)) : setFio2;
     var target = S.customTarget ? num("i-target") : null;
 
     [["w-ph", ph], ["w-paco2", paco2], ["w-pao2", pao2], ["w-hco3", hco3], ["w-tco2", tco2], ["w-be", be], ["w-so2", so2], ["w-lac", lac],
@@ -1549,7 +1586,7 @@ if (typeof module !== "undefined") module.exports = ABG;
     $("w-fio2").classList.toggle("bad", ok(setFio2) && (setFio2 < 21 || setFio2 > 100));
     syncChips(ok(setFio2) ? setFio2 : null, ok(target) ? target : null, ok(support.ncFlow) ? support.ncFlow : null, ok(support.hfFlow) ? support.hfFlow : null);
     // mode hints
-    $("nc-hint").innerHTML = ok(support.ncFlow) && support.ncFlow > 0
+    $("nc-hint").innerHTML = support.ncFlow === 0 ? "0 L/min is read as <b>room air</b> (FiO<sub>2</sub> 21%)." : ok(support.ncFlow) && support.ncFlow > 0
       ? "FiO<sub>2</sub> ≈ <b>" + fmt(fio2Pct, 0) + "%</b> (20 + 4 × " + fmt(support.ncFlow, 1) + ")" + (support.ncFlow > 6 ? ' · <span style="color:var(--warn)">above 6 L/min the estimate is unreliable; use HFNC or a mask</span>' : "")
       : "FiO<sub>2</sub> ≈ 20% + 4% per L/min (valid for 1–6 L/min).";
     $("dev-hint").innerHTML = S.dev === "venturi" ? "Venturi masks deliver a set FiO<sub>2</sub> (24–60%)."
@@ -1560,7 +1597,7 @@ if (typeof module !== "undefined") module.exports = ABG;
     // Hints
     $("fio2-hint").innerHTML = ok(setFio2) ? "Read as <b>FiO<sub>2</sub> " + fmt(setFio2, 1) + "%</b>" + (fio2Raw.indexOf(".") > -1 && parseFloat(fio2Raw.replace(",", ".")) <= 1 ? " (entered as a fraction)" : "") + "."
       : "Type the % (40) or fraction (0.4).";
-    $("tgt-age-hint").innerHTML = ok(age) ? "Target = 104 − 0.4 × " + fmt(age, 1) + " = <b>" + fmt(ABG.ageTarget(age), 1) + " mmHg</b>" : "Target = 104 − 0.4 × age";
+
     var abHint = [];
     if (phScaled) abHint.push("pH read as <b>" + fmt(ph, 2) + "</b>");
     if (hco3 == null && ok(ph) && ok(paco2) && ph >= 6.5 && ph <= 8) abHint.push("HCO₃ calculated: <b>" + fmt(ABG.hco3FromPh(ph, paco2), 1) + "</b>");
@@ -1571,9 +1608,16 @@ if (typeof module !== "undefined") module.exports = ABG;
     var ab = abBad ? { errors: ["One of pH, pCO₂ or HCO₃ is not a number."], notes: [] } : ABG.acidBase({ ph: ph, paco2: paco2, hco3: hco3 });
     var ox = ABG.oxygenation({ pao2: ok(pao2) ? pao2 : null, fio2Pct: ok(fio2Pct) ? fio2Pct : null, age: ok(age) ? age : null });
     var o2Bad = [pao2, paco2, fio2Pct, age, target].some(function (v) { return v != null && !isFinite(v); }) || (S.mode === "nc" && supBad && !ok(fio2Pct));
+    var abOk0 = ab && !ab.errors.length;
+    var hyperc = !!(abOk0 && ok(paco2) && paco2 > 45 && (ab.primary === "resp-acid" || ab.primary === "mixed-acid" || ab.primary === "ambig-ra-ma" || (ab.check && ab.check.extra === "resp-acid")));
+    var pfNow = ok(pao2) && ok(fio2Pct) && fio2Pct > 0 ? pao2 / (fio2Pct / 100) : null;
+    var tgt = ABG.effectiveTarget({ custom: S.customTarget && ok(target) ? target : null, age: ok(age) ? age : null, retainer: retainer, hypercap: hyperc, mode: support.mode, pf: pfNow });
     var r = o2Bad ? { errors: ["One of the entries is not a number."], warnings: [] }
-      : ABG.calc({ pao2: pao2, paco2: paco2, fio2Pct: fio2Pct, age: age, target: S.customTarget ? (target == null ? undefined : target) : null });
+      : ABG.calc({ pao2: pao2, paco2: paco2, fio2Pct: fio2Pct, age: age, target: S.customTarget ? (target == null ? undefined : target) : (tgt && tgt.kind !== "age" ? tgt.value : null) });
     if (S.customTarget && target == null && r) r = null;
+    if (r && !r.errors.length) { r.tgt = tgt; ABG.applyAdequacy(r, ox, tgt, ok(pao2) ? pao2 : null); }
+    $("tgt-age-hint").innerHTML = tgt && tgt.kind !== "custom" ? "Auto: target pO<sub>2</sub> <b>" + fmt(tgt.value, 0) + " mmHg</b> (" + sub2(esc(tgt.why)) + ")"
+      : "Auto: 104 − 0.4 × age; pO<sub>2</sub> 60 if CO<sub>2</sub> retention (not on the ventilator); pO<sub>2</sub> 65 if ventilated with P/F ≤ 300.";
     var abOk = ab && !ab.errors.length;
     var hUse = ok(hco3) ? hco3 : abOk ? ab.hco3 : null;
     var def = ok(wt) && hUse != null ? ABG.bicarbDeficit(wt, hUse, S.vd) : null;
@@ -1591,7 +1635,7 @@ if (typeof module !== "undefined") module.exports = ABG;
     var rf = ABG.respFailure(abOk ? ab : null, ok(pao2) ? pao2 : null, ok(paco2) ? paco2 : null);
     var rOk = r && !r.errors.length ? r : null;
     var sugg = (abOk || ox) ? ABG.suggestions({ ab: abOk ? ab : null, ox: ox, r: rOk, g: g, rf: rf, lactate: ok(lac) ? lac : null, def: def,
-      retainer: retainer, mismatch: mismatch, paco2: ok(paco2) ? paco2 : null, fio2Pct: ok(fio2Pct) ? fio2Pct : null, support: support, vent: vent }) : null;
+      retainer: retainer, mismatch: mismatch, paco2: ok(paco2) ? paco2 : null, pao2: ok(pao2) ? pao2 : null, fio2Pct: ok(fio2Pct) ? fio2Pct : null, support: support, vent: vent, tgt: tgt }) : null;
 
     $("ab-result").innerHTML = abCard(ab, ox, { ph: ph, paco2: paco2, pao2: pao2, tco2: tco2, be: be, so2: so2, lac: lac }, tco2Note, g, rf, ok(fio2Pct) ? ABG.supportLine(support, fio2Pct) : null);
     $("vent-result").innerHTML = S.mode === "mv" ? ventCard(vent, support, abOk ? ab : null, paco2) : "";
@@ -1603,7 +1647,7 @@ if (typeof module !== "undefined") module.exports = ABG;
       ph: ok(ph) ? ph : null, paco2: ok(paco2) ? paco2 : null, pao2: ok(pao2) ? pao2 : null, hco3: ok(hco3) ? hco3 : null,
       tco2: ok(tco2) ? tco2 : null, be: ok(be) ? be : null, so2: ok(so2) ? so2 : null, lactate: ok(lac) ? lac : null,
       ab: abOk ? ab : null, ox: ox, r: rOk, fio2Pct: ok(fio2Pct) ? fio2Pct : null, def: def,
-      age: ok(age) ? age : null, retainer: retainer, mismatch: mismatch, support: support, vent: vent
+      age: ok(age) ? age : null, retainer: retainer, mismatch: mismatch, support: support, vent: vent, tgt: tgt
     });
     $("msg").textContent = S.msg || "The message builds here as you enter values.";
     $("msg").classList.toggle("empty-msg", !S.msg);
@@ -1670,7 +1714,7 @@ if (typeof module !== "undefined") module.exports = ABG;
     return '<div class="card" data-tone="' + tone + '">' +
       '<span class="kicker">' + phWord + " · " + PH + " " + fmt(ab.ph, 2) + "</span>" +
       '<div class="headline">' + esc(ABG.interpretation(ab)) + "</div>" + trad + oxLine + rfLine +
-      (supText ? '<div class="supl">On ' + sub2(esc(supText.charAt(0).toLowerCase() + supText.slice(1))) + "</div>" : "") +
+      (supText ? '<div class="supl">On: ' + sub2(esc(supText)) + "</div>" : "") +
       vals + comp + oxDetail + notes.join("") + "</div>";
   }
 
@@ -1695,7 +1739,14 @@ if (typeof module !== "undefined") module.exports = ABG;
     var now = mode === "ra" ? "room air" : mode === "nc" ? "NC " + fmt(sp.ncFlow, 1) + " L/min" : "FiO<sub>2</sub> " + cur + " on " + esc(ABG.modeName(sp));
     var lpm = fmt(r.lpm, 1), req = fmt(r.fio2Req, 1), reqR = Math.round(r.fio2Req), need = Math.ceil(r.fio2Req);
     var lowFlow = mode === "ra" || mode === "nc";
-    if (r.level === "over") {
+    var tgtLine = r.tgt ? '<div class="supl">Target pO<sub>2</sub> ' + fmt(r.tgt.value, 0) + " (" + sub2(esc(r.tgt.why)) + ")</div>" : "";
+    if (r.adequate) {
+      tone = "ok"; kicker = r.inWindow ? "On target" : "No increase needed";
+      headline = mode === "ra" ? "Room air is enough" : "Keep the current " + (mode === "nc" ? "cannula flow" : "FiO<sub>2</sub>");
+      readout = '<span class="num">' + fmt(fio2Pct, 0) + '</span><span class="unit">% FiO<sub>2</sub> now</span><span class="side">formula for pO<sub>2</sub> ' + fmt(r.target, 0) + "<b>" + req + "%</b></span>";
+      next = r.inWindow ? "pO<sub>2</sub> " + fmt(pao2, 0) + " is within the target window " + r.inWindow + ": keep, reassess with the next gas"
+        : "pO<sub>2</sub> " + fmt(pao2, 0) + " is already adequate (≥ " + fmt(r.adequateLimit, 0) + "): no increase needed";
+    } else if (r.level === "over") {
       tone = "crit"; kicker = "Target not reachable";
       headline = "Even FiO<sub>2</sub> 100% won't reach pO<sub>2</sub> " + fmt(r.target, 0);
       readout = '<span class="num">&gt;100</span><span class="unit">% FiO<sub>2</sub></span><span class="side">calculated<b>' + fmt(r.fio2Req, 0) + "%</b></span>";
@@ -1747,7 +1798,7 @@ if (typeof module !== "undefined") module.exports = ABG;
       "</div>";
 
     var f2 = String(parseFloat((r.fio2Pct / 100).toFixed(3)));
-    var tgtF = r.custom ? "custom target" : "104 − 0.4 × " + fmt(age, 1);
+    var tgtF = r.tgt && r.tgt.kind !== "age" ? r.tgt.why : "104 − 0.4 × " + fmt(age, 1);
     var trace = '<details class="work"' + (S.workOpen ? " open" : "") + '><summary>Show working (sheet steps 1–6)</summary><div class="trace">' +
       t("1", "pCO₂ ÷ 0.8 = <b>" + fmt(paco2, 1) + "</b> ÷ 0.8", fmt(r.paco2Term, 2)) +
       t("2", "713 × <b>" + f2 + "</b> − " + fmt(r.paco2Term, 2) + " = PAO₂", fmt(r.PAO2, 2)) +
@@ -1760,7 +1811,7 @@ if (typeof module !== "undefined") module.exports = ABG;
 
     return '<div class="card" data-tone="' + tone + '">' +
       '<span class="kicker">' + kicker + "</span>" +
-      '<div class="headline">' + headline + "</div>" +
+      '<div class="headline">' + headline + "</div>" + tgtLine +
       '<div class="readout">' + readout + "</div>" +
       '<div class="next">' + ARROW + "<span>" + next + "</span></div>" +
       notes.join("") + idx +
@@ -1844,7 +1895,8 @@ if (typeof module !== "undefined") module.exports = ABG;
   });
   $("b-clear").addEventListener("click", function () {
     FIELDS.forEach(function (id) { $(id).value = ""; });
-    $("i-retainer").checked = false; S.autoTarget = false;
+    $("i-retainer").checked = false; S.sex = null;
+    document.querySelectorAll("[data-sex]").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
     setTargetMode(false);
     try { window.scrollTo(0, 0); $("i-ph").focus(); } catch (e) {}
   });

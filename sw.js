@@ -1,5 +1,5 @@
-// Offline cache for the ABG O2 app. Bump CACHE when you replace any file.
-const CACHE = "timpex-abg-v6";
+// Offline cache for TIMPEX ABG. Bump CACHE when you replace any file.
+const CACHE = "timpex-abg-v7";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {
@@ -14,18 +14,36 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// Serve from cache first so the app opens instantly on poor hospital Wi-Fi;
-// refresh the cached copy in the background when the network is there.
+// The page (navigation): network first, so an update shows on the first open when there is signal;
+// fall back to the cached copy within 3 s or when offline (poor hospital Wi-Fi, no signal).
+// Icons and manifest: cache first, refreshed in the background.
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return;
-  const key = e.request.mode === "navigate" ? "./index.html" : e.request;
+
+  if (e.request.mode === "navigate") {
+    e.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 3000);
+        const res = await fetch(url.origin + url.pathname, { signal: ctrl.signal, cache: "no-store" });
+        clearTimeout(timer);
+        if (res && res.ok) { cache.put("./index.html", res.clone()); return res; }
+        throw new Error("bad response");
+      } catch (err) {
+        return (await cache.match("./index.html")) || (await cache.match("./")) || Response.error();
+      }
+    })());
+    return;
+  }
+
   e.respondWith(
     caches.open(CACHE).then((cache) =>
-      cache.match(key).then((hit) => {
+      cache.match(e.request).then((hit) => {
         const fresh = fetch(e.request)
-          .then((res) => { if (res && res.ok) cache.put(key, res.clone()); return res; })
+          .then((res) => { if (res && res.ok) cache.put(e.request, res.clone()); return res; })
           .catch(() => hit);
         return hit || fresh;
       })
