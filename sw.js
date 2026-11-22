@@ -1,5 +1,5 @@
 // Offline cache for TIMPEX Gas & Vent. Bump CACHE when you replace any file.
-const CACHE = "timpex-gasvent-v16-1";
+const CACHE = "timpex-gasvent-v16-2";
 // Caches are shared by every app on this origin (other TIMPEX apps live beside this one on github.io).
 // Delete only this app's own older caches: "timpex-gasvent-vN" and the names it used before ("timpex-abg-vN", "abg-o2-vN").
 const OWN = /^(timpex-gasvent|timpex-abg|abg-o2)-v\d+(-\d+)?$/;

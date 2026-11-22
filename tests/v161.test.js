@@ -117,9 +117,12 @@ test("D3. auto-PEEP still blocks a faster rate", () => {
   const x = pipeline(Object.assign({}, D_GAS, { sp: MV({ ftot: 14, pplat: 22, pco2Target: 40, peeptot: 9 }) }));
   assert.match(x.text("rr"), /Air trapping.*do not raise the rate/);
 });
-test("D4. severe metabolic acidosis with compensatory triggering: match the patient's rate, no new set-rate target", () => {
+// Expectation changed in v16.2 (spec "v16.2 Safety Corrections", issue B): v16.1 asserted the unconditional instruction
+// "raise the set rate to at least 32", which the v16.2 review found unsafe. The critical warning is kept without a number.
+test("D4 (expectations updated in v16.2). severe metabolic acidosis with compensatory triggering: warning kept, no set-rate number", () => {
   const x = pipeline({ ph: 7.10, paco2: 25, hco3: hh(7.10, 25), pao2: 150, sp: MV({ rr: 14, ftot: 32, pplat: 24 }) });
-  assert.match(x.text("vdrive"), /raise the set rate to at least 32/);
+  assert.match(x.text("vdrive"), /Sedation, paralysis or a switch to a controlled mode can abruptly remove this ventilation/);
+  assert.doesNotMatch(x.text("vdrive"), /raise the set rate to at least/i);
   assert.doesNotMatch(x.text("rr"), /Raise the set RR to ≈/);
 });
 test("D5. SIMV with spontaneous breaths: no set-rate number", () => {
@@ -130,7 +133,7 @@ test("D5. SIMV with spontaneous breaths: no set-rate number", () => {
 });
 
 /* ---------- Findings E and F: contradictory pressures ---------- */
-test("E1. total PEEP below set PEEP: flagged, auto-PEEP/DP/compliance withheld, never 'no auto-PEEP'", () => {
+test("E1 (wording updated in v16.2). total PEEP below set PEEP: flagged, auto-PEEP/DP/compliance withheld, never 'no auto-PEEP'", () => {
   const sp = MV({ peep: 10, peeptot: 3, pplat: 25 });
   const x = pipeline(Object.assign({}, N, { sp }));
   assert.equal(x.vent.badPeepTot, true);
@@ -139,7 +142,8 @@ test("E1. total PEEP below set PEEP: flagged, auto-PEEP/DP/compliance withheld, 
   assert.doesNotMatch(lines + x.msg, /No significant auto-PEEP/);
   assert.match(checks(x.msg), /Total PEEP 3 is below set PEEP 10/);
   assert.match(x.msg, /Total PEEP: 3 cmH₂O \(invalid: below set PEEP; recheck\)/);
-  assert.match(x.msg, /Driving pressure: not available \(total PEEP below set PEEP; recheck\)/);
+  // wording changed in v16.2 ("not available" → "not assessed", the status vocabulary the v16.2 spec asks for)
+  assert.match(x.msg, /Driving pressure: not assessed \(total PEEP below set PEEP; recheck\)/);
 });
 test("F1. plateau above peak: flagged, plateau-based advice withheld, valid advice kept", () => {
   const sp = MV({ ppeak: 25, pplat: 40, peep: 5, vt: 700 });     // VT 700 = 10.6 mL/kg: valid, independent advice

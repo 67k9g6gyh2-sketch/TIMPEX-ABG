@@ -38,6 +38,28 @@ var ABG = (function () {
   }
 
   /*
+   * Shared validation (v16.2). One accepted range and one status per measurement, used by every module, so a value
+   * rejected in one place can never enter a calculation somewhere else. Status: "valid", "invalid" (entered but outside
+   * the accepted range: shown with a warning, never used) or "missing" (not entered: never treated as normal).
+   */
+  var LIM = { ph: [6.30, 8.00], paco2: [5, 200], pao2: [10, 700], fio2Pct: [21, 100], spo2: [50.5, 100], mv: [0.5, 59.99], mawp: [1, 60] };
+  function vStat(key, v) {
+    if (v == null || v === "" || typeof v === "number" && !isFinite(v)) return "missing";
+    if (!isFinite(v)) return "invalid";
+    var L = LIM[key];
+    return L && (v < L[0] || v > L[1]) ? "invalid" : "valid";
+  }
+  function vOK(key, v) { return vStat(key, v) === "valid" ? +v : null; }
+  // A pO2 above the alveolar pO2 (alveolar gas equation at sea level) is impossible: the same a/A > 1 rule calc() applies,
+  // now shared by every module. Returns the alveolar pO2 when the pO2 is above it, otherwise null.
+  function pao2AboveAlv(pao2, paco2, fio2Pct) {
+    var p = vOK("pao2", pao2), c = vOK("paco2", paco2), f = vOK("fio2Pct", fio2Pct);
+    if (p == null || c == null || f == null) return null;
+    var A = P_DRY * f / 100 - c / RQ;
+    return A > 0 && p / A > 1 ? A : null;
+  }
+
+  /*
    * inp: { pao2, paco2, fio2Pct, age, target }   (mmHg, mmHg, %, years, mmHg or null for age-based)
    * Returns null when inputs are incomplete; otherwise an object with every intermediate.
    */
@@ -453,9 +475,18 @@ var ABG = (function () {
   // Every unresolved input problem, for the app's check card and the top of the copied message.
   // m: { abRaw, el, ox, pao2, fio2Pct, support, vent, extra: [{ text, level }] }
   // pO2 or FiO2 entered but outside the accepted range: oxygenation is not interpreted
-  function oxOutOfRange(pao2, fio2Pct) {
-    return (pao2 != null && isFinite(pao2) && (pao2 < 10 || pao2 > 700)) || (fio2Pct != null && isFinite(fio2Pct) && (fio2Pct < 21 || fio2Pct > 100));
+  function oxOutOfRange(pao2, fio2Pct, paco2) {
+    return vStat("pao2", pao2) === "invalid" || vStat("fio2Pct", fio2Pct) === "invalid" || (paco2 != null && pao2AboveAlv(pao2, paco2, fio2Pct) != null);
   }
+  // One wording for a rejected pO2 or FiO2, wherever it is reported (ABG tab, Ventilator tab, both messages)
+  var OX_NA = "P/F, the oxygenation index, ARDS grading and the weaning oxygenation check are not assessed";
+  function pao2IssueText(pao2, fio2Pct) {
+    return "pO₂ " + fmt(pao2, 0) + (vStat("fio2Pct", fio2Pct) === "valid" ? " on FiO₂ " + fmt(fio2Pct, 0) + "%" : "") + " is outside the accepted range (pO₂ 10–700, FiO₂ 21–100): oxygenation is not interpreted, and " + OX_NA + ". Recheck the gas.";
+  }
+  function alvIssueText(pao2, fio2Pct, paco2, A) {
+    return "pO₂ " + fmt(pao2, 0) + " on FiO₂ " + fmt(fio2Pct, 0) + "% is higher than the alveolar pO₂ (≈ " + fmt(A, 0) + " for pCO₂ " + fmt(paco2, 0) + " at sea level), which is not possible: check the FiO₂ entry and the sample (an air bubble raises pO₂). Oxygenation is not interpreted, and " + OX_NA + ".";
+  }
+  function fio2IssueText(fio2Pct) { return "FiO₂ " + fmt(fio2Pct, 0) + "% is outside 21–100%: oxygenation is not interpreted, and " + OX_NA + ". Check the entry."; }
   // The line shown when there are no suggestions: never "no problem" when part of the gas was not assessed
   function nothingLine(abBad, oxBad) {
     return abBad && oxBad ? "Acid–base and oxygenation not assessed: see the input checks above."
@@ -468,10 +499,14 @@ var ABG = (function () {
     var ab = m.abRaw;
     if (ab && ab.errors && ab.errors.length) ab.errors.forEach(function (e) { add(ab.mismatch ? e : "Acid–base not interpreted: " + e, "crit"); });
     else if (ab && ab.extreme) add(ab.extreme, "crit");
-    if (oxOutOfRange(null, m.fio2Pct))
-      add("FiO₂ " + fmt(m.fio2Pct, 0) + "% is outside 21–100%: oxygenation is not interpreted. Check the entry.", "crit");
-    else if (oxOutOfRange(m.pao2, null))
-      add("pO₂ " + fmt(m.pao2, 0) + (m.fio2Pct != null && isFinite(m.fio2Pct) ? " on FiO₂ " + fmt(m.fio2Pct, 0) + "%" : "") + " is outside the accepted range (pO₂ 10–700, FiO₂ 21–100): oxygenation is not interpreted. Check the entries.", "crit");
+    if (oxOutOfRange(null, m.fio2Pct)) add(fio2IssueText(m.fio2Pct), "crit");
+    else if (oxOutOfRange(m.pao2, null)) add(pao2IssueText(m.pao2, m.fio2Pct), "crit");
+    else if (m.paco2 != null && pao2AboveAlv(m.pao2, m.paco2, m.fio2Pct) != null) add(alvIssueText(m.pao2, m.fio2Pct, m.paco2, pao2AboveAlv(m.pao2, m.paco2, m.fio2Pct)), "crit");
+    // the ventilator engine reports the same rejected values in the same words, so the two tabs always agree
+    var vv = m.vent;
+    if (vv && vv.fio2Bad != null && !oxOutOfRange(null, m.fio2Pct)) add(fio2IssueText(vv.fio2Bad), "crit");
+    else if (vv && vv.pao2Bad != null && !oxOutOfRange(m.pao2, m.fio2Pct)) add(pao2IssueText(vv.pao2Bad, vv.fio2Raw), "crit");
+    else if (vv && vv.pao2Alv && !(m.paco2 != null && pao2AboveAlv(m.pao2, m.paco2, m.fio2Pct) != null)) add(alvIssueText(vv.pao2Alv.p, vv.pao2Alv.f, vv.pao2Alv.c, vv.pao2Alv.A), "crit");
     var sp = m.support;
     if (sp && sp.mode === "nc" && num_(sp.ncFlow) != null && sp.ncFlow > 6) add("Nasal cannula " + fmt(sp.ncFlow, 0) + " L/min: the FiO₂ estimate (20 + 4 × L/min) is unreliable above 6 L/min, so P/F and the desired FiO₂ are rough.", "warn");
     if (m.el && m.el.issues) m.el.issues.forEach(function (x) { add(x.text, x.level); });
@@ -552,7 +587,8 @@ var ABG = (function () {
   function oxygenation(inp) {
     var pao2 = inp.pao2, fio2Pct = inp.fio2Pct, age = inp.age;
     if (pao2 == null || fio2Pct == null || !isFinite(pao2) || !isFinite(fio2Pct)) return null;
-    if (pao2 < 10 || pao2 > 700 || fio2Pct < 21 || fio2Pct > 100) return null;
+    if (vOK("pao2", pao2) == null || vOK("fio2Pct", fio2Pct) == null) return null;   // shared validation
+    if (inp.paco2 != null && pao2AboveAlv(pao2, inp.paco2, fio2Pct) != null) return null;
     var hasAge = age != null && isFinite(age);
     var adj = hasAge && age > 60 ? Math.min(age, 90) - 60 : 0;
     var o = { pao2: pao2, fio2Pct: fio2Pct, adj: adj, hasAge: hasAge };
@@ -747,10 +783,23 @@ var ABG = (function () {
     else if (h != null && h >= 48 && h <= 90) { o.height = Math.round(h * 2.54); notes.push("Height read as " + o.height + " cm (typed in inches)"); }
     return { s: o, notes: notes };
   }
-  function ventCalc(s, ab, paco2, pao2, fio2Pct, retainer) {
+  // gas (optional): { paused: true } when the acid–base reading is paused because pH, pCO2 and HCO3 disagree
+  function ventCalc(s, ab, paco2, pao2, fio2Pct, retainer, gas) {
     if (!s || s.mode !== "mv") return null;
     s = normalizeVent(s).s;
     var vm = VMODES[s.vmode] ? s.vmode : "acvc", o = { vmode: vm, pbw: pbw(s.height, s.sex) };
+    // Inconsistent or rejected measurements are flagged and every value that depends on them is withheld (v16.1, v16.2)
+    o.issues = [];
+    var vIssue = function (key, text, level) { o.issues.push({ key: key, text: text, level: level || "warn" }); };
+    // v16.2: the gas values go through the same shared validation as the ABG tab; a rejected value never enters a calculation
+    var pao2V = vOK("pao2", pao2), fiV = vOK("fio2Pct", fio2Pct), pco2V = vOK("paco2", paco2);
+    var alvA = pao2AboveAlv(pao2, paco2, fio2Pct);
+    if (alvA != null) { o.pao2Alv = { p: pao2V, f: fiV, c: pco2V, A: alvA }; pao2V = null; }
+    o.pao2St = vStat("pao2", pao2); o.fio2St = vStat("fio2Pct", fio2Pct); o.pco2St = vStat("paco2", paco2);
+    if (o.pao2St === "invalid") { o.pao2Bad = pao2; o.fio2Raw = fio2Pct; }
+    if (o.fio2St === "invalid") o.fio2Bad = fio2Pct;
+    if (o.pco2St === "invalid") o.pco2Bad = paco2;
+    o.pco2Unverified = !!(gas && gas.paused) && pco2V != null;   // the gas is internally inconsistent: pCO2 may be the wrong value
     if (!o.pbw && pbw(s.height, "m")) o.pbwNeedSex = true;   // height entered, sex missing
     var vte = pos_(s.vte), vti = pos_(s.vti), vtSet = isVC(vm) || isPRVC(vm) ? pos_(s.vt) : null;
     // ΔPsupp (pressure support) in CPAP/PSV and the SIMV modes; older entries put PS in the Pinsp box on PSV
@@ -774,25 +823,55 @@ var ABG = (function () {
     o.spont = isSIMV(vm) ? ((o.fspn != null && o.fspn >= 1) || (o.trig != null && o.trig >= 1)) : (o.trig != null && o.trig >= 2);
     o.ftotMissing = ftot == null && bur != null && vm !== "psv";
     if (o.vt != null && o.f != null) o.ve = o.vt * o.f / 1000;
-    var mvM = pos_(s.mv);   // measured minute volume beats VT × rate, especially in SIMV where breaths differ
-    if (mvM != null && mvM < 60) { o.veCalc = o.ve; o.ve = mvM; o.veSrc = "measured"; }
+    // Measured minute volume beats VT × rate, especially in SIMV where breaths differ (v16.2: only when plausible, and,
+    // outside SIMV, only when it roughly agrees with VT × total rate; otherwise neither is assumed)
+    var mvM = num_(s.mv);
+    if (mvM != null && mvM > 0) {
+      if (vStat("mv", mvM) === "invalid") { o.mvBad = mvM; vIssue("mv", "Measured minute ventilation " + fmt(mvM, 1) + " L/min is outside 0.5–60 L/min: it is not used. Check the entry and the unit."); }
+      else if (o.ve != null && !isSIMV(vm) && (mvM / o.ve > 2 || mvM / o.ve < 0.5)) {
+        o.mvDisputed = { m: mvM, c: o.ve }; o.veCalc = o.ve; o.ve = null;
+        vIssue("mv", "Measured minute ventilation " + fmt(mvM, 1) + " L/min and VT × rate (" + fmt(o.mvDisputed.c, 1) + " L/min) differ more than 2-fold: recheck MV, VT and Ftotal (wrong field or unit, or a large leak). Minute ventilation, the ventilatory ratio and ventilation targets are not assessed until they agree.");
+      }
+      else {
+        o.veCalc = o.ve; o.ve = mvM; o.veSrc = "measured";
+        if (mvM < 2 || mvM > 30) { o.mvExtreme = true; vIssue("mv", "Measured minute ventilation " + fmt(mvM, 1) + " L/min is extreme: confirm it on the ventilator; it is used as entered."); }
+      }
+    }
     if (pos_(s.mvspn) != null && o.ve) { o.mvspn = s.mvspn; o.spontShare = Math.min(100, s.mvspn / o.ve * 100); }
     if (num_(s.mvleak) != null && s.mvleak >= 0 && o.ve) { o.mvleak = s.mvleak; o.leakMV = s.mvleak / (o.ve + s.mvleak) * 100; }
     var vtspn = pos_(s.vtespn); if (vtspn != null) { o.vtspn = vtspn; if (o.pbw) o.vtspnKg = vtspn / o.pbw; }
     if (o.pbw) o.vePred = o.pbw * 0.1;                  // 100 mL/kg PBW per min
-    if (o.ve != null && o.pbw && num_(paco2) != null) o.vr = (o.ve * 1000 * paco2) / (o.pbw * 100 * 37.5);
+    if (o.ve != null && o.pbw && pco2V != null) { o.vr = (o.ve * 1000 * pco2V) / (o.pbw * 100 * 37.5); if (o.pco2Unverified) o.vrUnverified = true; }
     var peep = num_(s.peep), ptot = num_(s.peeptot), ppk = pos_(s.ppeak), ppl = pos_(s.pplat);
-    var peepB = num_(s.peepm) != null && s.peepm >= 0 ? s.peepm : peep;   // measured PEEP (end-expiratory) when entered
-    o.peepM = num_(s.peepm) != null && s.peepm >= 0 ? s.peepm : null;
-    // Inconsistent measurements are flagged and every value that depends on them is withheld (v16.1)
-    o.issues = [];
-    var vIssue = function (key, text, level) { o.issues.push({ key: key, text: text, level: level || "warn" }); };
+    o.peepM = num_(s.peepm) != null && s.peepm >= 0 ? s.peepm : null;   // measured end-expiratory PEEP (ventilator display)
+    if (ppk != null && peep != null && ppk < peep - 1) {
+      o.badPpk = true;
+      vIssue("ppeak", "Peak pressure " + fmt(ppk, 0) + " is below PEEP " + fmt(peep, 0) + ", which is impossible: recheck both. Peak-based values (dynamic compliance, resistance, mechanical power) are withheld.");
+      ppk = null;
+    }
     if (ptot != null && peep != null && ptot < peep - 1) {
       o.badPeepTot = true;
       vIssue("peeptot", "Total PEEP " + fmt(ptot, 0) + " is below set PEEP " + fmt(peep, 0) + ": both cannot be right, because an end-expiratory hold in a passive patient reads at least the set PEEP. Recheck both (full expiratory hold, no patient effort, same breath). Auto-PEEP, driving pressure and compliance are not calculated until they agree.");
     }
-    o.peepEff = o.badPeepTot ? null : ptot != null && peepB != null && ptot >= peepB ? ptot : peepB;
-    if (ptot != null && peep != null && !o.badPeepTot) o.autoPeep = ptot - peep;
+    // End-expiratory pressure for driving pressure, compliance and mechanical power (v16.2). A valid expiratory-hold total
+    // PEEP is the reference; without one, set PEEP (or the measured PEEP when it is within 2 of set). When set and measured
+    // PEEP disagree and no hold settles it, nothing is assumed: the dependent values are withheld.
+    var ptotV = ptot != null && !o.badPeepTot ? ptot : null;
+    if (o.badPeepTot) o.peepEff = null;
+    else if (ptotV != null) {
+      if (o.peepM != null && o.peepM > ptotV + 2) o.peepUnres = { m: o.peepM, ref: ptotV, hold: true };
+      else { o.peepEff = Math.max(ptotV, o.peepM != null ? o.peepM : peep != null ? peep : ptotV); o.peepSrc = "total PEEP"; }
+    }
+    else if (o.peepM != null && peep != null && Math.abs(o.peepM - peep) > 2) o.peepUnres = { m: o.peepM, ref: peep, hold: false };
+    else if (o.peepM != null || peep != null) { o.peepEff = o.peepM != null ? o.peepM : peep; o.peepSrc = o.peepM != null ? "measured PEEP" : "set PEEP"; }
+    if (o.peepUnres) {
+      var U = o.peepUnres;
+      o.peepUnresTxt = U.hold ? "measured PEEP " + fmt(U.m, 0) + " is above the expiratory-hold total PEEP " + fmt(U.ref, 0) : "set PEEP " + fmt(U.ref, 0) + ", measured " + fmt(U.m, 0) + ", no expiratory hold";
+      vIssue("peepm", U.hold
+        ? "Measured PEEP " + fmt(U.m, 0) + " is above the expiratory-hold total PEEP " + fmt(U.ref, 0) + ": both cannot be right (active breathing or a reading during a transient?). The app does not assume which is right: driving pressure, compliance and mechanical power are not assessed until a repeat hold in a passive patient settles it."
+        : "Measured PEEP " + fmt(U.m, 0) + " differs from set PEEP " + fmt(U.ref, 0) + " by more than 2 and no expiratory-hold total PEEP was entered: " + (U.m < U.ref ? "a leak (cuff, circuit), active breathing" : "auto-PEEP (incomplete exhalation), active breathing") + " or a reading error. The app does not assume which value is right: driving pressure, compliance and mechanical power are not assessed until an expiratory hold in a passive patient confirms the end-expiratory pressure.");
+    }
+    if (ptotV != null && peep != null) o.autoPeep = ptotV - peep;
     var peepRef = o.peepEff != null ? o.peepEff : peep;
     if (ppl != null && peepRef != null && ppl < peepRef) {
       o.badPlat = true;
@@ -804,9 +883,9 @@ var ABG = (function () {
     }
     if (o.badPlat || o.badPeak) ppl = null;
     o.pplV = ppl;   // the plateau that may be used, or null
-    if (o.peepM != null && peep != null && Math.abs(o.peepM - peep) > 2) vIssue("peepm", "Measured PEEP " + fmt(o.peepM, 0) + " differs from set PEEP " + fmt(peep, 0) + " by more than 2: " + (o.peepM < peep ? "look for a leak (cuff, circuit) or a reading during active breathing." : "look for incomplete exhalation (auto-PEEP) or a reading during active breathing.") + " Check before using PEEP-based values.");
     // Driving pressure = plateau − PEEP (total PEEP if measured). Pinsp and peak pressure are not substitutes for a plateau.
     if (ppl != null && o.peepEff != null && !o.badPlat) o.dp = ppl - o.peepEff;
+    if (o.dp != null && o.spont) o.dpUnverified = true;   // plateau (or hold) taken while the patient triggers breaths
     if (isPC(vm) && pinsp != null) o.dPinsp = pinsp;
     if (o.vt != null && o.dp != null && o.dp > 0) { o.cstat = o.vt / o.dp; o.cstatSrc = "plateau"; }
     if (ppk != null && o.peepEff != null && o.vt != null && ppk - o.peepEff > 0) o.cdyn = o.vt / (ppk - o.peepEff);
@@ -849,57 +928,77 @@ var ABG = (function () {
       vIssue("ftot", "Ftotal " + fmt(ftot, 0) + " is below the set rate " + fmt(bur, 0) + ", which cannot happen in assist-control or SIMV modes. Recheck both; rate calculations are withheld.");
     }
     o.rateSettable = vm !== "psv" && !o.fLow && !o.spont;
-    if (o.pplV != null && o.spont) vIssue("pplat", "A plateau was entered while the patient is triggering breaths: it is reliable only from a hold in a passive patient. Interpret plateau-based values with caution.");
+    if (o.pplV != null && o.spont) vIssue("pplat", "A plateau was entered while the patient is triggering breaths: it is reliable only from a hold in a passive patient. Interpret plateau-based values with caution: driving pressure and compliance are shown as unverified.");
     // Effort and drive (assisted breathing): P0.1; end-expiratory occlusion ΔPocc → Pmus ≈ 0.75 × |ΔPocc|,
     // dynamic transpulmonary driving pressure ≈ (peak − PEEP) + 0.66 × |ΔPocc| (Bertoni 2019)
     var p01 = num_(s.p01); if (p01 != null) o.p01 = Math.abs(p01);
     var pocc = num_(s.pocc);
     if (pocc != null && pocc !== 0) {
       o.pocc = -Math.abs(pocc); o.pmus = 0.75 * Math.abs(pocc);
-      var dpaw = ppk != null && peepB != null ? ppk - peepB : (vm === "psv" || isPC(vm)) && pinsp != null ? pinsp : null;
+      var dpaw = ppk != null && o.peepEff != null ? ppk - o.peepEff : (vm === "psv" || isPC(vm)) && pinsp != null ? pinsp : null;
       if (dpaw != null) o.dpl = dpaw + 0.66 * Math.abs(pocc);
     }
     // Pulse oximetry: SpO2/FiO2 and oxygen saturation index
+    var mawp = pos_(s.mawp);
+    if (mawp != null && (vStat("mawp", mawp) === "invalid" || (peep != null && mawp < peep - 1) || (ppk != null && mawp > ppk + 1))) {
+      o.badMawp = vStat("mawp", mawp) === "invalid" ? "outside 1–60" : peep != null && mawp < peep - 1 ? "below PEEP " + fmt(peep, 0) : "above the peak pressure " + fmt(ppk, 0);
+      vIssue("mawp", "Mean airway pressure " + fmt(mawp, 0) + " is " + o.badMawp + ", which is impossible (it lies between PEEP and the peak): the oxygenation and saturation indices are not assessed. Recheck the entry.");
+      mawp = null;
+    }
+    o.mawpV = mawp;
     var spo2 = num_(s.spo2);
-    if (spo2 != null && spo2 > 50 && spo2 <= 100 && fio2Pct) {
-      o.spo2 = spo2; o.sf = spo2 / (fio2Pct / 100);
-      if (pos_(s.mawp) != null && spo2 <= 97) o.osi = (fio2Pct / 100) * s.mawp * 100 / spo2;
+    if (spo2 != null && vStat("spo2", spo2) === "invalid") {
+      o.spo2Bad = spo2;
+      vIssue("spo2", spo2 > 100 ? "SpO₂ " + fmt(spo2, 0) + "% is not possible: check the entry. It is not used." : "SpO₂ " + fmt(spo2, 0) + "% is below the range used here (51–100%), so S/F and the saturation index are not calculated: confirm with an ABG.", spo2 > 100 ? "warn" : "crit");
+    }
+    if (spo2 != null && !o.spo2Bad && fiV) {
+      o.spo2 = spo2; o.sf = spo2 / (fiV / 100);
+      if (mawp != null && spo2 <= 97) o.osi = (fiV / 100) * mawp * 100 / spo2;
       if (spo2 <= 97 && o.sf <= 315) { o.sfRange = true; if (num_(s.peep) != null && s.peep >= 5) o.sfSev = o.sf <= 148 ? "severe" : o.sf <= 235 ? "moderate" : "mild"; }
     }
     // Mechanical power, J/min: volume control 0.098·RR·VT·(Ppeak − ½·ΔP); pressure control 0.098·RR·VT·(ΔPinsp + PEEP)
     var vtL = o.vt != null ? o.vt / 1000 : null;
     if (vtL != null && o.f != null) {
-      if (isVC(vm) && ppk != null && ppl != null && peep != null && !o.badPlat) o.mp = 0.098 * o.f * vtL * (ppk - (ppl - peep) / 2);
+      if (isVC(vm) && ppk != null && ppl != null && peep != null && !o.badPlat) {
+        if (o.peepUnres || o.badPeepTot) o.mpNA = o.peepUnres ? "end-expiratory pressure unresolved" : "total PEEP below set PEEP";
+        else o.mp = 0.098 * o.f * vtL * (ppk - (ppl - peep) / 2);
+      }
       else if ((isPC(vm) || isPRVC(vm)) && peep != null && (pinsp != null || ppk != null)) o.mp = 0.098 * o.f * vtL * (pinsp != null ? pinsp + peep : ppk);
     }
     if (vm === "psv" && o.vt != null && o.f != null) o.rsbi = o.f / (o.vt / 1000);
     // RSBI is a weaning index only on minimal support (PS ≤ 8, or CPAP / T-piece)
     o.rsbiOK = !(ps != null && ps > 8) && !isSIMV(vm);
     if (ps != null && ps > ((pinsp != null && isPC(vm)) ? pinsp : 99) - 0.5 && isPC(vm)) o.psOverPinsp = true;
-    if (pos_(s.mawp) != null && fio2Pct != null && num_(pao2) != null && pao2 > 0) { o.oi = (fio2Pct / 100) * s.mawp * 100 / pao2; o.oiG = oiGrade(o.oi); }
-    var pf = num_(pao2) != null && fio2Pct ? pao2 / (fio2Pct / 100) : null;
+    if (mawp != null && fiV != null && pao2V != null) { o.oi = (fiV / 100) * mawp * 100 / pao2V; o.oiG = oiGrade(o.oi); }
+    var pf = pao2V != null && fiV ? pao2V / (fiV / 100) : null;
     o.pf = pf; o.ardsRange = pf != null && pf <= 300;
-    o.peep = peep; o.fio2Pct = fio2Pct;
+    o.peep = peep; o.fio2Pct = fiV;
     if (pf == null && o.sf != null && o.spo2 <= 97 && o.sf <= 315) o.ardsRangeSF = true;   // global ARDS definition 2023
-    o.wean = weanScreen(o, s, ab, fio2Pct);
-    if (o.ardsRange) o.peepTab = peepTable(fio2Pct);
+    o.wean = weanScreen(o, s, ab, fiV);
+    if (o.ardsRange) o.peepTab = peepTable(fiV);
     if (num_(s.pco2Target) != null && s.pco2Target > 0) {
       o.target = { value: s.pco2Target, why: "your custom target", custom: true, reach: true };
       if (ab && !ab.errors.length) { o.target.hco3 = ab.hco3; o.target.phAt = phAt(s.pco2Target, ab.hco3); }
-    } else o.target = targetPco2(ab, retainer, o.ardsRange, num_(paco2));
-    if (o.target && vm !== "psv" && o.f != null && num_(paco2) != null && o.target.value > 0) {
-      if (!o.fLow) o.rrNeed = o.f * paco2 / o.target.value;
-      if (o.ve != null) o.veNeed = o.ve * paco2 / o.target.value;
+    } else o.target = targetPco2(ab, retainer, o.ardsRange, pco2V);
+    if (o.target && vm !== "psv" && o.f != null && pco2V != null && !o.pco2Unverified && o.target.value > 0) {
+      if (!o.fLow) o.rrNeed = o.f * pco2V / o.target.value;
+      if (o.ve != null && !o.mvExtreme) o.veNeed = o.ve * pco2V / o.target.value;   // no projection from an unconfirmed extreme MV
     }
     return o;
   }
   // Readiness for a spontaneous breathing trial (numbers only; clinical items listed as reminders)
   function weanScreen(o, s, ab, fio2Pct) {
+    // ok: true (met), false (not met) or null (not assessed: the value is invalid or missing; never counted as met)
     var C = [], add = function (k, label, ok, val) { C.push({ k: k, label: label, ok: ok, val: val }); };
+    // v16.2: oxygenation only from a valid PaO2 (P/F) or, failing that, a valid SpO2 (its source named); otherwise not assessed
+    var oxWhy = o.pao2Bad != null ? "pO₂ " + fmt(o.pao2Bad, 0) + " is invalid" : o.fio2Bad != null ? "FiO₂ " + fmt(o.fio2Bad, 0) + "% is invalid"
+      : o.pao2Alv ? "pO₂ " + fmt(o.pao2Alv.p, 0) + " is above the alveolar pO₂" : null;
     if (o.pf != null) add("ox", "Oxygenation: P/F ≥ 150", o.pf >= 150, "P/F " + Math.round(o.pf));
-    else if (o.spo2 != null && fio2Pct != null) add("ox", "Oxygenation: SpO₂ > 90% on FiO₂ ≤ 40%", o.spo2 > 90 && fio2Pct <= 40, "SpO₂ " + fmt(o.spo2, 0) + "% on " + fmt(fio2Pct, 0) + "%");
+    else if (o.spo2 != null && fio2Pct != null) add("ox", "Oxygenation: SpO₂ > 90% on FiO₂ ≤ 40%" + (oxWhy ? " (from SpO₂ because " + oxWhy + "; pulse oximetry only)" : ""), o.spo2 > 90 && fio2Pct <= 40, "SpO₂ " + fmt(o.spo2, 0) + "% on " + fmt(fio2Pct, 0) + "%");
+    else if (oxWhy) add("ox", "Oxygenation", null, "not assessed: " + oxWhy + " and there is no valid SpO₂");
     if (o.peep != null) add("peep", "PEEP ≤ 8", o.peep <= 8, "PEEP " + fmt(o.peep, 0));
     if (fio2Pct != null) add("fio2", "FiO₂ ≤ 40–50%", fio2Pct <= 50, "FiO₂ " + fmt(fio2Pct, 0) + "%");
+    else if (o.fio2Bad != null) add("fio2", "FiO₂ ≤ 40–50%", null, "not assessed: FiO₂ " + fmt(o.fio2Bad, 0) + "% is invalid");
     var ft = pos_(s.ftot); if (ft != null) add("rr", "Rate ≤ 35/min", ft <= 35, fmt(ft, 0) + "/min");
     if (o.vtkg != null && pos_(s.vte) != null) add("vt", "VT > 5 mL/kg PBW", o.vtkg > 5, fmt(o.vtkg, 1) + " mL/kg");
     var rsbiW = o.rsbi != null ? o.rsbi : o.rsbiM;
@@ -907,12 +1006,17 @@ var ABG = (function () {
     var rsbiInfo = rsbiW != null && o.rsbiOK ? { label: "RSBI (information only)", val: String(Math.round(rsbiW)), ok: rsbiW < 105 } : null;
     if (ab && !ab.errors.length) add("ph", "No significant respiratory acidosis (pH ≥ 7.30)", ab.ph >= 7.30, "pH " + fmt(ab.ph, 2));
     if (o.p01 != null) add("p01", "P0.1 not high (≤ 3.5)", o.p01 <= 3.5, fmt(o.p01, 1));
-    var known = C.length, met = C.filter(function (c) { return c.ok; }).length;
-    var lowSupport = (o.vmode === "psv" && (o.ps == null || o.ps <= 10)) || (o.peep != null && o.peep <= 8 && fio2Pct != null && fio2Pct <= 50);
-    var hasOx = C.some(function (c) { return c.k === "ox"; });
+    var assessed = C.filter(function (c) { return c.ok !== null; });
+    var known = assessed.length, met = assessed.filter(function (c) { return c.ok; }).length, na = C.length - known;
+    // low support judged on the FiO2 actually validated (an invalid FiO2 is never "≤ 50%")
+    var fiLow = fio2Pct != null && fio2Pct <= 50;
+    var lowSupport = (o.vmode === "psv" && (o.ps == null || o.ps <= 10)) || (o.peep != null && o.peep <= 8 && fiLow);
+    var hasOx = assessed.some(function (c) { return c.k === "ox"; });
     var spont = o.vmode === "psv" || (o.fspn != null && o.fspn >= 1) || (o.trig != null && o.trig >= 1);          // breathing on their own
     var entryErr = !!(o.fLow || o.badPeak || o.badPlat || o.tiLong);
-    return { items: C, known: known, met: met, allMet: known >= 4 && met === known, relevant: lowSupport && hasOx && spont && !entryErr, rsbi: rsbiInfo };
+    var ctx = lowSupport && spont && !entryErr;
+    return { items: C, known: known, met: met, na: na, allMet: known >= 4 && met === known && !na, relevant: ctx && hasOx,
+      incomplete: ctx && !hasOx && !!oxWhy, rsbi: rsbiInfo };
   }
   // Stress index (Ranieri 2000): during constant-flow, passive inflation P(t) = a·t^b + c.
   // b > 1.1 upward concavity (tidal overdistension), b < 0.9 downward concavity (tidal recruitment), ≈ 1 linear.
@@ -936,6 +1040,20 @@ var ABG = (function () {
   }
 
   // Kept for older callers: short summary lines
+  // What the driving pressure was calculated from (v16.2: provenance is always shown)
+  function dpBasis(v) {
+    return v.peepSrc === "total PEEP" ? "plateau − total PEEP " + fmt(v.peepEff, 0) + " from the expiratory hold" : v.peepSrc === "measured PEEP" ? "plateau − measured PEEP " + fmt(v.peepEff, 0) : "plateau − PEEP";
+  }
+  // The first n suggestions, but never without a critical one (high-priority warnings must not fall off the end)
+  function capSugg(list, n) {
+    if (!list || list.length <= n) return list || [];
+    var keep = list.slice(0, n), crit = list.slice(n).filter(function (x) { return x.tone === "crit"; });
+    if (!crit.length) return keep;
+    var drop = keep.length + crit.length - n, out = [];
+    for (var i = keep.length - 1; i >= 0 && drop > 0; i--) if (keep[i].tone !== "crit") { keep[i] = null; drop--; }
+    keep.forEach(function (x) { if (x) out.push(x); });
+    return list.filter(function (x) { return out.indexOf(x) > -1 || crit.indexOf(x) > -1; });
+  }
   function ventLines(v, s) {
     if (!v) return [];
     var L = [];
@@ -954,6 +1072,7 @@ var ABG = (function () {
     var p = ab ? ab.primary : null, ex = ab && ab.check ? ab.check.extra : null;
     var metAcid = p === "met-acid" || p === "mixed-acid" || ex === "met-acid";
     var stiff = v.cstat != null ? v.cstat < 40 : ppl != null && ppl > 30 ? true : null;
+    var unv = v.dpUnverified && v.cstatSrc !== "ventilator" ? " (unverified: plateau taken while the patient was triggering)" : "";
     if (v.badPlat) add("check", "Plateau is below PEEP: recheck the plateau (inspiratory hold) and PEEP entries.", "warn");
     normalizeVent(sp).notes.forEach(function (t) { add("check", "Entry: " + t + ".", "", false); });
     if (v.badPeak) add("check", "Plateau is above the peak pressure: recheck both (the plateau cannot exceed the peak).", "warn", false);
@@ -965,16 +1084,20 @@ var ABG = (function () {
     var resist = v.raw != null ? v.raw > 15 : v.gap != null ? v.gap > 10 : null;
     var cTxt = v.cstat != null ? " (Cstat " + fmt(v.cstat, 0) + " mL/cmH₂O" + (v.cstatSrc === "ventilator" ? ", ventilator" : "") + ")" : "";
     var rTxt = v.rawSrc === "ventilator" ? " (Ri " + fmt(v.raw, 0) + " cmH₂O/L/s)" : v.gap != null ? " (peak − plateau " + fmt(v.gap, 0) + ")" : "";
-    if (stiff && resist) add("mech", "Low compliance" + cTxt + " and high airway resistance" + rTxt + ": a stiff lung or chest wall plus an airway problem.", "warn");
-    else if (stiff) add("mech", "Low compliance" + cTxt + (resist === false ? " with normal airway resistance" : "") + ": stiff lungs or chest wall (ARDS, pulmonary edema, pneumonia, atelectasis, mainstem intubation, pneumothorax, large effusion, abdominal distension).", "warn");
-    else if (resist) add("mech", "High airway resistance" + rTxt + (stiff === false ? " with normal compliance" : "") + ": airway problem (bronchospasm, secretions or mucus plug, kinked or bitten tube, small tube).", "warn");
+    if (stiff && resist) add("mech", "Low compliance" + cTxt + " and high airway resistance" + rTxt + unv + ": a stiff lung or chest wall plus an airway problem.", "warn");
+    else if (stiff) add("mech", "Low compliance" + cTxt + (resist === false && !unv ? " with normal airway resistance" : "") + unv + ": stiff lungs or chest wall (ARDS, pulmonary edema, pneumonia, atelectasis, mainstem intubation, pneumothorax, large effusion, abdominal distension).", "warn");
+    else if (resist) add("mech", "High airway resistance" + rTxt + (stiff === false && !unv ? " with normal compliance" : "") + unv + ": airway problem (bronchospasm, secretions or mucus plug, kinked or bitten tube, small tube).", "warn");
+    else if ((stiff === false || resist === false) && unv) add("mech", "Compliance and resistance are not interpreted: the plateau was taken while the patient was triggering breaths. Repeat the hold with the patient passive.", "");
     else if (stiff === false && resist === false) add("mech", "Compliance and airway resistance are within normal limits" + cTxt + ".", "ok");
     else if (stiff === false) add("mech", "Compliance is normal" + cTxt + ".", "ok");
     else if (ppk != null && ppk > 35) add("mech", "Peak pressure " + fmt(ppk, 0) + " is high: do an inspiratory hold (plateau) to tell airway resistance from stiff lungs.", "warn");
     if (v.dp != null) {
-      if (v.dp > 15) add("dp", "Driving pressure " + fmt(v.dp, 0) + " (plateau − PEEP) is above 15: high lung stress.", "warn");
-      else add("dp", "Driving pressure " + fmt(v.dp, 0) + " (plateau − PEEP) is within 15.", "ok", false);
-    } else if (!v.badPlat && !v.badPeak) add("dp", "Driving pressure not available: it needs a plateau pressure (inspiratory hold)." + (v.dPinsp != null ? " ΔPinsp " + fmt(v.dPinsp, 0) + " is the set pressure above PEEP; it equals the driving pressure only if flow falls to zero before the breath ends." : ""), "", false);
+      if (v.dp > 15) add("dp", "Driving pressure " + fmt(v.dp, 0) + " (" + dpBasis(v) + ") is above 15: high lung stress" + (v.dpUnverified ? " (unverified: plateau taken while the patient was triggering)" : "") + ".", "warn");
+      else if (v.dpUnverified) add("dp", "Driving pressure " + fmt(v.dp, 0) + " is unverified: the plateau was taken while the patient was triggering, so it is not compared with the goal.", "", false);
+      else add("dp", "Driving pressure " + fmt(v.dp, 0) + " (" + dpBasis(v) + ") is within 15.", "ok", false);
+    } else if (v.peepUnres) add("dp", "Driving pressure not assessed: the end-expiratory pressure is unresolved (" + v.peepUnresTxt + "). Do an expiratory hold in a passive patient.", "warn");
+    else if (v.badPeepTot) add("dp", "Driving pressure not assessed: total PEEP is below set PEEP; recheck both.", "warn", false);
+    else if (!v.badPlat && !v.badPeak) add("dp", "Driving pressure not available: it needs a plateau pressure (inspiratory hold)." + (v.dPinsp != null ? " ΔPinsp " + fmt(v.dPinsp, 0) + " is the set pressure above PEEP; it equals the driving pressure only if flow falls to zero before the breath ends." : ""), "", false);
     if (ppl != null && ppl > 30) add("pplat", "Plateau " + fmt(ppl, 0) + " is above 30: overdistension risk.", "warn");
     if (v.pbwNeedSex) add("pbw", "Select Male or Female: predicted body weight, mL/kg and the lung-protective volume are not calculated without sex (PBW differs by 4.5 kg).", "warn");
     if (v.vtkg != null) {
@@ -1421,11 +1544,12 @@ var ABG = (function () {
   }
 
   // Message blocks for an intubated patient (user's layout)
-  function ventBlocks(sp, v, fio2Pct, ab) {
+  // opts: { unverified: true } while AI-filled values are not yet checked: values are listed, interpretations withheld
+  function ventBlocks(sp, v, fio2Pct, ab, opts) {
     if (!sp || sp.mode !== "mv") return [];
-    v = v || {}; var sp0 = sp; sp = normalizeVent(sp).s;
+    v = v || {}; var sp0 = sp; sp = normalizeVent(sp).s; opts = opts || {};
     var vm = VMODES[sp.vmode] ? sp.vmode : "acvc", B = [];
-    var A = ["Present settings:", "Mode: " + VMODES[vm], "FiO₂: " + (fio2Pct != null ? fmt(fio2Pct, 0) + "%" : "—")];
+    var A = ["Present settings:", "Mode: " + VMODES[vm], "FiO₂: " + (fio2Pct != null ? fmt(fio2Pct, 0) + "%" + (v.fio2Bad != null ? " (invalid: outside 21–100%; not used)" : "") : "—")];
     if ((isVC(vm) || isPRVC(vm)) && pos_(sp.vt) != null) A.push("TV: " + fmt(sp.vt, 0) + " mL" + (v.vtSetKg != null ? " (" + fmt(v.vtSetKg, 1) + " mL/kg PBW)" : ""));
     if (isPC(vm) && pos_(sp.pinsp) != null) A.push("Pinsp (ΔPinsp): " + fmt(sp.pinsp, 0) + " cmH₂O above PEEP");
     if (vm !== "psv" && pos_(sp.rr) != null) A.push((isSIMV(vm) ? "BUR (fsimv): " : "BUR: ") + fmt(sp.rr, 0) + "/min");
@@ -1440,36 +1564,47 @@ var ABG = (function () {
     if (v.ets != null) A.push("Cycle-off (Exp%): " + fmt(v.ets, 0) + "%");
     B.push(A);
     var P = ["Pressures"];
-    if (pos_(sp.ppeak) != null) P.push("Peak pressure: " + fmt(sp.ppeak, 0) + " cmH₂O" + (sp.ppeak > 35 ? " " + UP : ""));
-    if (pos_(sp.pplat) != null) P.push("Plateau pressure: " + fmt(sp.pplat, 0) + " cmH₂O" + (v.badPeak ? " (invalid: above the peak; recheck)" : v.badPlat ? " (invalid: below PEEP; recheck)" : (sp.pplat > 30 ? " " + UP : "") + " (goal ≤ 30)"));
+    if (pos_(sp.ppeak) != null) P.push("Peak pressure: " + fmt(sp.ppeak, 0) + " cmH₂O" + (v.badPpk ? " (invalid: below PEEP; recheck)" : sp.ppeak > 35 ? " " + UP : ""));
+    if (pos_(sp.pplat) != null) P.push("Plateau pressure: " + fmt(sp.pplat, 0) + " cmH₂O" + (v.badPeak ? " (invalid: above the peak; recheck)" : v.badPlat ? " (invalid: below PEEP; recheck)"
+      : (sp.pplat > 30 ? " " + UP : "") + (v.dpUnverified ? " (unverified: taken while the patient was triggering)" : " (goal ≤ 30)")));
     if (num_(sp.peeptot) != null && v.badPeepTot) P.push("Total PEEP: " + fmt(sp.peeptot, 0) + " cmH₂O (invalid: below set PEEP; recheck)");
-    if (pos_(sp.mawp) != null) P.push("Mean airway pressure: " + fmt(sp.mawp, 0) + " cmH₂O");
-    if (v.peepM != null) P.push("PEEP (measured): " + fmt(v.peepM, 0) + " cmH₂O");
-    if (num_(sp.peeptot) != null && !v.badPeepTot) P.push("Total PEEP: " + fmt(sp.peeptot, 0) + " cmH₂O" + (v.autoPeep != null ? " (auto-PEEP " + fmt(Math.max(0, v.autoPeep), 0) + ")" : ""));
+    if (pos_(sp.mawp) != null) P.push("Mean airway pressure: " + fmt(sp.mawp, 0) + " cmH₂O" + (v.badMawp ? " (invalid: " + v.badMawp + "; recheck)" : ""));
+    if (v.peepM != null) P.push("PEEP (measured): " + fmt(v.peepM, 0) + " cmH₂O" + (v.peepUnres ? " (unverified: disagrees with " + (v.peepUnres.hold ? "the expiratory-hold total PEEP" : "set PEEP") + "; see the input checks)" : ""));
+    if (num_(sp.peeptot) != null && !v.badPeepTot) P.push("Total PEEP: " + fmt(sp.peeptot, 0) + " cmH₂O (expiratory hold" + (v.autoPeep != null ? "; auto-PEEP " + fmt(Math.max(0, v.autoPeep), 0) : "") + ")");
     if (pos_(sp.vte) != null) P.push("VTE: " + fmt(sp.vte, 0) + " mL" + (v.pbw ? " (" + fmt(sp.vte / v.pbw, 1) + " mL/kg PBW)" : ""));
     if (pos_(sp.vti) != null) P.push("VTi: " + fmt(sp.vti, 0) + " mL" + (v.leak != null && v.leak >= 10 && !v.simv ? " (VTE " + fmt(v.leak, 0) + "% lower: leak?)" : ""));
     if (v.vtspn != null) P.push("VTE spn: " + fmt(v.vtspn, 0) + " mL" + (v.vtspnKg != null ? " (" + fmt(v.vtspnKg, 1) + " mL/kg PBW)" : ""));
     if (v.veSrc === "measured") P.push("MV: " + fmt(v.ve, 1) + " L/min" + (v.mvspn != null ? " (MVspn " + fmt(v.mvspn, 1) + ")" : "") + (v.mvleak != null ? "; MVleak " + fmt(v.mvleak, 1) : ""));
+    else if (v.mvDisputed) P.push("MV: " + fmt(v.mvDisputed.m, 1) + " L/min (unverified: VT × rate gives " + fmt(v.mvDisputed.c, 1) + "; recheck)");
+    else if (v.mvBad != null) P.push("MV: " + fmt(v.mvBad, 1) + " L/min (invalid: outside 0.5–60; not used)");
     if (pos_(sp.ftot) != null || (v.fmand != null && v.fspn != null)) P.push("Ftotal: " + fmt(v.f, 0) + "/min" + (v.fmand != null || v.fspn != null ? " (fmand " + (v.fmand != null ? fmt(v.fmand, 0) : "–") + ", fspn " + (v.fspn != null ? fmt(v.fspn, 0) : "–") + ")" : v.trig != null && v.trig >= 2 && vm !== "psv" ? " (" + fmt(v.trig, 0) + " above BUR)" : ""));
-    if (v.dp != null) P.push("Driving pressure: " + fmt(v.dp, 0) + " cmH₂O" + (v.dp > 15 ? " " + UP : "") + " (plateau − PEEP; goal ≤ 15)");
-    else P.push(v.badPlat ? "Driving pressure: not available (plateau below PEEP; recheck)" : v.badPeak ? "Driving pressure: not available (plateau above peak; recheck)" : v.badPeepTot ? "Driving pressure: not available (total PEEP below set PEEP; recheck)" : "Driving pressure: needs plateau pressure (inspiratory hold)");
+    // Driving pressure always carries its basis; it is compared with the goal only when the measurements behind it are valid
+    if (v.dp != null) P.push("Driving pressure: " + fmt(v.dp, 0) + " cmH₂O" + (v.dp > 15 ? " " + UP : "") + (v.dpUnverified ? " (unverified: plateau taken while the patient was triggering; " + dpBasis(v) + ")" : " (" + dpBasis(v) + "; goal ≤ 15)"));
+    else P.push(v.badPlat ? "Driving pressure: not assessed (plateau below PEEP; recheck)" : v.badPeak ? "Driving pressure: not assessed (plateau above peak; recheck)" : v.badPeepTot ? "Driving pressure: not assessed (total PEEP below set PEEP; recheck)"
+      : v.peepUnres ? "Driving pressure: not assessed (end-expiratory pressure unresolved: " + v.peepUnresTxt + "; do an expiratory hold)" : "Driving pressure: needs plateau pressure (inspiratory hold)");
     B.push(P);
     var C = [];
     if (v.pbw) C.push("PBW " + fmt(v.pbw, 1) + " kg (6 mL/kg = " + Math.round(6 * v.pbw) + " mL)");
     else if (v.pbwNeedSex) C.push("PBW: not calculated (sex not selected)");
+    if (v.pao2Bad != null || v.fio2Bad != null) C.push("P/F and oxygenation index: not assessed (" + (v.fio2Bad != null ? "FiO₂ " + fmt(v.fio2Bad, 0) + "%" : "pO₂ " + fmt(v.pao2Bad, 0)) + " is invalid; recheck)");
+    else if (v.pao2Alv) C.push("P/F and oxygenation index: not assessed (pO₂ " + fmt(v.pao2Alv.p, 0) + " is above the alveolar pO₂ ≈ " + fmt(v.pao2Alv.A, 0) + "; recheck FiO₂ and the sample)");
     if (v.oi != null) C.push("Oxygenation index: " + fmt(v.oi, 1) + " (no adult severity bands; follow the trend)");
+    if (v.spo2Bad != null) C.push("SpO₂: " + fmt(v.spo2Bad, 0) + "% (" + (v.spo2Bad > 100 ? "invalid" : "outside 51–100%") + "; not used for S/F)");
     if (v.sf != null) C.push("SpO₂/FiO₂: " + Math.round(v.sf) + " (SpO₂ " + fmt(v.spo2, 0) + "%)" + (v.spo2 > 97 ? "; not valid above 97%" : v.sfRange ? " " + DOWN + "; ARDS oxygenation range (≤ 315)" + (v.sfSev ? ", " + v.sfSev : "") : ""));
     if (v.osi != null) C.push("Oxygen saturation index: " + fmt(v.osi, 1) + " (no adult severity bands; follow the trend)");
     if (C.length) B.push(C);
     var M = ["Mechanics"];
-    if (v.cstat != null) M.push("Static compliance: " + fmt(v.cstat, 0) + " mL/cmH₂O" + (v.cstat < 40 ? " " + DOWN : "") + (v.cstatSrc === "ventilator" ? " (ventilator-measured; normal 40–100)" : " (from plateau; normal 40–100)") + (v.cstatM != null && v.cstatSrc !== "ventilator" ? "; ventilator Cstat " + fmt(v.cstatM, 0) : ""));
+    if (v.cstat == null && (v.peepUnres || v.badPeepTot) && v.pplV != null) M.push("Static compliance: not assessed (" + (v.peepUnres ? "end-expiratory pressure unresolved" : "total PEEP below set PEEP") + ")");
+    if (v.cstat != null) M.push("Static compliance: " + fmt(v.cstat, 0) + " mL/cmH₂O" + (v.cstat < 40 ? " " + DOWN : "") + (v.cstatSrc === "ventilator" ? " (ventilator-measured; normal 40–100)" : v.dpUnverified ? " (unverified: plateau taken while the patient was triggering)" : " (from plateau; normal 40–100)") + (v.cstatM != null && v.cstatSrc !== "ventilator" ? "; ventilator Cstat " + fmt(v.cstatM, 0) : ""));
     if (v.cdynM != null) M.push("Dynamic compliance (Cdyn): " + fmt(v.cdynM, 0) + " mL/cmH₂O");
     if (v.raw != null) M.push("Airway resistance" + (v.rawSrc === "ventilator" ? " (Ri)" : "") + ": " + fmt(v.raw, 0) + " cmH₂O/L/s" + (v.raw > 15 ? " " + UP : "") + (v.rawSrc === "ventilator" ? " (normal ≈ 5–10 with a tube)" : " (peak − plateau " + fmt(v.gap, 0) + "; normal ≈ 5–10 with a tube)"));
     else if (v.gap != null) M.push("Peak − plateau: " + fmt(v.gap, 0) + " cmH₂O" + (v.gap > 10 ? " " + UP : "") + " (resistive pressure; normal ≤ 5–10)");
     if (v.te != null && v.tau != null) M.push("Expiratory time: " + fmt(v.te, 1) + " s" + (v.teAct ? " at ftotal " + fmt(v.f, 0) : "") + " vs 3 time constants" + (v.tauSrc === "RCexp" ? " (RCexp " + fmt(v.tau, 2) + " s)" : "") + " " + fmt(3 * v.tau, 1) + " s" + (v.te < 3 * v.tau ? " (air trapping risk)" : " (enough to exhale)"));
     if (v.ve != null) M.push("Minute ventilation" + (v.veSrc === "measured" ? " (measured)" : "") + ": " + fmt(v.ve, 1) + " L/min" + (v.vePred ? (v.ve / v.vePred >= 1.5 ? " " + UP : "") + " (predicted " + fmt(v.vePred, 1) + ")" : ""));
-    if (v.vr != null) M.push("Ventilatory ratio: " + fmt(v.vr, 1) + (v.vr >= 2 ? " " + UP : "") + " (normal ≈ 1)");
+    else if (v.mvDisputed) M.push("Minute ventilation: not assessed (measured " + fmt(v.mvDisputed.m, 1) + " vs VT × rate " + fmt(v.mvDisputed.c, 1) + " L/min; recheck)");
+    if (v.vr != null) M.push("Ventilatory ratio: " + fmt(v.vr, 1) + (v.vrUnverified ? " (unverified: the gas is internally inconsistent)" : (v.vr >= 2 ? " " + UP : "") + " (normal ≈ 1)"));
     if (v.mp != null) M.push("Mechanical power: " + fmt(v.mp, 0) + " J/min" + (v.mp > 17 ? " " + UP : "") + " (> 17 linked to higher mortality)");
+    else if (v.mpNA) M.push("Mechanical power: not assessed (" + v.mpNA + ")");
     if (v.rsbi != null) M.push("RSBI: " + Math.round(v.rsbi) + (v.rsbiOK ? " (< 105 favours weaning)" : " (on PS " + fmt(v.ps, 0) + ": not a weaning index; measure on PS 5–8 or CPAP)"));
     else if (v.rsbiM != null) M.push("RSBI (ventilator): " + Math.round(v.rsbiM) + (v.rsbiOK ? " (< 105 favours weaning)" : " (not a weaning index at this support" + (v.simv ? "; spontaneous breaths only" : "") + ")"));
     if (M.length > 1) B.push(M);
@@ -1477,14 +1612,18 @@ var ABG = (function () {
     if (v.p01 != null) E.push("P0.1: " + fmt(v.p01, 1) + " cmH₂O" + (v.p01 > 3.5 ? " " + UP : v.p01 < 1 ? " " + DOWN : "") + " (usual 1–3.5)");
     if (v.pmus != null) E.push("ΔPocc: −" + fmt(Math.abs(v.pocc), 0) + " cmH₂O → Pmus ≈ " + fmt(v.pmus, 0) + (v.pmus > 10 ? " " + UP : "") + " (> 10 high)" + (v.dpl != null ? "; ΔPL,dyn ≈ " + fmt(v.dpl, 0) + (v.dpl > 15 ? " " + UP : "") + " (> 15 high)" : ""));
     if (E.length > 1) B.push(E);
+    if (opts.unverified) { B.push(["Ventilator interpretation and weaning screen: not assessed until the AI-filled values are checked against the ventilator screen."]); return B; }
     var I = ventInterp(v, sp, ab).filter(function (x) { return x.msg; }).map(function (x) { return x.text; });
     if (I.length) B.push(["Ventilator interpretation:"].concat(I));
     var SB = scalarBlock(sp0);
     if (SB) B.push(SB);
     var W = v.wean;
+    var mark = function (c) { return (c.ok === null ? "– " : c.ok ? "✓ " : "✗ ") + c.label + " (" + c.val + ")"; };
     if (W && W.known >= 3 && W.relevant && (vm === "psv" || isSIMV(vm) || W.allMet)) {
-      B.push(["Weaning screen (numbers only):"].concat(W.items.map(function (c) { return (c.ok ? "✓ " : "✗ ") + c.label + " (" + c.val + ")"; }))
-        .concat([W.allMet ? "Meets the numeric criteria; also needs: cause improving, stable without or on low-dose vasopressors, awake, good cough, manageable secretions." : "Not yet: " + W.items.filter(function (c) { return !c.ok; }).map(function (c) { return c.label; }).join("; ") + "."]));
+      B.push(["Weaning screen (numbers only):"].concat(W.items.map(mark))
+        .concat([W.allMet ? "Meets the numeric criteria; also needs: cause improving, stable without or on low-dose vasopressors, awake, good cough, manageable secretions." : "Not yet: " + W.items.filter(function (c) { return c.ok === false; }).map(function (c) { return c.label; }).join("; ") + "."]));
+    } else if (W && W.incomplete && W.known >= 2) {
+      B.push(["Weaning screen (numbers only):"].concat(W.items.map(mark)).concat(["Screen incomplete: oxygenation is not assessed, so this is not a pass. Recheck the gas (or use a valid SpO₂)."]));
     }
     return B;
   }
@@ -1497,16 +1636,16 @@ var ABG = (function () {
     var ab = m.linked && m.ab && !m.ab.errors.length ? m.ab : null;
     if (m.linked && m.ph != null && m.paco2 != null && m.pao2 != null) {
       var ix = indices(m.pao2, m.paco2, m.fio2Pct);
-      B[0].push("ABG: pH " + fmt(m.ph, 2) + ", pCO₂ " + n1(m.paco2) + ", pO₂ " + n1(m.pao2) + (m.fio2Pct != null ? " on FiO₂ " + fmt(m.fio2Pct, 0) + "%" : "") + (ix ? " (P/F " + Math.round(ix.pf) + ")" : ""));
+      B[0].push("ABG: pH " + fmt(m.ph, 2) + ", pCO₂ " + n1(m.paco2) + ", pO₂ " + n1(m.pao2) + (vStat("pao2", m.pao2) === "invalid" ? " (invalid)" : "") + (m.fio2Pct != null ? " on FiO₂ " + fmt(m.fio2Pct, 0) + "%" : "") + (ix ? " (P/F " + Math.round(ix.pf) + ")" : ""));
       var head = interpretation(ab); if (head) B[0].push(head + (m.ox ? ", with " + m.ox.label : ""));
     }
-    var vIs = collectIssues({ abRaw: m.linked ? m.ab : null, vent: m.vent, extra: m.extraIssues });
+    var vIs = collectIssues({ abRaw: m.linked ? m.ab : null, vent: m.vent, pao2: m.linked ? m.pao2 : null, paco2: m.linked ? m.paco2 : null, fio2Pct: m.fio2Pct, extra: m.extraIssues });
     if (vIs.length) B.push(["⚠️ Input checks (resolve before acting):"].concat(vIs.map(function (x) { return "• " + x.text; })));
-    ventBlocks(sp, m.vent, m.fio2Pct, ab).forEach(function (b) { B.push(b); });
+    ventBlocks(sp, m.vent, m.fio2Pct, ab, { unverified: !!m.aiPending }).forEach(function (b) { B.push(b); });
     if (m.aiPending) { B.push(["Suggestions: withheld until the AI-filled values are checked against the ventilator screen."]); return B.map(function (b) { return b.join("\n"); }).join("\n\n"); }
     var sg = suggestions({ ab: ab, ox: m.linked ? m.ox : null, r: m.linked ? m.r : null, g: m.linked ? m.g : null, rf: m.linked ? m.rf : null, retainer: m.retainer,
       paco2: m.linked ? m.paco2 : null, pao2: m.linked ? m.pao2 : null, fio2Pct: m.fio2Pct, support: sp, vent: m.vent, tgt: m.tgt }).filter(function (x) { return isVentKey(x.key); });
-    if (sg.length) B.push(["Suggestions:"].concat(sg.slice(0, 10).map(function (x) { return "• " + x.text + (x.src ? " [" + x.src + "]" : ""); })));
+    if (sg.length) B.push(["Suggestions:"].concat(capSugg(sg, 10).map(function (x) { return "• " + x.text + (x.src ? " [" + x.src + "]" : ""); })));
     return B.map(function (b) { return b.join("\n"); }).join("\n\n");
   }
 
@@ -1689,16 +1828,23 @@ var ABG = (function () {
             " This is a theoretical estimate: it assumes VT, dead space and CO₂ production stay the same and that the patient breathes at the set rate (patient-triggered breaths may already exceed it). A faster rate also adds dead-space ventilation and shortens expiration. Recheck the ABG after any change.");
         }
       }
-      if (v && v.trig != null && v.trig >= 2 && metAcid && ab && ab.ph < 7.30)
-        add("vdrive", "Patient is breathing " + fmt(v.trig, 0) + "/min above the set rate (total " + fmt(ftotN, 0) + ") to compensate for the acidosis: before sedating or paralyzing, raise the set rate to at least " + fmt(ftotN, 0) + " so minute ventilation does not fall.", "", "crit",
-          "Not matching the patient's own compensation (after intubation, sedation or paralysis) can drop the pH quickly and cause arrest in severe metabolic acidosis.");
+      // v16.2: the warning stays (critical) but gives no set-rate number: the rate needed cannot be read from the total rate
+      var ownVent = v && metAcid && ab && ab.ph < 7.30 && ((v.trig != null && v.trig >= 2) || (vm === "psv" && ftotN != null));
+      if (ownVent) {
+        var veTxt = v.ve != null ? "; minute ventilation " + fmt(v.ve, 1) + " L/min" + (v.veSrc === "measured" ? " measured" : "") : "";
+        add("vdrive", (vm === "psv" ? "On pressure support the patient generates all of the ventilation (total " + fmt(ftotN, 0) + "/min" + veTxt + ")"
+            : "Patient is breathing " + fmt(v.trig, 0) + "/min above the set rate (total " + fmt(ftotN, 0) + " vs set " + fmt(bur, 0) + veTxt + ")") +
+          " to compensate for the acidosis. Sedation, paralysis or a switch to a controlled mode can abruptly remove this ventilation and worsen the acidemia. Plan beforehand how minute ventilation will be maintained: the set rate cannot be inferred from the total rate alone; account for VT, dead space, expiratory time, auto-PEEP, plateau and driving pressure, and recheck the ABG soon after.",
+          "", "crit",
+          "Expert interpretation: losing the patient's compensatory hyperventilation after intubation, sedation or paralysis can drop the pH quickly and cause arrest in severe metabolic acidosis. Guideline protocol (ARDSNet, for ARDS): set the initial rate to approximate the baseline minute ventilation, not above 35/min; that ceiling belongs to the ARDSNet protocol, not to every patient or mode. Physiology: matching a high minute ventilation by rate alone shortens expiration (check auto-PEEP with an expiratory hold); a larger VT raises plateau and driving pressure.");
+      }
       else if (ftotN != null && ftotN > 30) add("vdrive", "Total RR " + fmt(ftotN, 0) + "/min is high: look for pain, agitation, fever, hypoxemia, acidosis or dyssynchrony before adding sedation.", "", "warn");
       var lowerHow = isPC(vm) || vm === "psv" ? "lower Pinsp/PS" : "lower VT";
       if (v && v.vtkg != null && v.vtkg > 8) add("vt", "VT " + fmt(v.vtkg, 1) + " mL/kg PBW is high: " + (isPC(vm) || vm === "psv" ? "lower the inspiratory pressure to get" : "reduce toward") + " " + (ardsRange ? "6" : "6–8") + " mL/kg PBW (" + Math.round((ardsRange ? 6 : 7) * v.pbw) + " mL).", ardsRange ? "ATS 2024; ARDSNet" : "SSC 2026", "warn",
         "ARDS: 6 mL/kg PBW (range 4–8) with plateau ≤ 30 cmH₂O. SSC 2026 suggests 6–8 mL/kg PBW for sepsis-related hypoxemic failure without ARDS.");
       if (v && v.vtkg != null && v.vtkg < 4) add("vt", "VT " + fmt(v.vtkg, 1) + " mL/kg PBW is below 4: check the height, sex and volume.", "ARDSNet", "warn");
       if (v && v.pplV != null && v.pplV > 30) add("pplat", "Plateau " + fmt(v.pplV, 0) + " cmH₂O > 30: " + lowerHow + " in 1 mL/kg steps (down to 4 mL/kg PBW).", "ARDSNet", "warn");
-      if (v && v.dp != null && v.dp > 15) add("dp", "Driving pressure " + fmt(v.dp, 0) + " cmH₂O is high: " +
+      if (v && v.dp != null && v.dp > 15) add("dp", "Driving pressure " + fmt(v.dp, 0) + " cmH₂O is high" + (v.dpUnverified ? " (unverified: the plateau was taken while the patient was triggering; confirm with a hold in a passive patient)" : "") + ": " +
         (ab && ab.ph < 7.15 ? "once pH is ≥ 7.15, " + lowerHow + " (toward 4–6 mL/kg PBW)" : lowerHow) + " and reassess PEEP.", "Amato, NEJM 2015", "",
         "Driving pressure (plateau − PEEP) was the ventilation variable most strongly associated with survival in ARDS; about 15 cmH₂O is the commonly used upper limit. This is observational evidence, not a guideline target.");
       if (v && v.autoPeep != null && v.autoPeep >= 2) add("autopeep", "Auto-PEEP " + fmt(v.autoPeep, 0) + " cmH₂O (air trapping): lengthen expiration (lower RR or VT, raise inspiratory flow), treat bronchospasm; watch BP.", "", "warn",
@@ -1731,8 +1877,9 @@ var ABG = (function () {
       if (v && v.sfRange && pf == null) add("ardsSF", "SpO₂/FiO₂ " + Math.round(v.sf) + " (SpO₂ " + fmt(v.spo2, 0) + "%) meets the ARDS oxygenation criterion" + (v.sfSev ? " (" + v.sfSev + " range)" : " (no severity grade without PEEP ≥ 5)") + ": if bilateral opacities are not explained by heart failure or fluid overload, treat as ARDS (VT 6 mL/kg PBW" + (v.pbw ? " = " + Math.round(6 * v.pbw) + " mL" : "") + ", plateau ≤ 30); confirm with an ABG.", "Global ARDS definition 2023", "warn");
       // Weaning and extubation
       var W = v && v.wean;
+      var oxBySpo2 = W && W.items.some(function (it) { return it.k === "ox" && /from SpO₂ because/.test(it.label); });
       if (W && W.relevant && W.allMet && W.known >= 4) {
-        add("wean", "Passes the numeric screen: if the cause is improving, BP is stable on no or low-dose vasopressors, and the patient is awake with a good cough, consider a spontaneous breathing trial (30 min on PS ≤ 8 with PEEP ≤ 5, or T-piece; do not raise FiO₂ during it). Readiness is a clinical decision.", "ACCP/ATS 2017; AARC 2024; Subirà JAMA 2019", "ok",
+        add("wean", "Passes the numeric screen" + (oxBySpo2 ? " (oxygenation judged from SpO₂ only, because the pO₂ entry is invalid)" : "") + ": if the cause is improving, BP is stable on no or low-dose vasopressors, and the patient is awake with a good cough, consider a spontaneous breathing trial (30 min on PS ≤ 8 with PEEP ≤ 5, or T-piece; do not raise FiO₂ during it). Readiness is a clinical decision.", "ACCP/ATS 2017; AARC 2024; Subirà JAMA 2019", "ok",
           "Stop the trial for RR > 35, SpO₂ < 90%, HR > 140 or a 20% change, SBP > 180 or < 90, agitation, sweating or rising work of breathing. A 30-minute PS trial gave more successful extubations than a 2-hour T-piece trial (82% vs 74%).");
         add("extub", "If the trial is passed: extubate straight to NIV when at high risk (hypercapnia, COPD, heart failure, other serious comorbidity); otherwise HFNC is reasonable. Cuff-leak test if at high risk of stridor (steroids at least 4 h before extubation if the leak is small).", "ACCP/ATS 2017; ERS 2022", "",
           "ACCP/ATS: preventive NIV for high-risk patients ventilated > 24 h (strong recommendation). ERS 2022: NIV over HFNC when at high risk of extubation failure; HFNC over conventional oxygen when at low risk.");
@@ -1865,9 +2012,9 @@ var ABG = (function () {
       var low = (!ox.onO2 && ox.grade !== "none") || ox.state === "uncorrected";
       var high = ox.state === "over";
       if (mode === "mv" && ardsRange && c.pao2 != null) {
-        if (c.pao2 < 55) add("o2", "pO₂ below the ARDSNet goal (55–80): raise FiO₂ and/or PEEP using the PEEP/FiO₂ table." + want, "ARDSNet; ATS 2024", "warn", tgtNote);
+        if (c.pao2 < 55) add("o2", "pO₂ below the ARDSNet goal (55–80): raise FiO₂ and/or PEEP using the PEEP/FiO₂ table." + want + " (The PEEP/FiO₂ table is for confirmed ARDS.)", "ARDSNet; ATS 2024", "warn", tgtNote);
         else if (c.pao2 <= 80) add("o2", "pO₂ " + fmt(c.pao2, 0) + " is within the ARDSNet goal (55–80): keep FiO₂/PEEP, wean FiO₂ when stable.", "ARDSNet", "", tgtNote);
-        else add("o2", "pO₂ " + fmt(c.pao2, 0) + " is above the ARDSNet goal (55–80): wean FiO₂ first, then PEEP." + want, "ARDSNet", "warn", tgtNote);
+        else add("o2", "pO₂ " + fmt(c.pao2, 0) + " is above the ARDSNet goal (55–80): wean FiO₂ first, then PEEP." + want + " The ARDSNet goal applies once ARDS is confirmed; otherwise use your unit's usual target.", "ARDSNet", "warn", tgtNote);
       } else if (mode === "mv") {
         var tgtMV = "the lowest FiO₂ that keeps SpO₂ in target";
         if (low) add("o2", "Raise FiO₂ and/or PEEP" + (ardsRange ? " (use the ARDSNet PEEP/FiO₂ table; higher PEEP if moderate–severe ARDS)" : "") + "." + want, ardsRange ? "ARDSNet; ATS 2024" : "", "warn");
@@ -1917,7 +2064,8 @@ var ABG = (function () {
   // P/F and A–a without needing age (the O2-requirement calc needs age; these don't)
   function indices(pao2, paco2, fio2Pct) {
     if ([pao2, paco2, fio2Pct].some(function (v) { return v == null || !isFinite(v); })) return null;
-    if (fio2Pct < 21 || fio2Pct > 100 || pao2 < 10 || pao2 > 700 || paco2 < 5 || paco2 > 200) return null;   // out-of-range entries are reported, not used
+    if (vOK("fio2Pct", fio2Pct) == null || vOK("pao2", pao2) == null || vOK("paco2", paco2) == null) return null;   // out-of-range entries are reported, not used
+    if (pao2AboveAlv(pao2, paco2, fio2Pct) != null) return null;
     var PAO2 = P_DRY * fio2Pct / 100 - paco2 / RQ;
     return { pf: pao2 / (fio2Pct / 100), PAO2: PAO2, AaGrad: PAO2 - pao2 };
   }
@@ -2023,7 +2171,7 @@ var ABG = (function () {
     var pLo = m.ox ? m.ox.mildLimit : 80;
     if (m.ph != null) v.push("pH " + fmt(m.ph, 2) + arrow(m.ph, RANGE.ph[0], RANGE.ph[1]));
     if (m.paco2 != null) v.push("pCO₂ " + n1(m.paco2) + " mmHg" + arrow(m.paco2, RANGE.co2[0], RANGE.co2[1]));
-    if (m.pao2 != null) v.push("pO₂ " + n1(m.pao2) + " mmHg" + arrow(m.pao2, pLo, null));
+    if (m.pao2 != null) v.push("pO₂ " + n1(m.pao2) + " mmHg" + (vStat("pao2", m.pao2) === "invalid" ? " (invalid: outside 10–700; not used)" : arrow(m.pao2, pLo, null)));
     if (hco3 != null) v.push("HCO₃ " + n1(hco3) + " mmol/L" + arrow(hco3, RANGE.hco3[0], RANGE.hco3[1]) + (m.hco3 == null ? " (calc)" : ""));
     if (m.tco2 != null) v.push("TCO₂ " + n1(m.tco2) + " mmol/L" + arrow(m.tco2, RANGE.tco2[0], RANGE.tco2[1]));
     if (m.be != null) v.push("BE " + (m.be > 0 ? "+" : "") + n1(m.be) + " mmol/L" + arrow(m.be, RANGE.be[0], RANGE.be[1]));
@@ -2032,7 +2180,7 @@ var ABG = (function () {
     if (v.length) blocks.push(v);
     var elV = elLines(m.el);
     if (elV.length) blocks.push(elV);
-    var issues = collectIssues({ abRaw: m.abRaw || m.abPaused || m.ab, el: m.el, ox: m.ox, pao2: m.pao2, fio2Pct: m.fio2Pct, support: m.support, vent: m.vent, extra: m.extraIssues });
+    var issues = collectIssues({ abRaw: m.abRaw || m.abPaused || m.ab, el: m.el, ox: m.ox, pao2: m.pao2, paco2: m.paco2, fio2Pct: m.fio2Pct, support: m.support, vent: m.vent, extra: m.extraIssues });
     if (issues.length) blocks.push(["⚠️ Input checks (resolve before acting):"].concat(issues.map(function (x) { return "• " + x.text; })));
 
     var isMV = !!(m.support && m.support.mode === "mv");
@@ -2046,7 +2194,7 @@ var ABG = (function () {
     if (m.def && !m.def.none) d.push("HCO3 deficit: " + Math.round(m.def.value) + " mEq (theoretical estimate, not a dose)");
     if (d.length) blocks.push(d);
 
-    if (isMV) ventBlocks(m.support, m.vent, m.fio2Pct, ab).forEach(function (b) { blocks.push(b); });
+    if (isMV) ventBlocks(m.support, m.vent, m.fio2Pct, ab, { unverified: !!m.aiPending }).forEach(function (b) { blocks.push(b); });
     if (ab) {
       var cl = compensationLines(ab);
       // the template keeps "Actual …" as its own paragraph
@@ -2064,8 +2212,8 @@ var ABG = (function () {
       var sg = suggestions({ ab: ab, ox: m.ox, r: r, g: g, rf: rf, lactate: m.lactate, def: m.def, retainer: m.retainer, mismatch: m.mismatch, paco2: m.paco2, pao2: m.pao2, fio2Pct: m.fio2Pct, support: m.support, vent: m.vent, tgt: m.tgt, el: m.el });
       if (m.aiPending) sg = sg.filter(function (x) { return !isVentKey(x.key); });
       var elN = m.el ? 2 : 0;
-      var lines = sg.slice(0, m.maxSugg || (isMV ? 10 : 7) + elN).map(function (x) { return "• " + x.text + (x.src ? " [" + x.src + "]" : ""); });
-      if (!lines.length) lines = ["• " + nothingLine(!!(m.abRaw && m.abRaw.errors && m.abRaw.errors.length), oxOutOfRange(m.pao2, m.fio2Pct))];
+      var lines = capSugg(sg, m.maxSugg || (isMV ? 10 : 7) + elN).map(function (x) { return "• " + x.text + (x.src ? " [" + x.src + "]" : ""); });
+      if (!lines.length) lines = ["• " + nothingLine(!!(m.abRaw && m.abRaw.errors && m.abRaw.errors.length), oxOutOfRange(m.pao2, m.fio2Pct, m.paco2))];
       blocks.push(["Suggestions:"].concat(lines));
     }
     return blocks.map(function (b) { return b.join("\n"); }).join("\n\n");
@@ -2085,7 +2233,7 @@ var ABG = (function () {
   }
 
   return {
-    oxOutOfRange: oxOutOfRange, nothingLine: nothingLine,
+    oxOutOfRange: oxOutOfRange, nothingLine: nothingLine, pao2AboveAlv: pao2AboveAlv, vStat: vStat, vOK: vOK, LIM: LIM, capSugg: capSugg, dpBasis: dpBasis,
     VMODES: VMODES, isVC: isVC, isPC: isPC, isSIMV: isSIMV, hasPS: hasPS, analyzeFlow: analyzeFlow, analyzePaw: analyzePaw, analyzeVolume: analyzeVolume, mergeReads: mergeReads, crossCheck: crossCheck, normalizeVent: normalizeVent, stressIndex: stressIndex, weanScreen: weanScreen, movAvg: movAvg, SCALARS: SCALARS, scalarsFor: scalarsFor, scalarIds: scalarIds, scalarBlock: scalarBlock, ventMessage: ventMessage, isVentKey: isVentKey, parseIE: parseIE, peepTable: peepTable, oiGrade: oiGrade, ventInterp: ventInterp, ventBlocks: ventBlocks, desiredMV: desiredMV,
     effectiveTarget: effectiveTarget, applyAdequacy: applyAdequacy, supportFio2: supportFio2, supportLine: supportLine, modeName: modeName, pbw: pbw, targetPco2: targetPco2, ventCalc: ventCalc, ventLines: ventLines, desiredText: desiredText, endExpPressure: endExpPressure, DEVICES: DEVICES,
     gasExchange: gasExchange, respFailure: respFailure, fullInterpretation: fullInterpretation, suggestions: suggestions,
