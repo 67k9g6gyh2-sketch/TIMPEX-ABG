@@ -206,7 +206,7 @@ test("13b. no rate change that would push a normal pH out of range", () => {
 const DKA_GAS = { ph: 7.10, paco2: 20, hco3: hh(7.10, 20), pao2: 100 };
 
 test("14. DKA with serum β-hydroxybutyrate", () => {
-  const x = pipeline(Object.assign({}, DKA_GAS, { el: { na: 130, k: 5.0, cl: 96, glu: 520, bhb: 6.2 } }));
+  const x = pipeline(Object.assign({}, DKA_GAS, { el: { na: 130, k: 5.0, cl: 96, glu: 520, gluUnit: "mgdl", bhb: 6.2 } }));
   assert.equal(x.E.dka.state, "met");
   assert.equal(x.E.dka.sev, "severe");                          // HCO3 < 10
   assert.match(x.msg, /DKA biochemical criteria met \(ADA\/EASD 2024\): severe/);
@@ -214,17 +214,17 @@ test("14. DKA with serum β-hydroxybutyrate", () => {
 });
 
 test("15. DKA with urine ketones (2+ or more), and below the threshold", () => {
-  const x = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520, uket: 3 } }));
+  const x = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520, gluUnit: "mgdl", uket: 3 } }));
   assert.equal(x.E.dka.state, "met");
   assert.match(x.msg, /urine ketones 3\+/);
-  const low = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520, uket: 1 } }));
+  const low = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520, gluUnit: "mgdl", uket: 1 } }));
   assert.equal(low.E.dka.state, "notmet");
   assert.match(low.msg, /DKA criteria not met: ketones below the threshold/);
   // β-OHB is used before urine ketones when both are entered
-  const both = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520, uket: 3, bhb: 1.0 } }));
+  const both = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520, gluUnit: "mgdl", uket: 3, bhb: 1.0 } }));
   assert.equal(both.E.dka.state, "notmet");
   // ketones not measured → possible, not met
-  const none = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520 } }));
+  const none = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520, gluUnit: "mgdl" } }));
   assert.equal(none.E.dka.state, "possible");
   assert.match(none.msg, /DKA possible, not confirmed: needs ketones/);
   assert.doesNotMatch(none.msg, /DKA biochemical criteria met/);
@@ -232,11 +232,11 @@ test("15. DKA with urine ketones (2+ or more), and below the threshold", () => {
 
 test("16. euglycemic DKA needs known diabetes; without it, other ketoacidoses are raised", () => {
   const gas = { ph: 7.15, paco2: 22, hco3: hh(7.15, 22), pao2: 100 };
-  const eu = pipeline(Object.assign({}, gas, { el: { glu: 160, bhb: 5, dm: true, k: 4.2 } }));
+  const eu = pipeline(Object.assign({}, gas, { el: { glu: 160, gluUnit: "mgdl", bhb: 5, dm: true, k: 4.2 } }));
   assert.equal(eu.E.dka.state, "met"); assert.equal(eu.E.dka.euglycemic, true);
   assert.match(eu.msg, /euglycemic/);
   assert.match(eu.text("dka"), /dextrose with the insulin from the start/);
-  const noDm = pipeline(Object.assign({}, gas, { el: { glu: 160, bhb: 5 } }));
+  const noDm = pipeline(Object.assign({}, gas, { el: { glu: 160, gluUnit: "mgdl", bhb: 5 } }));
   assert.equal(noDm.E.dka.state, "notmet"); assert.equal(noDm.E.dka.ketoNoD, true);
   assert.match(noDm.msg, /euglycemic DKA if the patient has diabetes/);
   assert.match(noDm.msg, /starvation or alcoholic ketoacidosis/);
@@ -245,7 +245,7 @@ test("16. euglycemic DKA needs known diabetes; without it, other ketoacidoses ar
 const HHS_GAS = { ph: 7.36, paco2: 38, hco3: hh(7.36, 38), pao2: 85 };
 
 test("17. HHS with complete biochemical criteria", () => {
-  const x = pipeline(Object.assign({}, HHS_GAS, { age: 75, el: { na: 148, k: 4.4, cl: 110, glu: 980, bhb: 0.8, bun: 60 } }));
+  const x = pipeline(Object.assign({}, HHS_GAS, { age: 75, el: { na: 148, k: 4.4, cl: 110, glu: 980, gluUnit: "mgdl", bhb: 0.8, bun: 60, bunUnit: "mgdl" } }));
   assert.equal(x.E.hhs.state, "met");
   assert.ok(x.E.effOsm > 300);
   assert.match(x.msg, /HHS biochemical criteria met \(ADA\/EASD 2024\)/);
@@ -253,16 +253,16 @@ test("17. HHS with complete biochemical criteria", () => {
 });
 
 test("18. HHS with ketones not measured is only 'possible'", () => {
-  const x = pipeline(Object.assign({}, HHS_GAS, { age: 75, el: { na: 148, glu: 980 } }));
+  const x = pipeline(Object.assign({}, HHS_GAS, { age: 75, el: { na: 148, glu: 980, gluUnit: "mgdl" } }));
   assert.equal(x.E.hhs.state, "possible");
   assert.match(x.msg, /HHS possible, not confirmed/);
   assert.doesNotMatch(x.msg, /HHS biochemical criteria met/);
   assert.match(x.text("hhs"), /measure β-hydroxybutyrate/);
   // significant ketones → not HHS
-  const k = pipeline(Object.assign({}, HHS_GAS, { age: 75, el: { na: 148, glu: 980, bhb: 4 } }));
+  const k = pipeline(Object.assign({}, HHS_GAS, { age: 75, el: { na: 148, glu: 980, gluUnit: "mgdl", bhb: 4 } }));
   assert.equal(k.E.hhs.state, "notmet");
   // DKA with HHS-range glucose and osmolality → overlap, not two diagnoses
-  const ov = pipeline(Object.assign({}, DKA_GAS, { el: { na: 140, glu: 900, bhb: 6 } }));
+  const ov = pipeline(Object.assign({}, DKA_GAS, { el: { na: 140, glu: 900, gluUnit: "mgdl", bhb: 6 } }));
   assert.equal(ov.E.dka.state, "met"); assert.equal(ov.E.overlap, true);
   assert.match(ov.msg, /overlapping DKA–HHS/);
   assert.doesNotMatch(ov.msg, /HHS biochemical criteria met/);
@@ -302,20 +302,20 @@ test("21. desired FiO2 and HCO3 deficit are reported as estimates, not prescript
 
 test("25. electrolytes: anion gap, albumin correction (Figge) and delta ratio", () => {
   const gas = { ph: 7.10, paco2: 20, hco3: hh(7.10, 20), pao2: 100 };
-  const x = pipeline(Object.assign({}, gas, { el: { na: 140, cl: 100, alb: 2.0 } }));
+  const x = pipeline(Object.assign({}, gas, { el: { na: 140, cl: 100, alb: 2.0, albUnit: "gdl" } }));
   assert.ok(Math.abs(x.E.ag - (140 - 100 - gas.hco3)) < 1e-9);
   assert.ok(Math.abs(x.E.agCorr - (x.E.ag + 2.5 * (4.0 - 2.0))) < 1e-9);
   assert.ok(Math.abs(x.E.dr - ((x.E.agCorr - 12) / (24 - gas.hco3))) < 1e-9);
   assert.match(ABG.interpretation(x.ab, x.E), /high anion gap metabolic acidosis/);
-  // albumin in g/L is converted
-  const gl = pipeline(Object.assign({}, gas, { el: { na: 140, cl: 100, alb: 20 } }));
+  // albumin in g/L is converted (unit picked explicitly since v16.1)
+  const gl = pipeline(Object.assign({}, gas, { el: { na: 140, cl: 100, alb: 20, albUnit: "gl" } }));
   assert.equal(gl.E.alb, 2.0);
 });
 
 test("26. potassium: insulin is held below 3.5 when DKA is being treated", () => {
-  const x = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520, bhb: 6, k: 3.1 } }));
+  const x = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520, gluUnit: "mgdl", bhb: 6, k: 3.1 } }));
   assert.match(x.text("k"), /hold insulin/);
-  const ok = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520, bhb: 6, k: 4.5 } }));
+  const ok = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520, gluUnit: "mgdl", bhb: 6, k: 4.5 } }));
   assert.doesNotMatch(ok.text("k"), /hold insulin/);
   const hi = pipeline({ ph: 7.30, paco2: 35, hco3: hh(7.30, 35), pao2: 95, el: { k: 6.7 } });
   assert.match(hi.text("k"), /12-lead ECG/);
@@ -331,8 +331,8 @@ test("27. seeded mini-fuzz (3,000 gases): no NaN/undefined/null and no contradic
     const mode = pick(["ra", "nc", "mask", "niv", "mv"]);
     const sp = mode === "mv" ? MV({ vmode: pick(["acvc", "acpc", "prvc", "psv", "simv", "psimv"]), sex: pick(["m", "f", null]), pplat: maybe(0.5, 26), pinsp: 14, psupp: maybe(0.5, 8), ti: maybe(0.5, 1), spo2: maybe(0.4, 93), mawp: maybe(0.4, 14), fio2Pct: pick([30, 50, 100]) })
       : mode === "nc" ? { mode, ncFlow: pick([1, 3, 5]) } : mode === "mask" ? { mode, dev: pick(["venturi", "hfnc"]), hfFlow: 40, fio2Pct: 50 } : mode === "niv" ? { mode, nivType: "bipap", ipap: 14, epap: 6, fio2Pct: 40 } : { mode };
-    const el = rnd() < 0.5 ? { na: maybe(0.8, 125 + Math.round(rnd() * 30)), k: maybe(0.8, +(2.5 + rnd() * 5).toFixed(1)), cl: maybe(0.8, 90 + Math.round(rnd() * 25)), glu: maybe(0.6, pick([90, 300, 700])),
-      bhb: maybe(0.4, pick([0.5, 4])), uket: maybe(0.3, pick([0, 1, 2, 4])), dm: rnd() < 0.3, alb: maybe(0.3, 2.5), bun: maybe(0.3, 30), osm: maybe(0.2, 320) } : null;
+    const el = rnd() < 0.5 ? { na: maybe(0.8, 125 + Math.round(rnd() * 30)), k: maybe(0.8, +(2.5 + rnd() * 5).toFixed(1)), cl: maybe(0.8, 90 + Math.round(rnd() * 25)), glu: maybe(0.6, pick([90, 300, 700])), gluUnit: "mgdl",
+      bhb: maybe(0.4, pick([0.5, 4])), uket: maybe(0.3, pick([0, 1, 2, 4])), dm: rnd() < 0.3, alb: maybe(0.3, 2.5), albUnit: "gdl", bun: maybe(0.3, 30), bunUnit: "mgdl", osm: maybe(0.2, 320) } : null;
     const hco3 = rnd() < 0.9 ? hc : Math.round(5 + rnd() * 35);
     const x = pipeline({ ph, paco2, pao2, hco3, sp, el, lactate: maybe(0.4, 3), wt: maybe(0.5, 60) });
     assert.doesNotMatch(x.msg, /NaN|undefined|\bnull\b|Infinity/, `${ph}/${paco2}/${hco3} ${mode}`);

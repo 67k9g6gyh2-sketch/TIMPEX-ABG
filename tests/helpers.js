@@ -25,7 +25,7 @@ function pipeline(o) {
   const sg = ABG.suggestions({ ab: abOk, ox, r, g, rf, lactate: o.lactate == null ? null : o.lactate, def, retainer: !!o.retainer, mismatch,
     paco2: o.paco2, pao2: o.pao2, fio2Pct: fio2, support: sp, vent, tgt, el: E });
   const msg = ABG.message({ ph: o.ph, paco2: o.paco2, pao2: o.pao2, hco3: o.hco3 == null ? null : o.hco3, lactate: o.lactate == null ? null : o.lactate,
-    ab: abOk, ox, r, fio2Pct: fio2, def, age, retainer: !!o.retainer, mismatch, support: sp, vent, tgt, el: E, abPaused: abRaw && abRaw.mismatch ? abRaw : null });
+    ab: abOk, ox, r, fio2Pct: fio2, def, age, retainer: !!o.retainer, mismatch, support: sp, vent, tgt, el: E, abPaused: abRaw && abRaw.mismatch ? abRaw : null, abRaw });
   const keys = sg.map((s) => s.key), text = (k) => (sg.find((s) => s.key === k) || {}).text || "";
   return { abRaw, ab: abOk, ox, r, g, rf, vent, E, sg, keys, text, msg, def, fio2 };
 }

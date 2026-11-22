@@ -342,6 +342,8 @@ details.elx .elsum { font: 500 13px/1.4 var(--font-body); color: var(--muted); }
 details.elx .seg button { font-size: 13px; }
 /* v16: a unit choice the app needs before it can read a value */
 .seg.ask { outline: 2px solid var(--crit); outline-offset: 2px; border-radius: 10px; }
+/* v16.1: input checks card */
+.card.chk .vint li { font-size: 14px; }
 </style>
 </head>
 <body>
@@ -432,15 +434,15 @@ details.elx .seg button { font-size: 13px; }
         </div>
         <div>
           <label class="lbl" for="i-ica">iCa <span class="opt">ionized</span></label>
-          <div class="inp" id="w-ica"><input id="i-ica" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">mmol/L</span></div>
+          <div class="inp" id="w-ica"><input id="i-ica" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u" id="u-ica">unit?</span></div>
         </div>
         <div>
           <label class="lbl" for="i-glu">Glucose</label>
-          <div class="inp" id="w-glu"><input id="i-glu" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u" id="u-glu">mg/dL</span></div>
+          <div class="inp" id="w-glu"><input id="i-glu" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u" id="u-glu">unit?</span></div>
         </div>
         <div>
           <label class="lbl" for="i-alb">Albumin</label>
-          <div class="inp" id="w-alb"><input id="i-alb" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u">g/dL</span></div>
+          <div class="inp" id="w-alb"><input id="i-alb" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u" id="u-alb">unit?</span></div>
         </div>
         <div>
           <label class="lbl" for="i-bhb">β-OHB <span class="opt">ketones</span></label>
@@ -448,7 +450,7 @@ details.elx .seg button { font-size: 13px; }
         </div>
         <div>
           <label class="lbl" for="i-bun"><span id="l-bun-txt">BUN</span></label>
-          <div class="inp" id="w-bun"><input id="i-bun" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u" id="u-bun">mg/dL</span></div>
+          <div class="inp" id="w-bun"><input id="i-bun" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—"><span class="u" id="u-bun">unit?</span></div>
         </div>
         <div>
           <label class="lbl" for="i-osm">Osmolality <span class="opt">measured</span></label>
@@ -470,14 +472,18 @@ details.elx .seg button { font-size: 13px; }
           <div class="seg" role="group" aria-labelledby="gu-lbl" id="gu-seg"><button type="button" data-gu="mgdl" aria-pressed="false">mg/dL</button><button type="button" data-gu="mmol" aria-pressed="false">mmol/L</button></div>
         </div>
         <div class="full-col">
-          <span class="lbl" id="bu-lbl">Urea</span>
-          <div class="seg" role="group" aria-labelledby="bu-lbl" id="bu-seg"><button type="button" data-bu="mgdl" aria-pressed="true">BUN mg/dL</button><button type="button" data-bu="urea" aria-pressed="false">Urea mmol/L</button></div>
+          <span class="lbl" id="au-lbl">Albumin unit</span>
+          <div class="seg" role="group" aria-labelledby="au-lbl" id="au-seg"><button type="button" data-au="gdl" aria-pressed="false">g/dL</button><button type="button" data-au="gl" aria-pressed="false">g/L</button></div>
+        </div>
+        <div class="full-col">
+          <span class="lbl" id="bu-lbl">BUN or urea unit</span>
+          <div class="seg" role="group" aria-labelledby="bu-lbl" id="bu-seg"><button type="button" data-bu="mgdl" aria-pressed="false">BUN mg/dL</button><button type="button" data-bu="urea" aria-pressed="false">Urea mmol/L</button></div>
         </div>
         <div class="full-col">
           <span class="lbl" id="agr-lbl">Normal anion gap (your lab)</span>
           <div class="seg" role="group" aria-labelledby="agr-lbl" id="agr-seg"><button type="button" data-agr="classic" aria-pressed="true">12 ± 4 (8–16)</button><button type="button" data-agr="ise" aria-pressed="false">3–11 (ion-selective)</button></div>
         </div>
-        <div class="full-col hint" id="el-hint">All optional. Na and Cl with the HCO<sub>3</sub> give the anion gap; add albumin to correct it, glucose for corrected Na and DKA/HHS, and a measured osmolality (with glucose and BUN) for the osmolal gap. Without a unit picked: glucose under 10 is read as mmol/L and 70 or more as mg/dL; 10–69 could be either, so the app asks. Ionized Ca up to 1.7 is read as mmol/L and 3 or more as mg/dL; in between it asks. Albumin over 10 is read as g/L.</div>
+        <div class="full-col hint" id="el-hint">All optional. Na and Cl with the HCO<sub>3</sub> give the anion gap; add albumin to correct it, glucose for corrected Na and DKA/HHS, and a measured osmolality (with glucose and BUN) for the osmolal gap. Glucose, ionized Ca, albumin and BUN/urea need their unit picked: the app never guesses a unit from the number, because the two readings can be opposite emergencies. A value without a unit is listed as "unit not confirmed" in the message and is not interpreted.</div>
       </div>
       <div id="el-result" style="margin-top:12px"></div>
     </details>
@@ -785,6 +791,7 @@ details.elx .seg button { font-size: 13px; }
     </div>
 
     <h3 class="sec">Interpretation</h3>
+    <div id="chk-result"></div>
     <div id="ab-result"></div>
 
     <h3 class="sec">Oxygenation target</h3>
@@ -900,6 +907,7 @@ details.elx .seg button { font-size: 13px; }
     </div>
 
     <h3 class="sec">Ventilator assessment</h3>
+    <div id="vchk-result"></div>
     <div id="vent-result2"></div>
 
     <h3 class="sec">Scalar findings</h3>
@@ -983,6 +991,7 @@ details.elx .seg button { font-size: 13px; }
 
     <div class="box">
       <h3>Electrolytes (optional)</h3>
+      <p class="hint" style="margin-top:0"><b>Every value has a status.</b> <i>Normal</i> or <i>abnormal</i> (arrows); <i>extreme</i>: interpreted as entered but flagged "confirm with the laboratory now"; <i>invalid</i>: not a plausible result, not interpreted, and reported; <i>unit not confirmed</i>: not interpreted until the unit is picked; <i>not measured</i>: left blank, never assumed normal. Accepted (extreme) ranges: Na 90–200 (below 110 or above 170 extreme); K 0.5–12 (2.0–8.0); Cl 50–160 (70–135); iCa 0.1–5 mmol/L (0.6–2.0); glucose 1–5000 mg/dL (20–1500); albumin 0.1–6.5 g/dL (below 1.0 extreme; above 6.5 implausible); BUN 0.5–400 mg/dL (2–200); measured osmolality 150–600 (240–400); pH 6.30–8.00 (below 6.80 or above 7.80 extreme). Unresolved problems go to the <b>⚠️ Input checks</b> block at the top of the copied message.</p>
       <p class="hint" style="margin-top:0">Nothing here is required. Each line appears only when its inputs are entered.</p>
       <ul class="plain">
         <li><b>Anion gap</b> = Na − (Cl + HCO₃). Normal is lab-dependent: 12 ± 4 (8–16) in the classic range, about 3–11 on modern ion-selective analyzers; pick your lab's under the inputs. i-STAT reports the gap with K (Na + K − Cl − TCO₂; reference 10–20), shown in the card only.</li>
@@ -993,9 +1002,9 @@ details.elx .seg button { font-size: 13px; }
         <li><b>Effective osmolality</b> = 2 Na + glucose ÷ 18. <b>Calculated osmolality</b> adds BUN ÷ 2.8. <b>Osmolal gap</b> = measured − calculated; normal &lt; 10. A high gap with a high anion gap suggests methanol or ethylene glycol; early after ingestion the osmolal gap rises before the anion gap, and late the reverse.</li>
         <li><b>DKA</b> (ADA/EASD 2024): glucose ≥ 200 mg/dL <i>or known diabetes</i> (tick the box); β-OHB ≥ 3.0 mmol/L <i>or urine ketones ≥ 2+</i> (β-OHB is used first when both are entered); <b>pH &lt; 7.3 or HCO₃ &lt; 18</b>, applied exactly as written. When only the pH criterion is met (HCO₃ 18 or more), the app flags that the acidemia is not explained by ketoacidosis alone and that a respiratory acidosis may coexist. Each criterion is met, not met, or not assessed, giving <b>biochemical criteria met</b>, <b>possible, not confirmed</b> (something missing) or <b>not met</b>; the diagnosis itself also needs the bedside picture. Ketoacidosis with glucose &lt; 200 is euglycemic DKA only with known diabetes. <b>Severity</b> (not every finding is needed; the worst one sets the grade): severe if β-OHB &gt; 6.0, pH &lt; 7.00 or HCO₃ &lt; 10; moderate if pH 7.00–7.25 or HCO₃ 10–14.9; otherwise mild (pH 7.26–7.29 or HCO₃ 15–17.9). β-OHB 6.0 exactly is not severe. The finding that set the grade is named. Mental status (alert, drowsy, stupor or coma) is part of the consensus grading and must be assessed at the bedside. The consensus is written for venous samples; arterial pH runs a little higher. The anion gap is no longer a diagnostic or resolution criterion.</li>
         <li><b>HHS</b> (ADA/EASD 2024): glucose ≥ 600 mg/dL; <b>calculated</b> effective osmolality (2 Na + glucose ÷ 18) &gt; 300, or <b>calculated</b> total osmolality (adds BUN ÷ 2.8) &gt; 320; no significant ketonemia (β-OHB &lt; 3.0 or urine ketones &lt; 2+); and pH ≥ 7.3 with HCO₃ ≥ 15. The app names which calculation met the osmolality criterion. A <b>measured</b> osmolality is shown as support but never stands in for the calculated values, so with a measured value alone HHS stays "possible" until Na (and BUN) are entered. Without a ketone result it is only "possible". Hyperosmolality with significant ketonemia or acidosis is reported as mixed features, which the consensus advises treating as DKA; DKA with HHS-range values is reported as overlapping DKA–HHS.</li>
-        <li><b>Potassium</b>: hyperkalemia mild 5.5–5.9, moderate 6.0–6.4, severe ≥ 6.5 (UKKA 2023); hypokalemia mild 3.0–3.4, moderate 2.5–2.9, severe &lt; 2.5. In DKA, insulin is held while K &lt; 3.5.</li>
+        <li><b>Potassium</b>: hyperkalemia mild 5.5–5.9, moderate 6.0–6.4, severe ≥ 6.5 (UKKA 2023); hypokalemia mild 3.0–3.4, moderate 2.5–2.9, severe &lt; 2.5. When DKA or HHS treatment is likely and K has not been entered (or is not valid), the app says to check K before any insulin; insulin is held while K &lt; 3.5 (ADA/EASD 2024).</li>
         <li><b>Sodium</b>: hyponatremia mild 130–135, moderate 125–129, profound &lt; 125 (European guideline 2014).</li>
-        <li><b>Units</b>: glucose mmol/L × 18 = mg/dL; urea mmol/L × 2.8 = BUN mg/dL; albumin &gt; 10 is read as g/L; ionized Ca mg/dL ÷ 4.008 = mmol/L. With no unit picked, a value is read only where one unit is the only plausible one: glucose under 10 as mmol/L and 70 or more as mg/dL; <b>10–69 could be hypoglycemia in mg/dL or hyperglycemia in mmol/L, so the app asks</b>. Ionized Ca up to 1.7 is read as mmol/L and 3 or more as mg/dL; in between it asks.</li>
+        <li><b>Units</b>: glucose, ionized Ca, albumin and BUN/urea each need their unit picked. The app never infers a unit from the size of the number, because the two readings can be opposite emergencies (glucose 7 is severe hypoglycemia in mg/dL and normal in mmol/L; iCa 1.6 is high in mmol/L and 0.40 mmol/L in mg/dL; albumin 5 g/L is 0.5 g/dL, not 5 g/dL). Conversions: glucose mmol/L × 18 = mg/dL; iCa mg/dL ÷ 4.008 = mmol/L; albumin g/L ÷ 10 = g/dL; urea mmol/L × 2.8 = BUN mg/dL. When a value is converted, both the typed and the standard value are shown.</li>
         <li><b>Arrows</b>: Na 135–145, K 3.5–5.0, Cl 98–107, iCa 1.12–1.32 mmol/L, albumin &lt; 3.5 g/dL, measured osmolality 275–295, glucose 70–180 mg/dL (the inpatient target ceiling).</li>
       </ul>
     </div>
@@ -1044,7 +1053,7 @@ details.elx .seg button { font-size: 13px; }
         <li><b>Mask / HFNC</b>: enter the set FiO₂ (Venturi, HFNC) or an estimate (simple mask, non-rebreather). HFNC at ≥ 30 L/min counts for the ARDS P/F criterion.</li>
         <li><b>NIV</b>: BiPAP (IPAP/EPAP, pressure support = IPAP − EPAP) or CPAP. EPAP ≥ 5 counts for the ARDS P/F criterion. Hypercapnic patients on NIV: SpO₂ 88–92%; if still acidotic, raise IPAP toward 20–30 cmH₂O, fix leak, recheck the ABG in 1–2 h. <i>BTS/ICS 2016.</i> Hypoxemic failure: HFNC is suggested over NIV. <i>ERS 2022.</i></li>
         <li><b>Ventilator</b>: choose the mode (ACVC, ACPC, PRVC, SIMV, PS), then enter the present settings and what the ventilator shows. Only the fields that apply to the mode are used. The copied message follows your intubated layout: settings, pressures, PBW, oxygenation index, mechanics and a ventilator interpretation (see "Reading the ventilator").</li>
-        <li><b>Target pCO₂ on the ventilator</b>: with P/F ≤ 300 the ARDSNet rule comes first (pH 7.30–7.45 accepted; pH 7.15–7.30: aim for pH 7.30 but not below pCO₂ 25; pH &lt; 7.15: rate up to 35, using the Winter's value in metabolic acidosis, then VT +1 mL/kg steps if pH stays &lt; 7.15). The current rate is Ftotal when entered (what the patient actually breathes), otherwise BUR. With auto-PEEP or a short expiratory time, the app does not advise a faster rate. Otherwise the Winter's value in metabolic acidosis, expected compensation in metabolic alkalosis, or the pCO₂ that gives pH 7.40 (7.38 for chronic hypercapnia) at the current HCO₃. RR needed = RR × pCO₂ ÷ target, assuming VT and dead space stay the same. <b>Projected pH</b> = 9 − log<sub>10</sub>(24 × target pCO₂ ÷ HCO₃), assuming HCO₃ does not change. When the ARDSNet pH goal cannot be reached even at the pCO₂ floor of 25 (e.g. pH 7.20, pCO₂ 26, HCO₃ 10 → ≈ 7.22 at pCO₂ 25), the app says so instead of offering a target. With pH &lt; 7.20 a faster rate is suggested only with the plateau, auto-PEEP and expiratory-time checks spelled out. A typed (custom) target gets the same projected pH and the same checks. <b>No rate change is suggested if it would move the pH away from normal and leave it outside 7.35–7.45</b> (for example a custom pCO₂ 25 at pH 7.40, or lowering the rate toward the Winter's value when pCO₂ is below it). These are theoretical estimates: they assume VT, dead space and CO₂ production stay the same and that the set rate is the delivered rate, and they ignore the extra dead-space ventilation and shorter expiration that a faster rate brings. Recheck the ABG after any change.</li>
+        <li><b>Target pCO₂ on the ventilator</b>: with P/F ≤ 300 the ARDSNet rule comes first (pH 7.30–7.45 accepted; pH 7.15–7.30: aim for pH 7.30 but not below pCO₂ 25; pH &lt; 7.15: rate up to 35, using the Winter's value in metabolic acidosis, then VT +1 mL/kg steps if pH stays &lt; 7.15). The current rate is Ftotal when entered (what the patient actually breathes), otherwise BUR. With auto-PEEP or a short expiratory time, the app does not advise a faster rate. Otherwise the Winter's value in metabolic acidosis, expected compensation in metabolic alkalosis, or the pCO₂ that gives pH 7.40 (7.38 for chronic hypercapnia) at the current HCO₃. RR needed = RR × pCO₂ ÷ target, assuming VT and dead space stay the same. <b>Projected pH</b> = 9 − log<sub>10</sub>(24 × target pCO₂ ÷ HCO₃), assuming HCO₃ does not change. When the ARDSNet pH goal cannot be reached even at the pCO₂ floor of 25 (e.g. pH 7.20, pCO₂ 26, HCO₃ 10 → ≈ 7.22 at pCO₂ 25), the app says so instead of offering a target. With pH &lt; 7.20 a faster rate is suggested only with the plateau, auto-PEEP and expiratory-time checks spelled out. <b>Set rate vs total rate</b>: a new set rate is calculated only when the breaths are machine-delivered (Ftotal within 2 of the set rate, or Ftotal not entered, which is stated). When the patient triggers extra breaths, or takes spontaneous breaths in SIMV, the app gives the change in alveolar and minute ventilation needed instead, because raising the set rate may only replace the patient's own breaths; reassess effort, synchrony, VT and measured minute ventilation first. Ftotal below the set rate is flagged as an entry error and no rate is calculated. A typed (custom) target gets the same projected pH and the same checks. <b>No rate change is suggested if it would move the pH away from normal and leave it outside 7.35–7.45</b> (for example a custom pCO₂ 25 at pH 7.40, or lowering the rate toward the Winter's value when pCO₂ is below it). These are theoretical estimates: they assume VT, dead space and CO₂ production stay the same and that the set rate is the delivered rate, and they ignore the extra dead-space ventilation and shorter expiration that a faster rate brings. Recheck the ABG after any change.</li>
         <li><b>Target pO₂ for the desired FiO₂ (Auto)</b>: 104 − 0.4 × age (your sheet); pO₂ 60 when there is CO₂ retention (box ticked, or respiratory acidosis with pCO₂ &gt; 45 when not ventilated), matching SpO₂ 88–92%; pO₂ 65 when ventilated with P/F ≤ 300 (ARDSNet goal 55–80). If pO₂ is already adequate or inside the target window (55–65 for CO₂ retention, 55–80 for ARDSNet), the app says "keep" instead of changing the oxygen. Choose Custom to override.</li>
         <li><b>Ventilator goals</b> (ARDSNet): VT 6 mL/kg PBW (4–8), plateau ≤ 30, pH 7.30–7.45, RR ≤ 35, pO₂ 55–80 or SpO₂ 88–95% in ARDS. Without ARDS, SSC 2026 suggests 6–8 mL/kg PBW. Oxygen targets outside ARDS: UK-ROX (JAMA 2025) found no mortality difference between SpO₂ 90% and usual care; avoid unnecessary hyperoxia.</li>
       </ul>
@@ -1056,7 +1065,7 @@ details.elx .seg button { font-size: 13px; }
         <li><b>Volume</b>: VT per kg predicted body weight uses VTE (exhaled) when entered, else the set TV. Lung-protective 4–8 mL/kg, 6 in ARDS. <i>ARDSNet.</i></li>
         <li><b>Rate</b>: Ftotal above BUR means the patient is triggering extra breaths. Ftotal = BUR means no own breaths (sedated, paralyzed, low drive, or over-ventilated). In metabolic acidosis, match the patient's own rate before sedating or paralyzing.</li>
         <li><b>Peak and plateau</b>: plateau (inspiratory hold) is the alveolar pressure; keep ≤ 30. High peak with high plateau = stiff lung or chest wall (ARDS, edema, pneumonia, atelectasis, mainstem intubation, pneumothorax, effusion, abdominal distension). High peak with normal plateau = airway problem (bronchospasm, secretions, kinked or bitten tube). Peak − plateau is normally ≤ 5–10.</li>
-        <li><b>Driving pressure</b> = plateau − PEEP (total PEEP if auto-PEEP was measured); ≤ 15 is the usual limit. <i>Amato, NEJM 2015.</i> Only a plateau (inspiratory hold) is used: without one, driving pressure and static compliance are shown as not available. ΔPinsp and peak pressure are not substitutes (ΔPinsp equals driving pressure only if flow reaches zero before the breath ends). A ventilator-measured Cstat is shown with its source.</li>
+        <li><b>Driving pressure</b> = plateau − PEEP (total PEEP if auto-PEEP was measured); ≤ 15 is the usual limit. <i>Amato, NEJM 2015.</i> <b>Contradictory pressures are flagged and the values that depend on them withheld</b>: a plateau above the peak or below PEEP (no plateau-based advice; repeat the hold, about 0.5 s, with the patient passive), total PEEP below set PEEP (no auto-PEEP, driving pressure or compliance), measured PEEP more than 2 away from set PEEP (leak or active breathing), and a plateau taken while the patient triggers breaths (reliable only when passive). Only a plateau (inspiratory hold) is used: without one, driving pressure and static compliance are shown as not available. ΔPinsp and peak pressure are not substitutes (ΔPinsp equals driving pressure only if flow reaches zero before the breath ends). A ventilator-measured Cstat is shown with its source.</li>
         <li><b>Static compliance</b> = VT ÷ driving pressure (normal about 40–100 mL/cmH₂O when intubated). <b>Dynamic compliance</b> = VT ÷ (peak − PEEP).</li>
         <li><b>Airway resistance</b> = (peak − plateau) ÷ flow in L/s, valid with constant (square-wave) flow in volume control; about 5–10 cmH₂O/L/s with a tube, &gt; 15 high.</li>
         <li><b>Air trapping</b>: auto-PEEP = total PEEP (expiratory hold) − set PEEP. Time constant τ = resistance × compliance; expiration needs about 3τ. Expiratory time = (60 ÷ rate) × E ÷ (I + E).</li>
@@ -1167,7 +1176,7 @@ details.elx .seg button { font-size: 13px; }
 
   <footer>
     <div class="disc"><b>Clinical decision aid.</b> For trained clinicians. It does not replace clinical judgment or your institution's protocols. Read the result with the patient and the history; recheck SpO₂ or the ABG after every change in oxygen.</div>
-    <div>TIMPEX Gas &amp; Vent · v16 · 22 Nov 2026 · <span id="app-hint"></span></div>
+    <div>TIMPEX Gas &amp; Vent · v16.1 (review build) · 22 Nov 2026 · <span id="app-hint"></span></div>
   </footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1325,10 +1334,12 @@ var ABG = (function () {
     var ph = inp.ph, paco2 = inp.paco2;
     if (ph == null || paco2 == null || !isFinite(ph) || !isFinite(paco2)) return null;
     var r = { errors: [], notes: [] };
-    if (ph < 6.5 || ph > 8.0) r.errors.push("pH of " + fmt(ph, 2) + " is outside 6.50–8.00. Check the entry.");
+    if (ph < 6.3 || ph > 8.0) r.errors.push("pH of " + fmt(ph, 2) + " is outside 6.30–8.00. Check the entry.");
     if (paco2 < 5 || paco2 > 200) r.errors.push("pCO₂ of " + fmt(paco2, 0) + " mmHg is outside 5–200. Check the entry.");
     if (inp.hco3 != null && (inp.hco3 < 2 || inp.hco3 > 60)) r.errors.push("HCO₃ of " + fmt(inp.hco3, 1) + " is outside 2–60. Check the entry.");
     if (r.errors.length) return r;
+    if (ph < 6.8 || ph > 7.8) r.extreme = "pH " + fmt(ph, 2) + " is extreme: confirm the analyzer result (sample, air bubbles, calibration); it is interpreted as entered.";
+    else if (paco2 < 10 || paco2 > 150) r.extreme = "pCO₂ " + fmt(paco2, 0) + " is extreme: confirm the analyzer result; it is interpreted as entered.";
 
     r.ph = ph; r.paco2 = paco2;
     r.hco3Calc = hco3FromPh(ph, paco2);
@@ -1449,47 +1460,80 @@ var ABG = (function () {
   var ERANGE = { na: [135, 145], k: [3.5, 5.0], cl: [98, 107], ica: [1.12, 1.32], glu: [70, 180], alb: [3.5, 5.0], osm: [275, 295] };
   function electrolytes(e, ab, lactate) {
     if (!e) return null;
-    var E = { notes: [], errors: [] }, any = false, n = function (v) { return v != null && isFinite(v) ? v : null; };
+    // v16.1: every laboratory value gets an explicit status, and units are never inferred from magnitude.
+    //   ok · extreme (used, but "confirm with the laboratory") · invalid (implausible entry: not used, reported) · unit (unit not picked: not used, reported)
+    // E.errors: messages for values that are NOT used (invalid or unit not confirmed). E.issues: everything the copied report must carry.
+    var E = { notes: [], errors: [], issues: [], st: {} }, any = false, n = function (v) { return v != null && isFinite(v) ? v : null; };
+    var issue = function (key, text, level, used) { E.issues.push({ key: key, text: text, level: level || "warn" }); if (!used) E.errors.push(text); };
+    // [field, label, unit, invalid below, invalid above, extreme below, extreme above, decimals]
+    function check(key, raw, label, unit, invLo, invHi, exLo, exHi, d) {
+      if (raw == null) return null;
+      any = true;
+      if (raw < invLo || raw > invHi) { E.st[key] = "invalid"; issue(key, label + " " + rawTxt(raw) + " " + unit + " is not a plausible result (accepted " + invLo + "–" + invHi + "): check the entry. Not interpreted.", "crit"); return null; }
+      if (raw < exLo || raw > exHi) { E.st[key] = "extreme"; issue(key, label + " " + fmt(raw, d) + " " + unit + " is extremely " + (raw < exLo ? "low" : "high") + ": confirm with the laboratory now; it is interpreted as entered.", "crit", true); return raw; }
+      E.st[key] = "ok"; return raw;
+    }
     var na = n(e.na), k = n(e.k), cl = n(e.cl), ica = n(e.ica), glu = n(e.glu), alb = n(e.alb), bhb = n(e.bhb), bun = n(e.bun), osm = n(e.osm);
-    if (na != null) { any = true; if (na < 100 || na > 200) E.errors.push("Na " + fmt(na, 0) + " is outside 100–200: check the entry."); else E.na = na; }
-    if (k != null) { any = true; if (k < 1 || k > 10) E.errors.push("K " + fmt(k, 1) + " is outside 1–10: check the entry."); else E.k = k; }
-    if (cl != null) { any = true; if (cl < 60 || cl > 150) E.errors.push("Cl " + fmt(cl, 0) + " is outside 60–150: check the entry."); else E.cl = cl; }
-    // Units. With no unit picked, a value is read only where one unit is the only plausible one:
-    //   iCa ≤ 1.7 → mmol/L, ≥ 3 → mg/dL; 1.7–3 could be severe hypercalcemia (mmol/L) or severe hypocalcemia (mg/dL) → ask.
-    //   glucose < 10 → mmol/L, ≥ 70 → mg/dL; 10–69 could be hypoglycemia (mg/dL) or hyperglycemia (mmol/L) → ask.
+    E.raw = { na: na, k: k, cl: cl, ica: ica, glu: glu, alb: alb, bhb: bhb, bun: bun, osm: osm };
+    var v_;
+    if ((v_ = check("na", na, "Na", "mmol/L", 90, 200, 110, 170, 0)) != null) E.na = v_;
+    if ((v_ = check("k", k, "K", "mmol/L", 0.5, 12, 2.0, 8.0, 1)) != null) E.k = v_;
+    if ((v_ = check("cl", cl, "Cl", "mmol/L", 50, 160, 70, 135, 0)) != null) E.cl = v_;
+    // Ionized calcium: unit required (mmol/L or mg/dL; mg/dL ÷ 4.008 = mmol/L)
     if (ica != null) {
       any = true;
-      var iu = e.icaUnit === "mgdl" || e.icaUnit === "mmol" ? e.icaUnit : ica >= 3 ? "mgdl" : ica <= 1.7 ? "mmol" : null;
-      if (!iu) { E.errors.push("Ionized Ca " + fmt(ica, 2) + " could be mmol/L or mg/dL: pick the unit."); E.icaAsk = true; }
-      else {
-        var icm = iu === "mgdl" ? ica / 4.008 : ica;   // mg/dL → mmol/L
-        if (iu === "mgdl" && e.icaUnit !== "mgdl") E.notes.push("Ionized Ca read as " + icm.toFixed(2) + " mmol/L (typed in mg/dL)");
-        if (icm < 0.3 || icm > 3) E.errors.push("Ionized Ca is outside 0.3–3 mmol/L: check the entry and unit."); else { E.ica = icm; E.icaUnit = iu; }
+      if (e.icaUnit !== "mmol" && e.icaUnit !== "mgdl") {
+        E.st.ica = "unit"; E.icaAsk = true;
+        issue("ica", "Ionized Ca " + rawTxt(ica) + ": unit not confirmed, so it is not interpreted (" + rawTxt(ica) + " mmol/L and " + rawTxt(ica) + " mg/dL = " + (ica / 4.008).toFixed(2) + " mmol/L are very different). Pick mmol/L or mg/dL.", "crit");
+      } else {
+        var icm = e.icaUnit === "mgdl" ? ica / 4.008 : ica;
+        if (e.icaUnit === "mgdl") E.notes.push("Ionized Ca " + rawTxt(ica) + " mg/dL = " + icm.toFixed(2) + " mmol/L");
+        if ((v_ = check("ica", icm, "Ionized Ca", "mmol/L", 0.1, 5, 0.6, 2.0, 2)) != null) { E.ica = v_; E.icaUnit = e.icaUnit; E.icaRaw = ica; }
       }
     }
+    // Glucose: unit required (mg/dL or mmol/L; mmol/L × 18 = mg/dL). Extreme values are kept and flagged, not discarded.
     if (glu != null) {
       any = true;
-      var gu = e.gluUnit === "mmol" || e.gluUnit === "mgdl" ? e.gluUnit : glu < 10 ? "mmol" : glu >= 70 ? "mgdl" : null;
-      if (!gu) { E.errors.push("Glucose " + fmt(glu, 1) + " could be mg/dL (hypoglycemia) or mmol/L (hyperglycemia): pick the unit."); E.gluAsk = true; }
-      else {
-        var gmg = gu === "mmol" ? glu * 18 : glu;
-        if (!e.gluUnit) E.notes.push("Glucose read as " + (gu === "mmol" ? fmt(glu, 1) + " mmol/L (" + fmt(gmg, 0) + " mg/dL)" : fmt(glu, 0) + " mg/dL") + ": pick the unit if that is wrong");
-        if (gmg < 10 || gmg > 2500) E.errors.push("Glucose is outside the possible range: check the entry and unit."); else { E.glu = gmg; E.gluMmol = gmg / 18; E.gluUnit = gu; E.gluAuto = !e.gluUnit; }
+      if (e.gluUnit !== "mmol" && e.gluUnit !== "mgdl") {
+        E.st.glu = "unit"; E.gluAsk = true;
+        var asMg = glu, asMmol = glu * 18, crit = asMg < 70 || asMmol < 70 || asMmol >= 600 || asMg >= 600;
+        issue("glu", "Glucose " + rawTxt(glu) + ": unit not confirmed, so it is not interpreted. As mg/dL it would be " + fmt(asMg, 0) + " mg/dL" + (asMg < 54 ? " (level 2 hypoglycemia)" : asMg < 70 ? " (hypoglycemia)" : "") +
+          "; as mmol/L it would be " + fmt(asMmol, 0) + " mg/dL" + (asMmol < 54 ? " (level 2 hypoglycemia)" : asMmol < 70 ? " (hypoglycemia)" : asMmol >= 600 ? " (HHS range)" : "") + ". Pick the unit.", crit ? "crit" : "warn");
+      } else {
+        var gmg = e.gluUnit === "mmol" ? glu * 18 : glu;
+        if (e.gluUnit === "mmol") E.notes.push("Glucose " + rawTxt(glu) + " mmol/L = " + fmt(gmg, 0) + " mg/dL");
+        if ((v_ = check("glu", gmg, "Glucose", "mg/dL", 1, 5000, 20, 1500, 0)) != null) { E.glu = v_; E.gluMmol = v_ / 18; E.gluUnit = e.gluUnit; E.gluRaw = glu; }
       }
     }
+    // Albumin: unit required (g/dL or g/L; g/L ÷ 10 = g/dL). An implausible value is reported, never re-read in the other unit.
     if (alb != null) {
-      any = true; var ag_ = alb > 10 ? alb / 10 : alb;   // g/L → g/dL
-      if (alb > 10) E.notes.push("Albumin read as " + ag_.toFixed(1) + " g/dL (typed in g/L)");
-      if (ag_ < 0.5 || ag_ > 7) E.errors.push("Albumin is outside 0.5–7 g/dL: check the entry."); else E.alb = ag_;
+      any = true;
+      if (e.albUnit !== "gdl" && e.albUnit !== "gl") {
+        E.st.alb = "unit"; E.albAsk = true;
+        issue("alb", "Albumin " + rawTxt(alb) + ": unit not confirmed (g/dL or g/L), so it is not used to correct the anion gap. Pick the unit.", "warn");
+      } else {
+        var agd = e.albUnit === "gl" ? alb / 10 : alb;
+        if (e.albUnit === "gl") E.notes.push("Albumin " + fmt(alb, 0) + " g/L = " + agd.toFixed(1) + " g/dL");
+        if (agd > 6.5) { E.st.alb = "invalid"; issue("alb", "Albumin " + rawTxt(alb) + " " + (e.albUnit === "gl" ? "g/L = " + agd.toFixed(1) + " g/dL" : "g/dL") + " is implausible: check the value and the unit" + (e.albUnit === "gdl" ? " (g/L?)" : "") + ". Not used.", "warn"); }
+        else if ((v_ = check("alb", agd, "Albumin", "g/dL", 0.1, 6.5, 1.0, 6.0, 1)) != null) { E.alb = v_; E.albUnit = e.albUnit; E.albRaw = alb; }
+      }
     }
-    if (bhb != null) { any = true; if (bhb < 0 || bhb > 25) E.errors.push("β-hydroxybutyrate is outside 0–25 mmol/L: check the entry."); else E.bhb = bhb; }
+    if ((v_ = check("bhb", bhb, "β-hydroxybutyrate", "mmol/L", 0, 30, -1, 15, 1)) != null) E.bhb = v_;
+    // BUN or urea: unit required (urea mmol/L × 2.8 = BUN mg/dL); it changes the total osmolality and the osmolal gap
     if (bun != null) {
-      any = true; var bmg = e.bunUnit === "urea" ? bun * 2.8 : bun;   // urea mmol/L → BUN mg/dL
-      if (bmg < 1 || bmg > 300) E.errors.push("BUN/urea is outside the possible range: check the entry and unit."); else { E.bun = bmg; E.bunUnit = e.bunUnit === "urea" ? "urea" : "mgdl"; }
+      any = true;
+      if (e.bunUnit !== "urea" && e.bunUnit !== "mgdl") {
+        E.st.bun = "unit"; E.bunAsk = true;
+        issue("bun", "BUN/urea " + rawTxt(bun) + ": unit not confirmed (BUN mg/dL or urea mmol/L), so it is not used for total osmolality or the osmolal gap. Pick the unit.", "warn");
+      } else {
+        var bmg = e.bunUnit === "urea" ? bun * 2.8 : bun;
+        if (e.bunUnit === "urea") E.notes.push("Urea " + rawTxt(bun) + " mmol/L = BUN " + fmt(bmg, 0) + " mg/dL");
+        if ((v_ = check("bun", bmg, "BUN", "mg/dL", 0.5, 400, 2, 200, 0)) != null) { E.bun = v_; E.bunUnit = e.bunUnit; }
+      }
     }
-    if (osm != null) { any = true; if (osm < 200 || osm > 500) E.errors.push("Measured osmolality is outside 200–500: check the entry."); else E.osm = osm; }
+    if ((v_ = check("osm", osm, "Measured osmolality", "mOsm/kg", 150, 600, 240, 400, 0)) != null) E.osm = v_;
     E.dm = e.dm === true;
-    var uk = n(e.uket); if (uk != null) { any = true; if (uk < 0 || uk > 4) E.errors.push("Urine ketones must be negative to 4+."); else E.uket = uk; }
+    var uk = n(e.uket); if (uk != null) { any = true; if (uk < 0 || uk > 4) issue("uket", "Urine ketones must be negative to 4+.", "warn"); else E.uket = uk; }
     if (!any) return null;
     var ref = AGREF[e.agRef] || AGREF.classic; E.ref = ref; E.refKey = AGREF[e.agRef] ? e.agRef : "classic";
     var abOk = ab && !ab.errors.length, h = abOk ? ab.hco3 : null;
@@ -1570,19 +1614,54 @@ var ABG = (function () {
     }
     return E;
   }
+  function rawTxt(v) { return v == null || !isFinite(v) ? "—" : String(+(+v).toFixed(3)); }   // a typed value as typed: 9000, 1.6, 0.05
+  var ELNAME = { na: "Na", k: "K", cl: "Cl", ica: "iCa", glu: "Glucose", alb: "Albumin", bhb: "β-hydroxybutyrate", bun: "BUN/urea", osm: "Measured osmolality" };
   function elLines(E) {   // value lines for the message
     if (!E) return [];
-    var L = [];
+    var L = [], st = E.st || {};
+    Object.keys(st).forEach(function (k) {
+      if (st[k] === "unit") L.push(ELNAME[k] + " " + rawTxt(E.raw[k]) + ": unit not confirmed (not interpreted)");
+      else if (st[k] === "invalid") L.push(ELNAME[k] + " " + rawTxt(E.raw[k]) + ": invalid entry (not interpreted)");
+    });
     if (E.na != null) L.push("Na " + fmt(E.na, 0) + " mmol/L" + arrow(E.na, ERANGE.na[0], ERANGE.na[1]));
     if (E.k != null) L.push("K " + E.k.toFixed(1) + " mmol/L" + arrow(E.k, ERANGE.k[0], ERANGE.k[1]));
     if (E.cl != null) L.push("Cl " + fmt(E.cl, 0) + " mmol/L" + arrow(E.cl, ERANGE.cl[0], ERANGE.cl[1]));
     if (E.ica != null) L.push("iCa " + E.ica.toFixed(2) + " mmol/L" + arrow(E.ica, ERANGE.ica[0], ERANGE.ica[1]));
-    if (E.glu != null) L.push("Glucose " + (E.gluUnit === "mmol" ? fmt(E.gluMmol, 1) + " mmol/L" : fmt(E.glu, 0) + " mg/dL") + arrow(E.glu, ERANGE.glu[0], ERANGE.glu[1]));
+    if (E.glu != null) L.push("Glucose " + (E.gluUnit === "mmol" ? fmt(E.gluMmol, 1) + " mmol/L (" + fmt(E.glu, 0) + " mg/dL)" : fmt(E.glu, 0) + " mg/dL") + arrow(E.glu, ERANGE.glu[0], ERANGE.glu[1]) + (st.glu === "extreme" ? " (extreme: confirm with the lab)" : ""));
     if (E.alb != null) L.push("Albumin " + E.alb.toFixed(1) + " g/dL" + arrow(E.alb, ERANGE.alb[0], null));
     if (E.bhb != null) L.push("β-hydroxybutyrate " + E.bhb.toFixed(1) + " mmol/L" + (E.bhb >= 3 ? " " + UP : ""));
     if (E.bun != null) L.push(E.bunUnit === "urea" ? "Urea " + fmt(E.bun / 2.8, 1) + " mmol/L" : "BUN " + fmt(E.bun, 0) + " mg/dL");
     if (E.osm != null) L.push("Measured osmolality " + fmt(E.osm, 0) + " mOsm/kg" + arrow(E.osm, ERANGE.osm[0], ERANGE.osm[1]));
     return L;
+  }
+  // Every unresolved input problem, for the app's check card and the top of the copied message.
+  // m: { abRaw, el, ox, pao2, fio2Pct, support, vent, extra: [{ text, level }] }
+  // pO2 or FiO2 entered but outside the accepted range: oxygenation is not interpreted
+  function oxOutOfRange(pao2, fio2Pct) {
+    return (pao2 != null && isFinite(pao2) && (pao2 < 10 || pao2 > 700)) || (fio2Pct != null && isFinite(fio2Pct) && (fio2Pct < 21 || fio2Pct > 100));
+  }
+  // The line shown when there are no suggestions: never "no problem" when part of the gas was not assessed
+  function nothingLine(abBad, oxBad) {
+    return abBad && oxBad ? "Acid–base and oxygenation not assessed: see the input checks above."
+      : abBad ? "Acid–base not assessed: see the input checks above."
+      : oxBad ? "No acid–base problem on this gas; oxygenation not assessed: see the input checks above."
+      : "No acid–base or oxygenation problem on this gas; correlate clinically.";
+  }
+  function collectIssues(m) {
+    var I = [], add = function (t, lvl) { if (t && !I.some(function (x) { return x.text === t; })) I.push({ text: t, level: lvl || "warn" }); };
+    var ab = m.abRaw;
+    if (ab && ab.errors && ab.errors.length) ab.errors.forEach(function (e) { add(ab.mismatch ? e : "Acid–base not interpreted: " + e, "crit"); });
+    else if (ab && ab.extreme) add(ab.extreme, "crit");
+    if (oxOutOfRange(null, m.fio2Pct))
+      add("FiO₂ " + fmt(m.fio2Pct, 0) + "% is outside 21–100%: oxygenation is not interpreted. Check the entry.", "crit");
+    else if (oxOutOfRange(m.pao2, null))
+      add("pO₂ " + fmt(m.pao2, 0) + (m.fio2Pct != null && isFinite(m.fio2Pct) ? " on FiO₂ " + fmt(m.fio2Pct, 0) + "%" : "") + " is outside the accepted range (pO₂ 10–700, FiO₂ 21–100): oxygenation is not interpreted. Check the entries.", "crit");
+    var sp = m.support;
+    if (sp && sp.mode === "nc" && num_(sp.ncFlow) != null && sp.ncFlow > 6) add("Nasal cannula " + fmt(sp.ncFlow, 0) + " L/min: the FiO₂ estimate (20 + 4 × L/min) is unreliable above 6 L/min, so P/F and the desired FiO₂ are rough.", "warn");
+    if (m.el && m.el.issues) m.el.issues.forEach(function (x) { add(x.text, x.level); });
+    if (m.vent && m.vent.issues) m.vent.issues.forEach(function (x) { add(x.text, x.level); });
+    (m.extra || []).forEach(function (x) { add(x.text, x.level); });
+    return I.sort(function (a, b) { return (a.level === "crit" ? 0 : 1) - (b.level === "crit" ? 0 : 1); });
   }
   function elCalcLines(E) {   // calculated values for the message
     if (!E) return [];
@@ -1875,6 +1954,9 @@ var ABG = (function () {
     o.f = ftot != null && ftot > 0 ? ftot : bur != null && bur > 0 ? bur : null;
     o.fSrc = ftot != null && ftot > 0 ? "Ftotal" : o.f != null ? "BUR" : null;
     if (ftot != null && bur != null) o.trig = ftot - bur;
+    // A new set rate can be estimated only when breaths are machine-delivered (no meaningful patient triggering).
+    o.spont = isSIMV(vm) ? ((o.fspn != null && o.fspn >= 1) || (o.trig != null && o.trig >= 1)) : (o.trig != null && o.trig >= 2);
+    o.ftotMissing = ftot == null && bur != null && vm !== "psv";
     if (o.vt != null && o.f != null) o.ve = o.vt * o.f / 1000;
     var mvM = pos_(s.mv);   // measured minute volume beats VT × rate, especially in SIMV where breaths differ
     if (mvM != null && mvM < 60) { o.veCalc = o.ve; o.ve = mvM; o.veSrc = "measured"; }
@@ -1886,10 +1968,27 @@ var ABG = (function () {
     var peep = num_(s.peep), ptot = num_(s.peeptot), ppk = pos_(s.ppeak), ppl = pos_(s.pplat);
     var peepB = num_(s.peepm) != null && s.peepm >= 0 ? s.peepm : peep;   // measured PEEP (end-expiratory) when entered
     o.peepM = num_(s.peepm) != null && s.peepm >= 0 ? s.peepm : null;
-    o.peepEff = ptot != null && peepB != null && ptot >= peepB ? ptot : peepB;
-    if (ptot != null && peep != null) o.autoPeep = ptot - peep;
-    if (ppl != null && o.peepEff != null && ppl < o.peepEff) o.badPlat = true;
-    if (ppk != null && ppl != null && ppl > ppk + 1) { o.badPeak = true; ppl = null; }
+    // Inconsistent measurements are flagged and every value that depends on them is withheld (v16.1)
+    o.issues = [];
+    var vIssue = function (key, text, level) { o.issues.push({ key: key, text: text, level: level || "warn" }); };
+    if (ptot != null && peep != null && ptot < peep - 1) {
+      o.badPeepTot = true;
+      vIssue("peeptot", "Total PEEP " + fmt(ptot, 0) + " is below set PEEP " + fmt(peep, 0) + ": both cannot be right, because an end-expiratory hold in a passive patient reads at least the set PEEP. Recheck both (full expiratory hold, no patient effort, same breath). Auto-PEEP, driving pressure and compliance are not calculated until they agree.");
+    }
+    o.peepEff = o.badPeepTot ? null : ptot != null && peepB != null && ptot >= peepB ? ptot : peepB;
+    if (ptot != null && peep != null && !o.badPeepTot) o.autoPeep = ptot - peep;
+    var peepRef = o.peepEff != null ? o.peepEff : peep;
+    if (ppl != null && peepRef != null && ppl < peepRef) {
+      o.badPlat = true;
+      vIssue("pplat", "Plateau " + fmt(ppl, 0) + " is below PEEP " + fmt(peepRef, 0) + ", which is impossible: recheck both. Plateau-based values and advice are withheld.");
+    }
+    if (ppk != null && ppl != null && ppl > ppk + 1) {
+      o.badPeak = true;
+      vIssue("pplat", "Plateau " + fmt(ppl, 0) + " is above the peak pressure " + fmt(ppk, 0) + ", which is impossible: plateau-based values and advice (VT, driving pressure, compliance) are withheld. Repeat the inspiratory hold (about 0.5 s) with the patient passive and read the plateau once the pressure has settled.");
+    }
+    if (o.badPlat || o.badPeak) ppl = null;
+    o.pplV = ppl;   // the plateau that may be used, or null
+    if (o.peepM != null && peep != null && Math.abs(o.peepM - peep) > 2) vIssue("peepm", "Measured PEEP " + fmt(o.peepM, 0) + " differs from set PEEP " + fmt(peep, 0) + " by more than 2: " + (o.peepM < peep ? "look for a leak (cuff, circuit) or a reading during active breathing." : "look for incomplete exhalation (auto-PEEP) or a reading during active breathing.") + " Check before using PEEP-based values.");
     // Driving pressure = plateau − PEEP (total PEEP if measured). Pinsp and peak pressure are not substitutes for a plateau.
     if (ppl != null && o.peepEff != null && !o.badPlat) o.dp = ppl - o.peepEff;
     if (isPC(vm) && pinsp != null) o.dPinsp = pinsp;
@@ -1929,7 +2028,12 @@ var ABG = (function () {
     if (hasPS(vm) && num_(s.ets) != null && s.ets > 0 && s.ets < 90) o.ets = s.ets;
     if (vte != null && vti != null && vti > 0) o.leak = (vti - vte) / vti * 100;
     if (vte != null && vtSet != null && isVC(vm)) o.vtDiff = (vte - vtSet) / vtSet * 100;
-    if (ftot != null && bur != null && ftot < bur - 1) o.fLow = true;
+    if (ftot != null && bur != null && ftot < bur - 1) {
+      o.fLow = true;
+      vIssue("ftot", "Ftotal " + fmt(ftot, 0) + " is below the set rate " + fmt(bur, 0) + ", which cannot happen in assist-control or SIMV modes. Recheck both; rate calculations are withheld.");
+    }
+    o.rateSettable = vm !== "psv" && !o.fLow && !o.spont;
+    if (o.pplV != null && o.spont) vIssue("pplat", "A plateau was entered while the patient is triggering breaths: it is reliable only from a hold in a passive patient. Interpret plateau-based values with caution.");
     // Effort and drive (assisted breathing): P0.1; end-expiratory occlusion ΔPocc → Pmus ≈ 0.75 × |ΔPocc|,
     // dynamic transpulmonary driving pressure ≈ (peak − PEEP) + 0.66 × |ΔPocc| (Bertoni 2019)
     var p01 = num_(s.p01); if (p01 != null) o.p01 = Math.abs(p01);
@@ -1968,7 +2072,7 @@ var ABG = (function () {
       if (ab && !ab.errors.length) { o.target.hco3 = ab.hco3; o.target.phAt = phAt(s.pco2Target, ab.hco3); }
     } else o.target = targetPco2(ab, retainer, o.ardsRange, num_(paco2));
     if (o.target && vm !== "psv" && o.f != null && num_(paco2) != null && o.target.value > 0) {
-      o.rrNeed = o.f * paco2 / o.target.value;
+      if (!o.fLow) o.rrNeed = o.f * paco2 / o.target.value;
       if (o.ve != null) o.veNeed = o.ve * paco2 / o.target.value;
     }
     return o;
@@ -2030,7 +2134,7 @@ var ABG = (function () {
   function ventInterp(v, sp, ab) {
     if (!v || !sp) return [];
     var L = [], add = function (key, text, tone, msg) { L.push({ key: key, text: text, tone: tone || "", msg: msg !== false }); };
-    var ppl = v.badPeak ? null : num_(sp.pplat), ppk = num_(sp.ppeak);
+    var ppl = v.pplV != null ? v.pplV : null, ppk = num_(sp.ppeak);
     var p = ab ? ab.primary : null, ex = ab && ab.check ? ab.check.extra : null;
     var metAcid = p === "met-acid" || p === "mixed-acid" || ex === "met-acid";
     var stiff = v.cstat != null ? v.cstat < 40 : ppl != null && ppl > 30 ? true : null;
@@ -2521,17 +2625,18 @@ var ABG = (function () {
     B.push(A);
     var P = ["Pressures"];
     if (pos_(sp.ppeak) != null) P.push("Peak pressure: " + fmt(sp.ppeak, 0) + " cmH₂O" + (sp.ppeak > 35 ? " " + UP : ""));
-    if (pos_(sp.pplat) != null) P.push("Plateau pressure: " + fmt(sp.pplat, 0) + " cmH₂O" + (sp.pplat > 30 ? " " + UP : "") + " (goal ≤ 30)");
+    if (pos_(sp.pplat) != null) P.push("Plateau pressure: " + fmt(sp.pplat, 0) + " cmH₂O" + (v.badPeak ? " (invalid: above the peak; recheck)" : v.badPlat ? " (invalid: below PEEP; recheck)" : (sp.pplat > 30 ? " " + UP : "") + " (goal ≤ 30)"));
+    if (num_(sp.peeptot) != null && v.badPeepTot) P.push("Total PEEP: " + fmt(sp.peeptot, 0) + " cmH₂O (invalid: below set PEEP; recheck)");
     if (pos_(sp.mawp) != null) P.push("Mean airway pressure: " + fmt(sp.mawp, 0) + " cmH₂O");
     if (v.peepM != null) P.push("PEEP (measured): " + fmt(v.peepM, 0) + " cmH₂O");
-    if (num_(sp.peeptot) != null) P.push("Total PEEP: " + fmt(sp.peeptot, 0) + " cmH₂O" + (v.autoPeep != null ? " (auto-PEEP " + fmt(Math.max(0, v.autoPeep), 0) + ")" : ""));
+    if (num_(sp.peeptot) != null && !v.badPeepTot) P.push("Total PEEP: " + fmt(sp.peeptot, 0) + " cmH₂O" + (v.autoPeep != null ? " (auto-PEEP " + fmt(Math.max(0, v.autoPeep), 0) + ")" : ""));
     if (pos_(sp.vte) != null) P.push("VTE: " + fmt(sp.vte, 0) + " mL" + (v.pbw ? " (" + fmt(sp.vte / v.pbw, 1) + " mL/kg PBW)" : ""));
     if (pos_(sp.vti) != null) P.push("VTi: " + fmt(sp.vti, 0) + " mL" + (v.leak != null && v.leak >= 10 && !v.simv ? " (VTE " + fmt(v.leak, 0) + "% lower: leak?)" : ""));
     if (v.vtspn != null) P.push("VTE spn: " + fmt(v.vtspn, 0) + " mL" + (v.vtspnKg != null ? " (" + fmt(v.vtspnKg, 1) + " mL/kg PBW)" : ""));
     if (v.veSrc === "measured") P.push("MV: " + fmt(v.ve, 1) + " L/min" + (v.mvspn != null ? " (MVspn " + fmt(v.mvspn, 1) + ")" : "") + (v.mvleak != null ? "; MVleak " + fmt(v.mvleak, 1) : ""));
     if (pos_(sp.ftot) != null || (v.fmand != null && v.fspn != null)) P.push("Ftotal: " + fmt(v.f, 0) + "/min" + (v.fmand != null || v.fspn != null ? " (fmand " + (v.fmand != null ? fmt(v.fmand, 0) : "–") + ", fspn " + (v.fspn != null ? fmt(v.fspn, 0) : "–") + ")" : v.trig != null && v.trig >= 2 && vm !== "psv" ? " (" + fmt(v.trig, 0) + " above BUR)" : ""));
     if (v.dp != null) P.push("Driving pressure: " + fmt(v.dp, 0) + " cmH₂O" + (v.dp > 15 ? " " + UP : "") + " (plateau − PEEP; goal ≤ 15)");
-    else P.push(v.badPlat ? "Driving pressure: check entries (plateau below PEEP)" : v.badPeak ? "Driving pressure: check entries (plateau above peak)" : "Driving pressure: needs plateau pressure (inspiratory hold)");
+    else P.push(v.badPlat ? "Driving pressure: not available (plateau below PEEP; recheck)" : v.badPeak ? "Driving pressure: not available (plateau above peak; recheck)" : v.badPeepTot ? "Driving pressure: not available (total PEEP below set PEEP; recheck)" : "Driving pressure: needs plateau pressure (inspiratory hold)");
     B.push(P);
     var C = [];
     if (v.pbw) C.push("PBW " + fmt(v.pbw, 1) + " kg (6 mL/kg = " + Math.round(6 * v.pbw) + " mL)");
@@ -2579,7 +2684,10 @@ var ABG = (function () {
       B[0].push("ABG: pH " + fmt(m.ph, 2) + ", pCO₂ " + n1(m.paco2) + ", pO₂ " + n1(m.pao2) + (m.fio2Pct != null ? " on FiO₂ " + fmt(m.fio2Pct, 0) + "%" : "") + (ix ? " (P/F " + Math.round(ix.pf) + ")" : ""));
       var head = interpretation(ab); if (head) B[0].push(head + (m.ox ? ", with " + m.ox.label : ""));
     }
+    var vIs = collectIssues({ abRaw: m.linked ? m.ab : null, vent: m.vent, extra: m.extraIssues });
+    if (vIs.length) B.push(["⚠️ Input checks (resolve before acting):"].concat(vIs.map(function (x) { return "• " + x.text; })));
     ventBlocks(sp, m.vent, m.fio2Pct, ab).forEach(function (b) { B.push(b); });
+    if (m.aiPending) { B.push(["Suggestions: withheld until the AI-filled values are checked against the ventilator screen."]); return B.map(function (b) { return b.join("\n"); }).join("\n\n"); }
     var sg = suggestions({ ab: ab, ox: m.linked ? m.ox : null, r: m.linked ? m.r : null, g: m.linked ? m.g : null, rf: m.linked ? m.rf : null, retainer: m.retainer,
       paco2: m.linked ? m.paco2 : null, pao2: m.linked ? m.pao2 : null, fio2Pct: m.fio2Pct, support: sp, vent: m.vent, tgt: m.tgt }).filter(function (x) { return isVentKey(x.key); });
     if (sg.length) B.push(["Suggestions:"].concat(sg.slice(0, 10).map(function (x) { return "• " + x.text + (x.src ? " [" + x.src + "]" : ""); })));
@@ -2717,7 +2825,7 @@ var ABG = (function () {
         var obstr = v.raw != null ? v.raw > 15 : v.gap != null && v.gap > 10;
         var stiffL = v.cstat != null && v.cstat < 40;
         var obstructive = trapping || scl.indexOf("f_obstr") > -1 || (obstr && !stiffL);
-        var plt = num_(sp.pplat);
+        var plt = v.pplV != null ? v.pplV : null;
         if (obstructive && plt != null && plt > 30) add("rr", "Obstructive pattern with plateau " + fmt(plt, 0) + " > 30: lower the rate (minute ventilation) to cut hyperinflation and accept hypercapnia.", "Leatherman, Tobin ch. 30", "warn",
           "Severe airflow obstruction: aim for plateau < 30 (≤ 25 ideal) and pH ≥ 7.2. Plateau > 30 → less minute ventilation; pH < 7.2 with plateau < 25 → more; pH < 7.2 with plateau 25–30 → no change.");
         else if (obstructive && plt != null && ab.ph < 7.2 && plt <= 30 && up) add("rr", plt < 25 ? "Obstructive pattern, pH < 7.2 with plateau < 25: the rate can be raised cautiously (recheck plateau and auto-PEEP after the change)."
@@ -2727,7 +2835,7 @@ var ABG = (function () {
           ": do not raise the rate to clear CO₂. Accept permissive hypercapnia (keep pH ≥ 7.15) while treating the obstruction; lower RR if auto-PEEP rises.", "", "warn",
           "A faster rate shortens expiration and adds to dynamic hyperinflation. Lower minute ventilation, a shorter inspiratory time and bronchodilators reduce auto-PEEP; the pCO₂ usually falls as the obstruction improves.");
         else if (v.target.goal != null && !v.target.reach && v.target.floor) add("rr", "pH " + fmt(ab.ph, 2) + " with pCO₂ " + fmt(c.paco2, 0) + ": ventilation alone cannot reach the ARDSNet goal of pH 7.30. Even at the pCO₂ floor of 25 the pH would be ≈ " + fmt(v.target.phAt, 2) + " at HCO₃ " + fmt(v.target.hco3, 1) +
-          (c.paco2 > 26 && up ? "; a rate of ≈ " + Math.round(Math.min(v.rrNeed, 35)) + "/min would get there only if plateau stays ≤ 30 and expiratory flow still reaches zero" : "") + ". Treat the metabolic cause; that is what will move the pH.", "ARDSNet", "warn",
+          (c.paco2 > 26 && up && v.rateSettable ? "; a rate of ≈ " + Math.round(Math.min(v.rrNeed, 35)) + "/min would get there only if plateau stays ≤ 30 and expiratory flow still reaches zero" : "") + ". Treat the metabolic cause; that is what will move the pH.", "ARDSNet", "warn",
           "Projected pH = 9 − log10(24 × pCO₂ ÷ HCO₃), assuming HCO₃ stays the same. ARDSNet: for pH 7.15–7.30 raise RR until pH > 7.30 or pCO₂ < 25 (RR ≤ 35); below 7.15, RR 35, then VT in 1 mL/kg steps, and bicarbonate may be given.");
         else if (diff >= 2 && v.target.phAt != null && Math.abs(v.target.phAt - 7.40) > Math.abs(ab.ph - 7.40) + 0.005 && (v.target.phAt < 7.35 || v.target.phAt > 7.45)) {
           var tTxt = (v.target.custom ? "your custom target pCO₂ " : "pCO₂ ") + fmt(v.target.value, 0) + (v.target.custom ? "" : " (" + v.target.why + ")");
@@ -2737,11 +2845,18 @@ var ABG = (function () {
             "", ab.ph < 7.35 || ab.ph > 7.45 ? "warn" : "",
             "Projected pH = 9 − log10(24 × pCO₂ ÷ HCO₃), with HCO₃ held constant. Compensation formulas describe what the body does; they are not ventilator targets when the pH would move the wrong way.");
         }
+        else if (diff >= 2 && up && !v.rateSettable) {
+          var need = Math.round((c.paco2 / v.target.value - 1) * 100);
+          add("rr", "To bring pCO₂ toward " + fmt(v.target.value, 0) + " (" + v.target.why + "; projected pH ≈ " + fmt(v.target.phAt, 2) + "), alveolar ventilation would need to rise by about " + need + "%" + (v.veNeed != null ? " (minute ventilation ≈ " + fmt(v.ve, 1) + " → " + fmt(v.veNeed, 1) + " L/min)" : "") +
+            ". No new set rate is calculated: the patient is " + (v.simv ? "taking spontaneous breaths between the mandatory ones" : "triggering " + fmt(v.trig, 0) + " breaths/min above the set rate (total " + fmt(v.f, 0) + " vs set " + fmt(v.bur, 0) + ")") +
+            ", so raising the set rate may only replace the patient's own breaths. Reassess effort, synchrony, VT and measured minute ventilation first, and watch expiratory time, breath stacking, auto-PEEP and plateau.", "", ab.ph < 7.25 ? "warn" : "",
+            "Theoretical estimate: assumes VT, dead space and CO₂ production stay the same. A set rate below the patient's own rate changes nothing; a set rate above it turns triggered breaths into mandatory ones and shortens expiration.");
+        }
         else if (diff >= 2 && permissive) add("rr", "pH ≥ 7.30 on lung-protective ventilation: permissive hypercapnia is acceptable; no RR increase needed.", "ARDSNet", "",
           "ARDSNet pH goal is 7.30–7.45. If pH falls to 7.15–7.30, increase RR (max 35) until pH > 7.30 or pCO₂ < 25; if pH < 7.15, RR 35 then VT +1 mL/kg steps.");
         else if (diff >= 2 && (up || canLower)) {
           var rrNew = Math.min(v.rrNeed, 35);
-          var rrT = (up ? "Raise" : "Lower") + " the set RR to ≈ " + Math.round(rrNew) + "/min (" + nowTxt + ") to bring pCO₂ toward " + fmt(v.target.value, 0) + " (" + v.target.why + "; projected pH ≈ " + fmt(v.target.phAt, 2) + " if HCO₃ is unchanged)";
+          var rrT = (up ? "Raise" : "Lower") + " the set RR to ≈ " + Math.round(rrNew) + "/min (" + nowTxt + (v.ftotMissing ? "; Ftotal not entered, so this assumes no patient-triggered breaths" : "") + ") to bring pCO₂ toward " + fmt(v.target.value, 0) + " (" + v.target.why + "; projected pH ≈ " + fmt(v.target.phAt, 2) + " if HCO₃ is unchanged)";
           if (up && ab.ph < 7.20) {
             var teNew = v.ti != null ? 60 / rrNew - v.ti : null;
             rrT += "; with pH < 7.20 do it only if plateau stays ≤ 30" + (plt == null ? " (no plateau entered: do an inspiratory hold first)" : "") + " and expiratory flow still reaches zero" +
@@ -2766,7 +2881,7 @@ var ABG = (function () {
       if (v && v.vtkg != null && v.vtkg > 8) add("vt", "VT " + fmt(v.vtkg, 1) + " mL/kg PBW is high: " + (isPC(vm) || vm === "psv" ? "lower the inspiratory pressure to get" : "reduce toward") + " " + (ardsRange ? "6" : "6–8") + " mL/kg PBW (" + Math.round((ardsRange ? 6 : 7) * v.pbw) + " mL).", ardsRange ? "ATS 2024; ARDSNet" : "SSC 2026", "warn",
         "ARDS: 6 mL/kg PBW (range 4–8) with plateau ≤ 30 cmH₂O. SSC 2026 suggests 6–8 mL/kg PBW for sepsis-related hypoxemic failure without ARDS.");
       if (v && v.vtkg != null && v.vtkg < 4) add("vt", "VT " + fmt(v.vtkg, 1) + " mL/kg PBW is below 4: check the height, sex and volume.", "ARDSNet", "warn");
-      if (sp.pplat != null && isFinite(sp.pplat) && sp.pplat > 30) add("pplat", "Plateau " + fmt(sp.pplat, 0) + " cmH₂O > 30: " + lowerHow + " in 1 mL/kg steps (down to 4 mL/kg PBW).", "ARDSNet", "warn");
+      if (v && v.pplV != null && v.pplV > 30) add("pplat", "Plateau " + fmt(v.pplV, 0) + " cmH₂O > 30: " + lowerHow + " in 1 mL/kg steps (down to 4 mL/kg PBW).", "ARDSNet", "warn");
       if (v && v.dp != null && v.dp > 15) add("dp", "Driving pressure " + fmt(v.dp, 0) + " cmH₂O is high: " +
         (ab && ab.ph < 7.15 ? "once pH is ≥ 7.15, " + lowerHow + " (toward 4–6 mL/kg PBW)" : lowerHow) + " and reassess PEEP.", "Amato, NEJM 2015", "",
         "Driving pressure (plateau − PEEP) was the ventilation variable most strongly associated with survival in ARDS; about 15 cmH₂O is the commonly used upper limit. This is observational evidence, not a guideline target.");
@@ -2891,6 +3006,8 @@ var ABG = (function () {
     if (E) {
       if (E.gluStatus === "severe-low" || E.gluStatus === "low") add("glu", "Glucose " + fmt(E.glu, 0) + " mg/dL: treat now (15–20 g oral glucose if able, otherwise IV dextrose such as 50% dextrose 25–50 mL) and recheck in 15 min.", "ADA Standards of Care", "crit",
         "< 70 mg/dL is level 1 and < 54 mg/dL level 2 hypoglycemia. Find the cause (insulin or sulfonylurea, sepsis, liver failure, adrenal insufficiency, alcohol).");
+      if (E.k == null && insulinCtx) add("k", "K " + (E.st && E.st.k === "invalid" ? "entry is not valid" : "not entered") + ": check serum potassium before any insulin. Hold insulin if K < 3.5 and replace K first.", "ADA/EASD 2024", "crit",
+        "Insulin drives potassium into cells; starting it with an unknown or low K risks arrhythmia. The consensus delays insulin until K is above 3.5 mmol/L.");
       if (E.k != null) {
         if (E.k >= 6.0) add("k", "K " + E.k.toFixed(1) + (E.k >= 6.5 ? " (severe)" : " (moderate)") + ": 12-lead ECG and cardiac monitoring now; IV calcium if ECG changes (30 mL 10% calcium gluconate over 10 min, or 10 mL 10% calcium chloride); " +
           (dka ? "in DKA the insulin infusion will shift K into cells, so give no K and recheck in 2 h" : "insulin–glucose (10 units soluble insulin with 25 g glucose)" + (E.k >= 6.5 ? " plus nebulised salbutamol 10–20 mg" : "") + ", then remove K (stop K-raising drugs, treat the cause, dialysis if refractory)") + ".", "UKKA 2023", "crit",
@@ -2903,7 +3020,7 @@ var ABG = (function () {
         else if (E.k < 3.5) add("k", "K " + E.k.toFixed(1) + (E.k < 2.5 ? " (severe)" : E.k < 3.0 ? " (moderate)" : " (mild)") + ": replace K (" + (E.k < 3.0 ? "IV with ECG monitoring" : "oral if able") + ") and check and replace Mg." + (metAlk ? " Hypokalemia keeps a metabolic alkalosis going." : ""), "", E.k < 3.0 ? "crit" : "warn",
           "Look for GI or urinary loss, diuretics, insulin or β-agonists. Low K with acidosis (diarrhea, RTA, DKA) means a large total-body deficit.");
       }
-      if (dka) add("dka", "DKA (" + E.dka.sev + "): isotonic saline or balanced crystalloid 500–1000 mL/h for the first 2–4 h (smaller boluses if heart or kidney disease), fixed-rate IV insulin 0.1 U/kg/h once K > 3.5, and " + (E.glu != null && E.glu < 250 ? "5–10% dextrose with the insulin from the start, as glucose is already below 250 mg/dL" : "add 5–10% dextrose when glucose < 250 mg/dL") + ". Find the trigger (infection, missed insulin, MI, SGLT2 inhibitor).", "ADA/EASD 2024", E.dka.sev === "severe" ? "crit" : "warn",
+      if (dka) add("dka", "DKA (" + E.dka.sev + "): isotonic saline or balanced crystalloid 500–1000 mL/h for the first 2–4 h (smaller boluses if heart or kidney disease), fixed-rate IV insulin 0.1 U/kg/h once K is confirmed above 3.5, and " + (E.glu != null && E.glu < 250 ? "5–10% dextrose with the insulin from the start, as glucose is already below 250 mg/dL" : "add 5–10% dextrose when glucose < 250 mg/dL") + ". Find the trigger (infection, missed insulin, MI, SGLT2 inhibitor).", "ADA/EASD 2024", E.dka.sev === "severe" ? "crit" : "warn",
         "Resolved when ketones < 0.6 mmol/L plus venous pH ≥ 7.3 or HCO₃ ≥ 18 (do not use the anion gap or urine ketones). Reduce insulin to 0.05 U/kg/h when glucose < 250 mg/dL. The 2024 criteria are written for venous gases; an arterial pH runs about 0.03 higher.");
       else if (E.dka && E.dka.state === "possible" && E.dka.K == null) add("dka", (E.glu != null ? "Glucose " + fmt(E.glu, 0) : "Known diabetes") + " with acidosis: measure β-hydroxybutyrate (≥ 3.0 mmol/L) or urine ketones (≥ 2+) before calling it DKA.", "ADA/EASD 2024", "warn");
       else if (E.dka && E.dka.ketoNoD) add("dka", "Ketoacidosis with glucose < 200: if the patient has diabetes this is euglycemic DKA (tick Known diabetes; stop SGLT2 inhibitors; insulin with dextrose from the start). Without diabetes think of starvation or alcoholic ketoacidosis.", "ADA/EASD 2024", "warn");
@@ -2984,7 +3101,7 @@ var ABG = (function () {
   // P/F and A–a without needing age (the O2-requirement calc needs age; these don't)
   function indices(pao2, paco2, fio2Pct) {
     if ([pao2, paco2, fio2Pct].some(function (v) { return v == null || !isFinite(v); })) return null;
-    if (fio2Pct < 21 || fio2Pct > 100) return null;
+    if (fio2Pct < 21 || fio2Pct > 100 || pao2 < 10 || pao2 > 700 || paco2 < 5 || paco2 > 200) return null;   // out-of-range entries are reported, not used
     var PAO2 = P_DRY * fio2Pct / 100 - paco2 / RQ;
     return { pf: pao2 / (fio2Pct / 100), PAO2: PAO2, AaGrad: PAO2 - pao2 };
   }
@@ -3099,6 +3216,8 @@ var ABG = (function () {
     if (v.length) blocks.push(v);
     var elV = elLines(m.el);
     if (elV.length) blocks.push(elV);
+    var issues = collectIssues({ abRaw: m.abRaw || m.abPaused || m.ab, el: m.el, ox: m.ox, pao2: m.pao2, fio2Pct: m.fio2Pct, support: m.support, vent: m.vent, extra: m.extraIssues });
+    if (issues.length) blocks.push(["⚠️ Input checks (resolve before acting):"].concat(issues.map(function (x) { return "• " + x.text; })));
 
     var isMV = !!(m.support && m.support.mode === "mv");
     if (!isMV && m.support && m.fio2Pct != null) blocks.push(["Support: " + supportLine(m.support, m.fio2Pct)]);
@@ -3127,9 +3246,10 @@ var ABG = (function () {
     if (fi.length) blocks.push(["ABG Interpretation:"].concat(fi));
     if (ab || m.ox) {
       var sg = suggestions({ ab: ab, ox: m.ox, r: r, g: g, rf: rf, lactate: m.lactate, def: m.def, retainer: m.retainer, mismatch: m.mismatch, paco2: m.paco2, pao2: m.pao2, fio2Pct: m.fio2Pct, support: m.support, vent: m.vent, tgt: m.tgt, el: m.el });
+      if (m.aiPending) sg = sg.filter(function (x) { return !isVentKey(x.key); });
       var elN = m.el ? 2 : 0;
       var lines = sg.slice(0, m.maxSugg || (isMV ? 10 : 7) + elN).map(function (x) { return "• " + x.text + (x.src ? " [" + x.src + "]" : ""); });
-      if (!lines.length) lines = ["• No acid–base or oxygenation problem on this gas; correlate clinically."];
+      if (!lines.length) lines = ["• " + nothingLine(!!(m.abRaw && m.abRaw.errors && m.abRaw.errors.length), oxOutOfRange(m.pao2, m.fio2Pct))];
       blocks.push(["Suggestions:"].concat(lines));
     }
     return blocks.map(function (b) { return b.join("\n"); }).join("\n\n");
@@ -3149,10 +3269,11 @@ var ABG = (function () {
   }
 
   return {
+    oxOutOfRange: oxOutOfRange, nothingLine: nothingLine,
     VMODES: VMODES, isVC: isVC, isPC: isPC, isSIMV: isSIMV, hasPS: hasPS, analyzeFlow: analyzeFlow, analyzePaw: analyzePaw, analyzeVolume: analyzeVolume, mergeReads: mergeReads, crossCheck: crossCheck, normalizeVent: normalizeVent, stressIndex: stressIndex, weanScreen: weanScreen, movAvg: movAvg, SCALARS: SCALARS, scalarsFor: scalarsFor, scalarIds: scalarIds, scalarBlock: scalarBlock, ventMessage: ventMessage, isVentKey: isVentKey, parseIE: parseIE, peepTable: peepTable, oiGrade: oiGrade, ventInterp: ventInterp, ventBlocks: ventBlocks, desiredMV: desiredMV,
     effectiveTarget: effectiveTarget, applyAdequacy: applyAdequacy, supportFio2: supportFio2, supportLine: supportLine, modeName: modeName, pbw: pbw, targetPco2: targetPco2, ventCalc: ventCalc, ventLines: ventLines, desiredText: desiredText, endExpPressure: endExpPressure, DEVICES: DEVICES,
     gasExchange: gasExchange, respFailure: respFailure, fullInterpretation: fullInterpretation, suggestions: suggestions,
-    chartLine: chartLine, interpretation: interpretation, compensationLines: compensationLines, message: message, electrolytes: electrolytes, elLines: elLines, elCalcLines: elCalcLines, elInterp: elInterp, AGREF: AGREF, ERANGE: ERANGE,
+    chartLine: chartLine, interpretation: interpretation, compensationLines: compensationLines, message: message, electrolytes: electrolytes, elLines: elLines, collectIssues: collectIssues, elCalcLines: elCalcLines, elInterp: elInterp, AGREF: AGREF, ERANGE: ERANGE,
     bicarbDeficit: bicarbDeficit, indices: indices, arrow: arrow, RANGE: RANGE,
     calc: calc, acidBase: acidBase, oxygenation: oxygenation, compensation: compensation, hco3FromPh: hco3FromPh,
     parseFio2: parseFio2, describeFio2: describeFio2, fmt: fmt,
@@ -3168,7 +3289,7 @@ if (typeof module !== "undefined") module.exports = ABG;
   function $(id) { return document.getElementById(id); }
   var fmt = ABG.fmt;
   var S = { customTarget: false, workOpen: false, vd: 0.5, msg: "", mode: "nc", dev: "venturi", nivType: "bipap", sex: null, vmode: "acvc", tab: "calc", sc: {}, scNormal: false, photos: [], vmsg: "",
-    an: { idx: -1, tr: "flow", t: { flow: {}, paw: {}, vol: {} }, reads: null, auto: {}, autoSet: {}, info: "", si: null }, aiModel: "claude-sonnet-5-5", gluUnit: null, icaUnit: null, bunUnit: "mgdl", agRef: "classic", uket: null };
+    an: { idx: -1, tr: "flow", t: { flow: {}, paw: {}, vol: {} }, reads: null, auto: {}, autoSet: {}, info: "", si: null }, aiModel: "claude-sonnet-5-5", gluUnit: null, icaUnit: null, albUnit: null, bunUnit: null, agRef: "classic", uket: null, aiPending: null };
   document.addEventListener("toggle", function (ev) {
     if (ev.target && ev.target.classList && ev.target.classList.contains("work")) S.workOpen = ev.target.open;
   }, true);
@@ -3306,7 +3427,8 @@ if (typeof module !== "undefined") module.exports = ABG;
     S.vd = Number(b.getAttribute("data-vd")); render();
   });
   document.addEventListener("click", function (ev) {
-    var b = ev.target.closest ? ev.target.closest("[data-gu],[data-bu],[data-agr],[data-uk],[data-iu]") : null; if (!b) return;
+    var b = ev.target.closest ? ev.target.closest("[data-gu],[data-bu],[data-agr],[data-uk],[data-iu],[data-au]") : null; if (!b) return;
+    if (b.hasAttribute("data-au")) S.albUnit = b.getAttribute("data-au");
     if (b.hasAttribute("data-iu")) { var iu = b.getAttribute("data-iu"); S.icaUnit = S.icaUnit === iu ? null : iu; }
     if (b.hasAttribute("data-uk")) { var uk = Number(b.getAttribute("data-uk")); S.uket = S.uket === uk ? null : uk; }
     if (b.hasAttribute("data-gu")) { var gu = b.getAttribute("data-gu"); S.gluUnit = S.gluUnit === gu ? null : gu; }
@@ -3440,32 +3562,47 @@ if (typeof module !== "undefined") module.exports = ABG;
     }
 
     var mismatch = !!((ab && ab.mismatch) || tco2Note);
+    var NUMLBL = { "w-ph": "pH", "w-paco2": "pCO₂", "w-pao2": "pO₂", "w-hco3": "HCO₃", "w-tco2": "TCO₂", "w-be": "BE", "w-so2": "SO₂", "w-lac": "Lactate", "w-age": "Age", "w-wt": "Weight", "w-fio2": "FiO₂",
+      "w-ncflow": "Nasal cannula flow", "w-na": "Na", "w-k": "K", "w-cl": "Cl", "w-ica": "Ionized Ca", "w-glu": "Glucose", "w-alb": "Albumin", "w-bhb": "β-OHB", "w-bun": "BUN/urea", "w-osm": "Osmolality" };
+    var extraIssues = [];
+    document.querySelectorAll(".inp.bad").forEach(function (w) {
+      if (NUMLBL[w.id]) extraIssues.push({ text: NUMLBL[w.id] + ": the entry is not a valid number, so it is not used.", level: "crit" });
+      else if (w.id) { var lb = document.querySelector('label[for="' + w.id.replace(/^w-/, "i-") + '"]'); extraIssues.push({ text: (lb ? lb.textContent.replace(/\s+optional.*$/, "").trim() : w.id.replace(/^w-/, "")) + ": the entry is not valid, so it is not used.", level: "warn" }); }
+    });
+    if (S.aiPending && S.mode === "mv") extraIssues.push({ text: "Ventilator values were filled from a photo by AI and are not yet checked against the screen: ventilator suggestions are withheld until you confirm them.", level: "crit" });
     var g = ABG.gasExchange({ pao2: ok(pao2) ? pao2 : null, paco2: ok(paco2) ? paco2 : null, fio2Pct: ok(fio2Pct) ? fio2Pct : null, age: ok(age) ? age : null, ox: ox, support: support });
     var vent = ABG.ventCalc(support, abOk ? ab : null, ok(paco2) ? paco2 : null, ok(pao2) ? pao2 : null, ok(fio2Pct) ? fio2Pct : null, retainer);
     var rf = ABG.respFailure(abOk ? ab : null, ok(pao2) ? pao2 : null, ok(paco2) ? paco2 : null);
     var rOk = r && !r.errors.length ? r : null;
     var elIn = { na: num("i-na"), k: num("i-k"), cl: num("i-cl"), ica: num("i-ica"), glu: num("i-glu"), alb: num("i-alb"), bhb: num("i-bhb"), bun: num("i-bun"), osm: num("i-osm"),
-      gluUnit: S.gluUnit, icaUnit: S.icaUnit, bunUnit: S.bunUnit, agRef: S.agRef, dm: $("i-dm").checked, uket: S.uket };
+      gluUnit: S.gluUnit, icaUnit: S.icaUnit, albUnit: S.albUnit, bunUnit: S.bunUnit, agRef: S.agRef, dm: $("i-dm").checked, uket: S.uket };
     Object.keys(elIn).forEach(function (k) { if (typeof elIn[k] === "number" && !isFinite(elIn[k])) elIn[k] = null; });
     var E = ABG.electrolytes(elIn, abOk ? ab : null, ok(lac) ? lac : null);
     var Eok = E && !E.errors.length ? E : E ? Object.assign({}, E) : null;
     var sugg = (abOk || ox) ? ABG.suggestions({ ab: abOk ? ab : null, ox: ox, r: rOk, g: g, rf: rf, lactate: ok(lac) ? lac : null, def: def,
       retainer: retainer, mismatch: mismatch, paco2: ok(paco2) ? paco2 : null, pao2: ok(pao2) ? pao2 : null, fio2Pct: ok(fio2Pct) ? fio2Pct : null, support: support, vent: vent, tgt: tgt, el: Eok }) : null;
+    if (sugg && S.aiPending && S.mode === "mv") sugg = sugg.filter(function (x) { return !ABG.isVentKey(x.key); });
 
+    var ISS = ABG.collectIssues({ abRaw: ab, el: E, ox: ox, pao2: ok(pao2) ? pao2 : null, fio2Pct: ok(fio2Pct) ? fio2Pct : null, support: support, vent: vent, extra: extraIssues });
+    put("chk-result", chkCard(ISS));
     put("ab-result", abCard(ab, ox, { ph: ph, paco2: paco2, pao2: pao2, tco2: tco2, be: be, so2: so2, lac: lac }, tco2Note, g, rf, ok(fio2Pct) ? ABG.supportLine(support, fio2Pct) : null, Eok));
     put("el-result", elCard(E, abOk ? ab : null));
     $("el-sum").textContent = E && E.ag != null ? " · AG " + fmt(E.agUse, 0) + (E.agHigh ? " ↑" : E.agLow ? " ↓" : "") : E ? " · entered" : "";
-    document.querySelectorAll("[data-gu]").forEach(function (x) { x.setAttribute("aria-pressed", String((S.gluUnit || (E && E.gluUnit)) === x.getAttribute("data-gu"))); });
+    document.querySelectorAll("[data-gu]").forEach(function (x) { x.setAttribute("aria-pressed", String(S.gluUnit === x.getAttribute("data-gu"))); });
+    document.querySelectorAll("[data-au]").forEach(function (x) { x.setAttribute("aria-pressed", String(S.albUnit === x.getAttribute("data-au"))); });
     document.querySelectorAll("[data-bu]").forEach(function (x) { x.setAttribute("aria-pressed", String(S.bunUnit === x.getAttribute("data-bu"))); });
     document.querySelectorAll("[data-agr]").forEach(function (x) { x.setAttribute("aria-pressed", String(S.agRef === x.getAttribute("data-agr"))); });
     document.querySelectorAll("[data-uk]").forEach(function (x) { x.setAttribute("aria-pressed", String(S.uket != null && S.uket === Number(x.getAttribute("data-uk")))); });
-    document.querySelectorAll("[data-iu]").forEach(function (x) { x.setAttribute("aria-pressed", String((S.icaUnit || (E && E.icaUnit)) === x.getAttribute("data-iu"))); });
+    document.querySelectorAll("[data-iu]").forEach(function (x) { x.setAttribute("aria-pressed", String(S.icaUnit === x.getAttribute("data-iu"))); });
     $("iu-seg").classList.toggle("ask", !!(E && E.icaAsk)); $("gu-seg").classList.toggle("ask", !!(E && E.gluAsk));
-    $("u-glu").textContent = (S.gluUnit || (E && E.gluUnit)) === "mmol" ? "mmol/L" : "mg/dL";
-    $("u-bun").textContent = S.bunUnit === "urea" ? "mmol/L" : "mg/dL";
-    $("l-bun-txt") && ($("l-bun-txt").textContent = S.bunUnit === "urea" ? "Urea" : "BUN");
+    $("au-seg").classList.toggle("ask", !!(E && E.albAsk)); $("bu-seg").classList.toggle("ask", !!(E && E.bunAsk));
+    var UL = { mgdl: "mg/dL", mmol: "mmol/L", gdl: "g/dL", gl: "g/L", urea: "mmol/L" };
+    $("u-ica").textContent = S.icaUnit ? UL[S.icaUnit] : "unit?"; $("u-alb").textContent = S.albUnit ? UL[S.albUnit] : "unit?";
+    $("u-glu").textContent = S.gluUnit ? UL[S.gluUnit] : "unit?";
+    $("u-bun").textContent = S.bunUnit ? UL[S.bunUnit] : "unit?";
+    $("l-bun-txt") && ($("l-bun-txt").textContent = S.bunUnit === "urea" ? "Urea" : S.bunUnit === "mgdl" ? "BUN" : "BUN or urea");
     put("vent-result", S.mode === "mv" ? ventCard(vent, support, abOk ? ab : null, paco2, ok(fio2Pct) ? fio2Pct : null) : "");
-    put("sug-result", sugCard(sugg));
+    put("sug-result", sugCard(sugg, null, !!(ab && ab.errors && ab.errors.length), ABG.oxOutOfRange(ok(pao2) ? pao2 : null, ok(fio2Pct) ? fio2Pct : null)));
     put("result", o2Card(r, pao2, paco2, fio2Pct, age, target, support));
     put("def-result", defCard(def, hUse, wt));
 
@@ -3474,7 +3611,7 @@ if (typeof module !== "undefined") module.exports = ABG;
       tco2: ok(tco2) ? tco2 : null, be: ok(be) ? be : null, so2: ok(so2) ? so2 : null, lactate: ok(lac) ? lac : null,
       ab: abOk ? ab : null, ox: ox, r: rOk, fio2Pct: ok(fio2Pct) ? fio2Pct : null, def: def,
       age: ok(age) ? age : null, retainer: retainer, mismatch: mismatch, support: support, vent: vent, tgt: tgt, el: Eok,
-      abPaused: ab && ab.mismatch ? ab : null
+      abPaused: ab && ab.mismatch ? ab : null, abRaw: ab, extraIssues: extraIssues, aiPending: !!(S.aiPending && S.mode === "mv")
     });
     // ---- Ventilator tab ----
     var vsp = Object.assign({}, support, { mode: "mv" });
@@ -3493,11 +3630,13 @@ if (typeof module !== "undefined") module.exports = ABG;
     $("sc-result").innerHTML = scCard(vsp);
     var vsugAll = ABG.suggestions({ ab: lab, ox: linked ? ox : null, r: linked ? rOk : null, g: linked ? g : null, rf: linked ? rf : null, retainer: retainer,
       paco2: linked && ok(paco2) ? paco2 : null, pao2: linked && ok(pao2) ? pao2 : null, fio2Pct: vFi, support: vsp, vent: vv, tgt: linked ? tgt : null });
-    var vsug = vsugAll.filter(function (x) { return ABG.isVentKey(x.key); });
+    var vsug = S.aiPending ? [] : vsugAll.filter(function (x) { return ABG.isVentKey(x.key); });
+    var vExtra = S.aiPending ? [{ text: "Ventilator values were filled from a photo by AI and are not yet checked against the screen: ventilator suggestions are withheld until you confirm them.", level: "crit" }] : [];
+    put("vchk-result", chkCard(ABG.collectIssues({ abRaw: linked ? ab : null, vent: vv, extra: vExtra })));
     var ventIn = ["vt", "pinsp", "rr", "flow", "peep", "ppeak", "pplat", "mawp", "peeptot", "vte", "vti", "ftot", "height", "spo2", "p01", "pocc", "ti", "ets", "psupp", "ftrig", "tslope", "peepm", "mv", "mvleak", "mvspn", "vtespn", "fmand", "fspn", "ri", "cdynm", "cstatm", "rcexp", "rsbim"].some(function (k) { return ok(vsp[k]); }) || !!vsp.ie || vsp.scalars.ids.length || S.scNormal || !!vsp.scalars.autoInfo;
-    put("vsug-result", ventIn ? sugCard(vsug, 10) : '<div class="card"><div class="empty">Suggestions appear once ventilator values or scalar findings are entered.</div></div>');
+    put("vsug-result", S.aiPending ? '<div class="card" data-tone="warn"><div class="empty">Suggestions are withheld until the AI-filled values are checked against the ventilator screen (see the fill box).</div></div>' : ventIn ? sugCard(vsug, 10) : '<div class="card"><div class="empty">Suggestions appear once ventilator values or scalar findings are entered.</div></div>');
     S.vmsg = ventIn ? ABG.ventMessage({ support: vsp, vent: vv, fio2Pct: vFi, linked: linked, ph: ok(ph) ? ph : null, paco2: ok(paco2) ? paco2 : null, pao2: ok(pao2) ? pao2 : null,
-      ab: lab, ox: ox, g: g, rf: rf, r: rOk, tgt: tgt, retainer: retainer }) : "";
+      ab: lab, ox: ox, g: g, rf: rf, r: rOk, tgt: tgt, retainer: retainer, aiPending: !!S.aiPending, extraIssues: vExtra }) : "";
     $("vmsg").textContent = S.vmsg || "The ventilator message builds here as you enter values or mark scalar findings.";
     $("vmsg").classList.toggle("empty-msg", !S.vmsg);
     $("vb-copy").disabled = !S.vmsg;
@@ -3580,10 +3719,21 @@ if (typeof module !== "undefined") module.exports = ABG;
       vals + comp + oxDetail + notes.join("") + "</div>";
   }
 
+  /* ---------- Input checks (shown in the app and copied in the message) ---------- */
+  function chkCard(issues) {
+    if (!issues.length) return "";
+    var crit = issues.some(function (x) { return x.level === "crit"; });
+    return '<div class="card chk" data-tone="' + (crit ? "crit" : "warn") + '"><span class="kicker">Input checks · resolve before acting</span><ul class="vint">' +
+      issues.map(function (x) { return '<li class="' + (x.level === "crit" ? "warn" : "") + '">' + sub2(esc(x.text)) + "</li>"; }).join("") +
+      '</ul><div class="src">These lines are also at the top of the copied message.</div></div>';
+  }
+
   /* ---------- Electrolytes card ---------- */
   function elCard(E, ab) {
     if (!E) return "";
     var R = ABG.ERANGE, cells = [], f = function (v, d) { return v.toFixed(d); };
+    var ST = E.st || {}, NM = { na: "Na", k: "K", cl: "Cl", ica: "iCa", glu: "Glucose", alb: "Albumin", bhb: "β-OHB", bun: "BUN/urea", osm: "Osm" };
+    Object.keys(ST).forEach(function (k) { if (ST[k] === "unit" || ST[k] === "invalid") cells.push(cell(NM[k], String(E.raw[k]), ST[k] === "unit" ? "unit?" : "invalid", "bad")); });
     var c2 = function (k, val, lo, hi, d) { var fl = flag(val, lo, hi); cells.push(cell(k, f(val, d), fl[0], fl[1])); };
     if (E.na != null) c2("Na", E.na, R.na[0], R.na[1], 0);
     if (E.k != null) c2("K", E.k, R.k[0], R.k[1], 1);
@@ -4413,7 +4563,9 @@ if (typeof module !== "undefined") module.exports = ABG;
     var rsbiT = v.rsbi != null ? v.rsbi : v.rsbiM;
     if (rsbiT != null) T1.push(tile("RSBI", Math.round(rsbiT), (v.rsbi == null ? "ventilator · " : "RR ÷ VT (L) · ") + (v.rsbiOK ? "information only; not an SBT gate (AARC 2024)" : "not valid at this support (needs PS ≤ 8 or CPAP)"), !v.rsbiOK ? "n/v" : rsbiT >= 105 ? "≥ 105" : "< 105", !v.rsbiOK ? "" : rsbiT >= 105 ? "warn" : "ok"));
     if (ok(sp.ppeak)) T2.push(tile("Peak pressure", fmt(sp.ppeak, 0) + " <small>cmH₂O</small>", "airway + elastic pressure", sp.ppeak > 35 ? "> 35" : "", "warn"));
-    if (ok(sp.pplat)) T2.push(tile("Plateau", fmt(sp.pplat, 0) + " <small>cmH₂O</small>", "goal ≤ 30", sp.pplat > 30 ? "> 30" : "ok", sp.pplat > 30 ? "warn" : "ok"));
+    if (ok(sp.pplat)) T2.push(v.badPeak || v.badPlat ? tile("Plateau", fmt(sp.pplat, 0) + " <small>cmH₂O</small>", v.badPeak ? "above the peak: invalid, recheck the hold" : "below PEEP: invalid, recheck", "invalid", "warn")
+      : tile("Plateau", fmt(sp.pplat, 0) + " <small>cmH₂O</small>", "goal ≤ 30", sp.pplat > 30 ? "> 30" : "ok", sp.pplat > 30 ? "warn" : "ok"));
+    if (v.badPeepTot) T2.push(tile("Total PEEP", fmt(sp.peeptot, 0) + " <small>cmH₂O</small>", "below set PEEP " + fmt(sp.peep, 0) + ": invalid, recheck", "invalid", "warn"));
     if (v.dp != null) T2.push(tile("Driving pressure", fmt(v.dp, 0) + " <small>cmH₂O</small>", "measured: plateau − " + (v.autoPeep != null && v.autoPeep > 0 ? "total PEEP" : "PEEP") + "; goal ≤ 15", v.dp > 15 ? "high" : "ok", v.dp > 15 ? "warn" : "ok"));
     else if (!v.badPlat && !v.badPeak) T2.push(tile("Driving pressure", "—", "not available: needs a plateau (inspiratory hold)" + (v.dPinsp != null ? "; ΔPinsp " + fmt(v.dPinsp, 0) + " is a setting, not a plateau" : ""), "", ""));
     if (v.autoPeep != null) T2.push(tile("Auto-PEEP", fmt(Math.max(0, v.autoPeep), 0) + " <small>cmH₂O</small>", "total " + fmt(sp.peeptot, 0) + " − set " + fmt(sp.peep, 0), v.autoPeep >= 2 ? "trapping" : "ok", v.autoPeep >= 2 ? "warn" : "ok"));
@@ -4451,7 +4603,10 @@ if (typeof module !== "undefined") module.exports = ABG;
         (Tg.goal != null && !Tg.reach ? '<span class="act warn">pH ' + fmt(Tg.goal, 2) + " is not reachable by ventilation alone within these limits: treat the metabolic cause.</span>" : "") +
         (!hasPh ? '<span class="act warn">No rate advice without a projected pH.</span>'
           : away ? '<span class="act warn">Not advised: pH would go from ' + fmt(ab.ph, 2) + " to ≈ " + fmt(Tg.phAt, 2) + ".</span>"
-          : v.rrNeed != null ? '<span class="act ' + (v.rrNeed > 35 ? "warn" : "ok") + '">Rate ≈ ' + Math.round(Math.min(v.rrNeed, 35)) + "/min" + (v.rrNeed > 35 ? " (max 35; needs " + Math.round(v.rrNeed) + ")" : "") + " (now " + fmt(v.f, 0) + ")</span>" +
+          : v.fLow ? '<span class="act warn">Ftotal is below the set rate: recheck both. No rate calculation.</span>'
+          : v.rrNeed != null && !v.rateSettable ? '<span class="act warn">No set rate calculated: the patient ' + (v.simv ? "takes spontaneous breaths between the mandatory ones" : "triggers " + fmt(v.trig, 0) + "/min above the set rate") + ".</span>" +
+            '<span class="why">Alveolar ventilation would need to change by about ' + Math.round((paco2 / Tg.value - 1) * 100) + "%" + (v.veNeed != null ? " (minute ventilation ≈ " + fmt(v.ve, 1) + " → " + fmt(v.veNeed, 1) + " L/min)" : "") + ", if VT, dead space and CO<sub>2</sub> production stay the same. Reassess effort, synchrony, VT and measured minute ventilation before changing the set rate.</span>"
+          : v.rrNeed != null ? '<span class="act ' + (v.rrNeed > 35 ? "warn" : "ok") + '">Rate ≈ ' + Math.round(Math.min(v.rrNeed, 35)) + "/min" + (v.rrNeed > 35 ? " (max 35; needs " + Math.round(v.rrNeed) + ")" : "") + " (now " + fmt(v.f, 0) + (v.ftotMissing ? "; Ftotal not entered: assumes no triggered breaths" : "") + ")</span>" +
             '<span class="why">Rate × pCO<sub>2</sub> ÷ target = ' + fmt(v.f, 0) + " × " + fmt(paco2, 0) + " ÷ " + fmt(Tg.value, 0) + (v.fSrc === "Ftotal" ? " (using Ftotal)" : "") + ", if VT, dead space and CO<sub>2</sub> production stay the same." + (v.veNeed != null ? " Minute ventilation needed ≈ " + fmt(v.veNeed, 1) + " L/min." : "") + " Check plateau, auto-PEEP and expiratory time before any change, and recheck the ABG after it.</span>"
           : '<span class="why">Enter BUR or Ftotal to calculate the rate needed.</span>') + "</div>";
     }
@@ -4461,9 +4616,9 @@ if (typeof module !== "undefined") module.exports = ABG;
   }
 
   /* ---------- suggestions card ---------- */
-  function sugCard(list, maxN) {
+  function sugCard(list, maxN, abBad, oxBad) {
     if (!list) return '<div class="card"><div class="empty">Suggestions appear once there is an acid–base or oxygenation reading.</div></div>';
-    if (!list.length) return '<div class="card" data-tone="ok"><div class="empty">No acid–base or oxygenation problem on this gas; correlate clinically.</div></div>';
+    if (!list.length) return '<div class="card" data-tone="' + (abBad || oxBad ? "warn" : "ok") + '"><div class="empty">' + esc(ABG.nothingLine(!!abBad, !!oxBad)) + '</div></div>';
     var tone = list.some(function (s) { return s.tone === "crit"; }) ? "crit" : list.some(function (s) { return s.tone === "warn"; }) ? "warn" : "inc";
     return '<div class="card" data-tone="' + tone + '"><ol class="sugg">' + list.map(function (s) {
       return '<li class="' + (s.tone || "") + '"><span class="st">' + sub2(esc(s.text)) + "</span>" +
@@ -4489,22 +4644,32 @@ if (typeof module !== "undefined") module.exports = ABG;
       "\"ftotal\": null, \"fmand\": null, \"fspn\": null, \"ri\": null, \"cdyn\": null, \"cstat\": null, \"rcexp\": null, \"rsbi\": null}}";
   }
   function fillOut(html, tone) { $("mv-ai-out").innerHTML = '<div class="card" data-tone="' + (tone || "inc") + '" style="margin-top:8px"><div class="empty">' + html + "</div></div>"; }
+  // Plausible ranges for numbers read from a photo; anything outside is not filled (often a missed decimal point)
+  var FILLRANGE = { o2: [21, 100], tv: [50, 2000], pinsp: [0, 60], f: [0, 60], tinsp: [0.1, 5], peep: [0, 30], psupp: [0, 40], ftrig: [0.1, 20], tslope: [0, 2.5], exp_pct: [1, 90],
+    flow: [5, 150], ppeak: [0, 80], pplat: [0, 70], pmean: [0, 50], peep_meas: [0, 40], mv: [0, 40], mvleak: [0, 40], mvspn: [0, 40], tve: [20, 2500], tvi: [20, 2500],
+    tve_spn: [0, 2500], ftotal: [0, 80], fmand: [0, 60], fspn: [0, 80], ri: [0, 100], cdyn: [1, 250], cstat: [1, 250], rcexp: [0.05, 5], rsbi: [1, 1000] };
   function fillApply(J) {
     if (J.readable === false) { fillOut("The AI could not read this photo: " + esc(J.reason || "no reason given") + ".", "warn"); return; }
     var modeNote = "";
     if (J.mode && MODEMAP[J.mode]) setVmode(MODEMAP[J.mode]);
     else if (J.mode && J.mode !== "null") modeNote = " The mode on the screen (" + esc(J.mode) + ") is not covered here, so choose the nearest mode yourself.";
-    var all = Object.assign({}, J.settings || {}, J.measured || {}), n = 0;
+    var all = Object.assign({}, J.settings || {}, J.measured || {}), n = 0, skipped = [];
     document.querySelectorAll(".inp.aifill").forEach(function (w) { w.classList.remove("aifill"); });
     Object.keys(FILLMAP).forEach(function (k) {
       var v = all[k], el = $(FILLMAP[k]); if (v == null || v === "" || !el) return;
       if (k !== "ie" && !isFinite(+v)) return;
+      if (FILLRANGE[k] && (+v < FILLRANGE[k][0] || +v > FILLRANGE[k][1])) { skipped.push(k + " " + v); return; }
       el.value = String(v); n++;
       var w = el.closest(".inp"); if (w) w.classList.add("aifill");
     });
+    S.aiPending = n ? true : null;
     render();
-    fillOut(n ? "Filled " + n + " boxes from the photo" + (J.mode && MODEMAP[J.mode] ? " (mode " + esc(J.mode) + ")" : "") + ". The filled boxes are outlined: check each against the screen before using the result." + modeNote
-      : "No numbers could be read from this photo." + modeNote, n ? "ok" : "warn");
+    if (!n) { fillOut("No usable numbers could be read from this photo." + (skipped.length ? " Not filled (outside plausible ranges): " + esc(skipped.join(", ")) + "." : "") + modeNote, "warn"); return; }
+    $("mv-ai-out").innerHTML = '<div class="card" data-tone="warn" style="margin-top:8px"><div class="empty" style="margin-bottom:8px">Filled ' + n + " boxes from the photo" + (J.mode && MODEMAP[J.mode] ? " (mode " + esc(J.mode) + ")" : "") +
+      ". <b>Check every outlined box against the ventilator screen</b> (decimal points, units, mode). Ventilator suggestions are withheld until you confirm." +
+      (skipped.length ? " Not filled because they are outside plausible ranges (often a missed decimal point): " + esc(skipped.join(", ")) + "." : "") + modeNote + "</div>" +
+      '<div class="btnrow"><button type="button" class="btn small" id="mv-ai-ok">I checked these values against the screen</button></div></div>';
+    $("mv-ai-ok").addEventListener("click", function () { S.aiPending = null; document.querySelectorAll(".inp.aifill").forEach(function (w) { w.classList.remove("aifill"); }); fillOut("Values confirmed. Ventilator suggestions are shown again.", "ok"); render(); });
   }
   document.querySelectorAll("#mv-inputs input, #fio2-row input").forEach(function (el) { el.addEventListener("input", function () { var w = el.closest(".inp"); if (w) w.classList.remove("aifill"); }); });
   $("mv-ai-fill").addEventListener("click", function () {
@@ -4596,7 +4761,7 @@ if (typeof module !== "undefined") module.exports = ABG;
   });
   $("b-clear").addEventListener("click", function () {
     FIELDS.forEach(function (id) { $(id).value = ""; });
-    $("i-retainer").checked = false; $("i-dm").checked = false; S.sex = null; S.gluUnit = null; S.icaUnit = null; S.bunUnit = "mgdl"; S.uket = null; clearScalars();
+    $("i-retainer").checked = false; $("i-dm").checked = false; S.sex = null; S.gluUnit = null; S.icaUnit = null; S.albUnit = null; S.bunUnit = null; S.uket = null; S.aiPending = null; clearScalars();
     document.querySelectorAll("[data-sex]").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
     setTargetMode(false);
     try { window.scrollTo(0, 0); $("i-ph").focus(); } catch (e) {}
