@@ -279,15 +279,28 @@ var ABG = (function () {
     if (na != null) { any = true; if (na < 100 || na > 200) E.errors.push("Na " + fmt(na, 0) + " is outside 100–200: check the entry."); else E.na = na; }
     if (k != null) { any = true; if (k < 1 || k > 10) E.errors.push("K " + fmt(k, 1) + " is outside 1–10: check the entry."); else E.k = k; }
     if (cl != null) { any = true; if (cl < 60 || cl > 150) E.errors.push("Cl " + fmt(cl, 0) + " is outside 60–150: check the entry."); else E.cl = cl; }
+    // Units. With no unit picked, a value is read only where one unit is the only plausible one:
+    //   iCa ≤ 1.7 → mmol/L, ≥ 3 → mg/dL; 1.7–3 could be severe hypercalcemia (mmol/L) or severe hypocalcemia (mg/dL) → ask.
+    //   glucose < 10 → mmol/L, ≥ 70 → mg/dL; 10–69 could be hypoglycemia (mg/dL) or hyperglycemia (mmol/L) → ask.
     if (ica != null) {
-      any = true; var icm = ica > 3 ? ica / 4.008 : ica;   // mg/dL → mmol/L
-      if (ica > 3) E.notes.push("Ionized Ca read as " + icm.toFixed(2) + " mmol/L (typed in mg/dL)");
-      if (icm < 0.3 || icm > 3) E.errors.push("Ionized Ca is outside 0.3–3 mmol/L: check the entry."); else E.ica = icm;
+      any = true;
+      var iu = e.icaUnit === "mgdl" || e.icaUnit === "mmol" ? e.icaUnit : ica >= 3 ? "mgdl" : ica <= 1.7 ? "mmol" : null;
+      if (!iu) { E.errors.push("Ionized Ca " + fmt(ica, 2) + " could be mmol/L or mg/dL: pick the unit."); E.icaAsk = true; }
+      else {
+        var icm = iu === "mgdl" ? ica / 4.008 : ica;   // mg/dL → mmol/L
+        if (iu === "mgdl" && e.icaUnit !== "mgdl") E.notes.push("Ionized Ca read as " + icm.toFixed(2) + " mmol/L (typed in mg/dL)");
+        if (icm < 0.3 || icm > 3) E.errors.push("Ionized Ca is outside 0.3–3 mmol/L: check the entry and unit."); else { E.ica = icm; E.icaUnit = iu; }
+      }
     }
     if (glu != null) {
-      any = true; var gu = e.gluUnit === "mmol" || (e.gluUnit !== "mgdl" && glu <= 35) ? "mmol" : "mgdl";
-      var gmg = gu === "mmol" ? glu * 18 : glu;
-      if (gmg < 10 || gmg > 2500) E.errors.push("Glucose is outside the possible range: check the entry and unit."); else { E.glu = gmg; E.gluMmol = gmg / 18; E.gluUnit = gu; E.gluAuto = !e.gluUnit; }
+      any = true;
+      var gu = e.gluUnit === "mmol" || e.gluUnit === "mgdl" ? e.gluUnit : glu < 10 ? "mmol" : glu >= 70 ? "mgdl" : null;
+      if (!gu) { E.errors.push("Glucose " + fmt(glu, 1) + " could be mg/dL (hypoglycemia) or mmol/L (hyperglycemia): pick the unit."); E.gluAsk = true; }
+      else {
+        var gmg = gu === "mmol" ? glu * 18 : glu;
+        if (!e.gluUnit) E.notes.push("Glucose read as " + (gu === "mmol" ? fmt(glu, 1) + " mmol/L (" + fmt(gmg, 0) + " mg/dL)" : fmt(glu, 0) + " mg/dL") + ": pick the unit if that is wrong");
+        if (gmg < 10 || gmg > 2500) E.errors.push("Glucose is outside the possible range: check the entry and unit."); else { E.glu = gmg; E.gluMmol = gmg / 18; E.gluUnit = gu; E.gluAuto = !e.gluUnit; }
+      }
     }
     if (alb != null) {
       any = true; var ag_ = alb > 10 ? alb / 10 : alb;   // g/L → g/dL
@@ -339,22 +352,45 @@ var ABG = (function () {
     // DKA and HHS, 2024 consensus (ADA/EASD/JBDS/AACE/DTS). Each criterion is true, false, or null (not assessed).
     // DKA: D glucose ≥ 200 mg/dL or known diabetes; K β-OHB ≥ 3.0 mmol/L or urine ketones ≥ 2+; A pH < 7.3 and/or HCO₃ < 18.
     // HHS: glucose ≥ 600; effective osmolality > 300 or total > 320; β-OHB < 3.0 or urine ketones < 2+; pH ≥ 7.3 and HCO₃ ≥ 15.
-    // β-OHB (quantitative) is used before urine ketones when both are entered. "A" is read as a metabolic acidosis
-    // (HCO₃ < 18, or pH < 7.3 with HCO₃ below 22) so that a pure respiratory acidosis is not counted.
+    // β-OHB (quantitative) is used before urine ketones when both are entered. "A" is applied exactly as written
+    // (pH < 7.3 OR HCO₃ < 18); when it is met by pH alone with HCO₃ ≥ 18, a mixed (respiratory) acidosis is flagged.
     var Kv = E.bhb != null ? E.bhb >= 3 : E.uket != null ? E.uket >= 2 : null;
     E.kTxt = E.bhb != null ? "β-OHB " + E.bhb.toFixed(1) : E.uket != null ? "urine ketones " + UKET[E.uket] : null;
     var Dv = (E.glu != null && E.glu >= 200) || E.dm ? true : E.glu != null ? false : null;
-    var Av = abOk ? (h < 18 || (ab.ph < 7.3 && h < 22)) : null;
+    var Av = abOk ? (ab.ph < 7.3 || h < 18) : null;
     if (Av === true || Kv === true || (Dv === true && E.glu != null && E.glu >= 250)) {
       var st = Dv === true && Kv === true && Av === true ? "met" : Dv === false || Kv === false || Av === false ? "notmet" : "possible";
       E.dka = { D: Dv, K: Kv, A: Av, state: st, euglycemic: st === "met" && E.glu != null && E.glu < 200,
-        ketoNoD: Kv === true && Av === true && Dv === false };
-      if (st === "met") E.dka.sev = ab.ph < 7.0 || h < 10 ? "severe" : ab.ph <= 7.25 || h < 15 ? "moderate" : "mild";
+        ketoNoD: Kv === true && Av === true && Dv === false, phOnly: abOk && ab.ph < 7.3 && h >= 18 };
+      if (st === "met") {
+        // Severity (2024 consensus; not all criteria need be met, so the worst finding sets the grade):
+        // severe β-OHB > 6.0, pH < 7.0 or HCO₃ < 10; moderate pH 7.0–7.25 or HCO₃ 10–< 15; mild pH > 7.25–< 7.30 or HCO₃ 15–18.
+        // Mental status (alert / drowsy / stupor or coma) is part of the grade and is not assessed by the app.
+        var why = [];
+        if (E.bhb != null && E.bhb > 6) why.push("β-OHB " + E.bhb.toFixed(1) + " > 6.0");
+        if (ab.ph < 7.0) why.push("pH " + fmt(ab.ph, 2) + " < 7.00");
+        if (h < 10) why.push("HCO₃ " + fmt(h, 1) + " < 10");
+        var sev = why.length ? "severe" : null;
+        if (!sev) {
+          if (ab.ph <= 7.25) why.push("pH " + fmt(ab.ph, 2) + " (7.00–7.25)");
+          if (h < 15) why.push("HCO₃ " + fmt(h, 1) + " (10–14.9)");
+          sev = why.length ? "moderate" : "mild";
+          if (sev === "mild") { if (ab.ph < 7.3) why.push("pH " + fmt(ab.ph, 2) + " (7.26–7.29)"); if (h < 18) why.push("HCO₃ " + fmt(h, 1) + " (15–17.9)"); }
+        }
+        E.dka.sev = sev; E.dka.sevWhy = why;
+      }
     }
     if (E.glu != null && E.glu >= 600) {
-      var Ov = (E.effOsm != null && E.effOsm > 300) || (E.calcOsm != null && E.calcOsm > 320) || (E.osm != null && E.osm > 320) ? true : E.effOsm != null ? false : null;
+      // Hyperosmolality: calculated effective osmolality > 300 (2 Na + glucose) or calculated total > 320 (adds urea).
+      // The consensus defines both by calculation, so a measured osmolality is shown as support but never stands in for them.
+      var oSrc = null, Ov = null;
+      if (E.effOsm != null && E.effOsm > 300) { Ov = true; oSrc = "calculated effective osmolality " + fmt(E.effOsm, 0) + " (> 300)"; }
+      else if (E.calcOsm != null && E.calcOsm > 320) { Ov = true; oSrc = "calculated total osmolality " + fmt(E.calcOsm, 0) + " (> 320)"; }
+      else if (E.effOsm != null && E.calcOsm != null) Ov = false;   // both calculated and neither high; without BUN the total is unknown
       var KAbs = Kv == null ? null : !Kv, AAbs = abOk ? ab.ph >= 7.3 && h >= 15 : null;
-      E.hhs = { O: Ov, K: KAbs, A: AAbs, state: Ov === true && KAbs === true && AAbs === true ? "met" : Ov === false || KAbs === false || AAbs === false ? "notmet" : "possible" };
+      E.hhs = { O: Ov, oSrc: oSrc, measOnly: Ov == null && E.osm != null, K: KAbs, A: AAbs,
+        state: Ov === true && KAbs === true && AAbs === true ? "met" : Ov === false || KAbs === false || AAbs === false ? "notmet" : "possible" };
+      if (Ov === true && (KAbs === false || AAbs === false)) E.hhs.mixed = true;   // hyperosmolar with ketonemia or acidosis
       if (E.dka && E.dka.state === "met" && Ov === true) E.overlap = true;   // DKA with HHS-range glucose and osmolality
     }
     return E;
@@ -400,7 +436,11 @@ var ABG = (function () {
     }
     if (E.dka) {
       var D = E.dka, need = [];
-      if (D.state === "met") add("DKA criteria met (ADA/EASD 2024): " + D.sev + " (pH " + fmt(ab.ph, 2) + ", HCO₃ " + fmt(E.hco3, 1) + ", " + E.kTxt + (D.euglycemic ? "; euglycemic: glucose " + fmt(E.glu, 0) + " with known diabetes" : "") + ")" + (E.overlap ? ", with HHS-range glucose and osmolality (overlapping DKA–HHS)" : ""), D.sev === "severe" ? "crit" : "warn");
+      if (D.state === "met") {
+        add("DKA biochemical criteria met (ADA/EASD 2024): " + D.sev + " by " + D.sevWhy.join(", ") + " (pH " + fmt(ab.ph, 2) + ", HCO₃ " + fmt(E.hco3, 1) + ", " + E.kTxt + (D.euglycemic ? "; euglycemic: glucose " + fmt(E.glu, 0) + " with known diabetes" : "") + ")" + (E.overlap ? ", with HHS-range glucose and osmolality (overlapping DKA–HHS)" : "") +
+          ". Severity also depends on mental status, which needs bedside assessment", D.sev === "severe" ? "crit" : "warn");
+        if (D.phOnly) add("pH " + fmt(ab.ph, 2) + " is below 7.3 but HCO₃ " + fmt(E.hco3, 1) + " is 18 or more: the acidemia is not explained by ketoacidosis alone. Look for a coexisting respiratory acidosis (pCO₂ " + fmt(ab.paco2, 0) + ") and treat the severity grade by pH with caution", "warn");
+      }
       else if (D.ketoNoD) add("Ketoacidosis (" + E.kTxt + ") with glucose < 200 and no known diabetes ticked: euglycemic DKA if the patient has diabetes (SGLT2 inhibitor, pregnancy, fasting); otherwise starvation or alcoholic ketoacidosis", "warn");
       else if (D.state === "possible") {
         if (D.D == null) need.push("glucose (or tick Known diabetes)");
@@ -411,13 +451,14 @@ var ABG = (function () {
     }
     if (E.hhs && !(E.dka && E.dka.state === "met")) {
       var H = E.hhs, hn = [];
-      if (H.state === "met") add("HHS criteria met (ADA/EASD 2024): glucose " + fmt(E.glu, 0) + " mg/dL, effective osmolality " + fmt(E.effOsm, 0) + ", no significant ketonemia (" + E.kTxt + "), pH ≥ 7.3 and HCO₃ ≥ 15", "crit");
+      if (H.state === "met") add("HHS biochemical criteria met (ADA/EASD 2024): glucose " + fmt(E.glu, 0) + " mg/dL, " + H.oSrc + ", no significant ketonemia (" + E.kTxt + "), pH ≥ 7.3 and HCO₃ ≥ 15", "crit");
       else if (H.state === "possible") {
-        if (H.O == null) hn.push("Na for the osmolality");
+        if (H.O == null) hn.push(H.measOnly ? "Na (and BUN) to calculate osmolality: measured " + fmt(E.osm, 0) + (E.osm > 320 ? " supports hyperosmolality, but the criteria use calculated values" : "") : E.na == null ? "Na for the osmolality" : "BUN for the total osmolality");
         if (H.K == null) hn.push("ketones (β-OHB < 3.0 or urine ketones < 2+)");
         if (H.A == null) hn.push("a valid pH and HCO₃");
-        add("HHS possible, not confirmed: glucose " + fmt(E.glu, 0) + " mg/dL" + (H.O ? " and hyperosmolality fit" : "") + "; needs " + hn.join(", "), "crit");
-      } else add("HHS criteria not met (" + [H.O === false ? "osmolality not high" : "", H.K === false ? "significant ketones" : "", H.A === false ? "acidosis present" : ""].filter(Boolean).join("; ") + ")", "");
+        add("HHS possible, not confirmed: glucose " + fmt(E.glu, 0) + " mg/dL" + (H.O ? " and " + H.oSrc : "") + "; needs " + hn.join(", "), "crit");
+      } else if (H.mixed) add("Hyperosmolar: " + H.oSrc + ", with " + [H.K === false ? "significant ketonemia" : "", H.A === false ? "acidosis" : ""].filter(Boolean).join(" and ") + ". Mixed features: the consensus advises treating it as DKA", "crit");
+      else add("HHS criteria not met (" + [H.O === false ? "calculated osmolality not high" : "", H.K === false ? "significant ketones" : "", H.A === false ? "acidosis present" : ""].filter(Boolean).join("; ") + ")", "");
     }
     if (E.kStatus && E.kStatus !== "normal") {
       var kw = { "severe-low": "Severe hypokalemia", "mod-low": "Moderate hypokalemia", low: "Mild hypokalemia", high: "Mild hyperkalemia", "mod-high": "Moderate hyperkalemia", "severe-high": "Severe hyperkalemia" }[E.kStatus];
@@ -747,7 +788,10 @@ var ABG = (function () {
     if (pf == null && o.sf != null && o.spo2 <= 97 && o.sf <= 315) o.ardsRangeSF = true;   // global ARDS definition 2023
     o.wean = weanScreen(o, s, ab, fio2Pct);
     if (o.ardsRange) o.peepTab = peepTable(fio2Pct);
-    o.target = num_(s.pco2Target) != null ? { value: s.pco2Target, why: "custom" } : targetPco2(ab, retainer, o.ardsRange, num_(paco2));
+    if (num_(s.pco2Target) != null && s.pco2Target > 0) {
+      o.target = { value: s.pco2Target, why: "your custom target", custom: true, reach: true };
+      if (ab && !ab.errors.length) { o.target.hco3 = ab.hco3; o.target.phAt = phAt(s.pco2Target, ab.hco3); }
+    } else o.target = targetPco2(ab, retainer, o.ardsRange, num_(paco2));
     if (o.target && vm !== "psv" && o.f != null && num_(paco2) != null && o.target.value > 0) {
       o.rrNeed = o.f * paco2 / o.target.value;
       if (o.ve != null) o.veNeed = o.ve * paco2 / o.target.value;
@@ -883,7 +927,7 @@ var ABG = (function () {
     if (v.p01 != null) add("p01", "P0.1 " + fmt(v.p01, 1) + " cmH₂O: " + (v.p01 > 3.5 ? "high respiratory drive and likely high effort (> 3.5)." : v.p01 < 1 ? "low drive (< 1): likely over-assisted or oversedated; risk of diaphragm disuse." : "drive in the usual range (1–3.5)."), v.p01 > 3.5 || v.p01 < 1 ? "warn" : "ok");
     if (v.pmus != null) add("pmus", "Occlusion ΔPocc −" + fmt(Math.abs(v.pocc), 0) + " → Pmus ≈ " + fmt(v.pmus, 0) + " cmH₂O" + (v.pmus > 15 ? ": excessive inspiratory effort (> 15)" : v.pmus > 10 ? ": high inspiratory effort (> 10)" : v.pmus < 3 ? ": very low effort (possible over-assistance)" : ": effort in an acceptable range") +
       (v.dpl != null ? "; dynamic transpulmonary driving pressure ≈ " + fmt(v.dpl, 0) + (v.dpl > 20 ? " (> 20: excessive lung stress)" : v.dpl > 15 ? " (> 15: high lung stress)" : "") : "") + ".", v.pmus > 10 || (v.dpl != null && v.dpl > 15) || v.pmus < 3 ? "warn" : "ok");
-    if (v.sf != null && v.pf == null) add("sf", "SpO₂/FiO₂ " + Math.round(v.sf) + (v.spo2 > 97 ? " (SpO₂ > 97%: not valid for grading; wean FiO₂ and recheck)." : v.sfRange ? ": meets the ARDS oxygenation criterion (S/F ≤ 315 with SpO₂ ≤ 97%)" + (v.sfSev ? ", " + v.sfSev + " range." : "; no severity grade without PEEP ≥ 5.") : " (above 315)."), v.sfRange ? "warn" : "", v.spo2 <= 97);
+    if (v.sf != null && v.pf == null) add("sf", "SpO₂/FiO₂ " + Math.round(v.sf) + (v.spo2 > 97 ? " (SpO₂ > 97%: the ratio is not valid for ARDS grading. If a P/F assessment is needed, get an ABG; do not change oxygen just to make the ratio usable)." : v.sfRange ? ": meets the ARDS oxygenation criterion (S/F ≤ 315 with SpO₂ ≤ 97%)" + (v.sfSev ? ", " + v.sfSev + " range." : "; no severity grade without PEEP ≥ 5.") : " (above 315)."), v.sfRange ? "warn" : "", v.spo2 <= 97);
     if (v.osi != null) add("osi", "Oxygen saturation index " + fmt(v.osi, 1) + ": no validated adult severity bands (PALICC-2 bands are pediatric); follow the trend.", "", false);
     var si = sp.scalars && sp.scalars.si;
     if (si && si.value != null) add("si", "Stress index ≈ " + fmt(si.value, 2) + " on " + si.n + " passive volume-control breaths (photo estimate): " + (si.verdict === "over" ? "upward concavity (> 1.1), suggests tidal overdistension." : si.verdict === "recruit" ? "downward concavity (< 0.9), suggests tidal recruitment (PEEP may be low)." : "straight rise (0.9–1.1), no sign of overdistension or tidal recruitment.") + (si.flowOk === false ? " Flow was not square, so the index is not valid here." : ""), si.verdict !== "ok" && si.flowOk !== false ? "warn" : "ok", si.flowOk !== false);
@@ -1510,9 +1554,14 @@ var ABG = (function () {
         else if (v.target.goal != null && !v.target.reach && v.target.floor) add("rr", "pH " + fmt(ab.ph, 2) + " with pCO₂ " + fmt(c.paco2, 0) + ": ventilation alone cannot reach the ARDSNet goal of pH 7.30. Even at the pCO₂ floor of 25 the pH would be ≈ " + fmt(v.target.phAt, 2) + " at HCO₃ " + fmt(v.target.hco3, 1) +
           (c.paco2 > 26 && up ? "; a rate of ≈ " + Math.round(Math.min(v.rrNeed, 35)) + "/min would get there only if plateau stays ≤ 30 and expiratory flow still reaches zero" : "") + ". Treat the metabolic cause; that is what will move the pH.", "ARDSNet", "warn",
           "Projected pH = 9 − log10(24 × pCO₂ ÷ HCO₃), assuming HCO₃ stays the same. ARDSNet: for pH 7.15–7.30 raise RR until pH > 7.30 or pCO₂ < 25 (RR ≤ 35); below 7.15, RR 35, then VT in 1 mL/kg steps, and bicarbonate may be given.");
-        else if (diff >= 2 && ab.ph >= 7.35 && ab.ph <= 7.45 && !v.target.goal && v.target.phAt != null && (v.target.phAt > 7.45 || v.target.phAt < 7.35))
-          add("rr", "pH " + fmt(ab.ph, 2) + " is normal: no rate change for the pCO₂ alone. Moving pCO₂ to " + fmt(v.target.value, 0) + " (" + v.target.why + ") would give pH ≈ " + fmt(v.target.phAt, 2) + ".", "", "",
-            "Compensation targets describe what the body does, not what to aim for on the ventilator when the pH is already normal.");
+        else if (diff >= 2 && v.target.phAt != null && Math.abs(v.target.phAt - 7.40) > Math.abs(ab.ph - 7.40) + 0.005 && (v.target.phAt < 7.35 || v.target.phAt > 7.45)) {
+          var tTxt = (v.target.custom ? "your custom target pCO₂ " : "pCO₂ ") + fmt(v.target.value, 0) + (v.target.custom ? "" : " (" + v.target.why + ")");
+          add("rr", (ab.ph >= 7.35 && ab.ph <= 7.45 ? "pH " + fmt(ab.ph, 2) + " is normal: no rate change for the pCO₂ alone. Moving to " + tTxt + " would give pH ≈ " + fmt(v.target.phAt, 2) + "."
+              : "Do not " + (up ? "raise" : "lower") + " the rate to reach " + tTxt + ": it would take pH from " + fmt(ab.ph, 2) + " to ≈ " + fmt(v.target.phAt, 2) + ", worsening the " + (ab.ph < 7.35 ? "acidemia" : "alkalemia") + "." +
+                (metAcid && !up && ab.ph < 7.35 && ex === "resp-alk" ? " A pCO₂ below the Winter's value is helping the pH; look for the cause of the extra drive instead." : "")),
+            "", ab.ph < 7.35 || ab.ph > 7.45 ? "warn" : "",
+            "Projected pH = 9 − log10(24 × pCO₂ ÷ HCO₃), with HCO₃ held constant. Compensation formulas describe what the body does; they are not ventilator targets when the pH would move the wrong way.");
+        }
         else if (diff >= 2 && permissive) add("rr", "pH ≥ 7.30 on lung-protective ventilation: permissive hypercapnia is acceptable; no RR increase needed.", "ARDSNet", "",
           "ARDSNet pH goal is 7.30–7.45. If pH falls to 7.15–7.30, increase RR (max 35) until pH > 7.30 or pCO₂ < 25; if pH < 7.15, RR 35 then VT +1 mL/kg steps.");
         else if (diff >= 2 && (up || canLower)) {
@@ -1527,10 +1576,11 @@ var ABG = (function () {
           if (up && obstr) rrT += "; with high airway resistance, raise the rate only if expiratory flow still reaches zero (check auto-PEEP)";
           if (v.rrNeed > 35) rrT += ab.ph < 7.15 ? "; 35 is the ARDSNet maximum: if pH stays < 7.15, raise VT in 1 mL/kg steps (plateau may exceed 30) and bicarbonate may be given"
             : "; that needs > 35/min, so accept some hypercapnia (keep pH ≥ 7.15) with VT 6–8 mL/kg PBW";
-          add("rr", rrT + ".", up ? "ARDSNet" : "", ab.ph < 7.25 || ab.ph > 7.55 ? "warn" : "",
-            (up ? "Assumes tidal volume and dead space stay the same (pCO₂ falls in proportion to alveolar ventilation)." + (v.veNeed != null ? " Minute ventilation needed ≈ " + fmt(v.veNeed, 1) + " L/min." : "") + " At high rates check expiratory time and auto-PEEP (expiratory hold)."
+          add("rr", rrT + ".", up && !v.target.custom ? "ARDSNet" : "", ab.ph < 7.25 || ab.ph > 7.55 ? "warn" : "",
+            (up ? (v.veNeed != null ? "Minute ventilation needed ≈ " + fmt(v.veNeed, 1) + " L/min. " : "") + "At high rates check expiratory time and auto-PEEP (expiratory hold), plateau ≤ 30 and VT 4–8 mL/kg PBW."
               : "A low pCO₂ on the ventilator often means a high set rate or an agitated, pained or febrile patient breathing over the set rate; check before cutting support.") +
-            (metAcid ? " In metabolic acidosis keep pCO₂ near the Winter's value: a 'normal' 40 is too high and worsens acidemia." : ""));
+            (metAcid ? " In metabolic acidosis keep pCO₂ near the Winter's value: a 'normal' 40 is too high and worsens acidemia." : "") +
+            " This is a theoretical estimate: it assumes VT, dead space and CO₂ production stay the same and that the patient breathes at the set rate (patient-triggered breaths may already exceed it). A faster rate also adds dead-space ventilation and shortens expiration. Recheck the ABG after any change.");
         }
       }
       if (v && v.trig != null && v.trig >= 2 && metAcid && ab && ab.ph < 7.30)

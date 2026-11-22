@@ -324,3 +324,5 @@ details.elx[open] > summary::after { content: " ▾"; }
 details.elx > summary .opt { margin-left: 6px; font: 500 11.5px var(--font-body); color: var(--muted); }
 details.elx .elsum { font: 500 13px/1.4 var(--font-body); color: var(--muted); }
 details.elx .seg button { font-size: 13px; }
+/* v16: a unit choice the app needs before it can read a value */
+.seg.ask { outline: 2px solid var(--crit); outline-offset: 2px; border-radius: 10px; }

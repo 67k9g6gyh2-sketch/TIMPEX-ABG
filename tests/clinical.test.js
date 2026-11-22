@@ -209,7 +209,7 @@ test("14. DKA with serum β-hydroxybutyrate", () => {
   const x = pipeline(Object.assign({}, DKA_GAS, { el: { na: 130, k: 5.0, cl: 96, glu: 520, bhb: 6.2 } }));
   assert.equal(x.E.dka.state, "met");
   assert.equal(x.E.dka.sev, "severe");                          // HCO3 < 10
-  assert.match(x.msg, /DKA criteria met \(ADA\/EASD 2024\): severe/);
+  assert.match(x.msg, /DKA biochemical criteria met \(ADA\/EASD 2024\): severe/);
   assert.ok(x.keys.includes("dka"));
 });
 
@@ -227,7 +227,7 @@ test("15. DKA with urine ketones (2+ or more), and below the threshold", () => {
   const none = pipeline(Object.assign({}, DKA_GAS, { el: { glu: 520 } }));
   assert.equal(none.E.dka.state, "possible");
   assert.match(none.msg, /DKA possible, not confirmed: needs ketones/);
-  assert.doesNotMatch(none.msg, /DKA criteria met/);
+  assert.doesNotMatch(none.msg, /DKA biochemical criteria met/);
 });
 
 test("16. euglycemic DKA needs known diabetes; without it, other ketoacidoses are raised", () => {
@@ -248,7 +248,7 @@ test("17. HHS with complete biochemical criteria", () => {
   const x = pipeline(Object.assign({}, HHS_GAS, { age: 75, el: { na: 148, k: 4.4, cl: 110, glu: 980, bhb: 0.8, bun: 60 } }));
   assert.equal(x.E.hhs.state, "met");
   assert.ok(x.E.effOsm > 300);
-  assert.match(x.msg, /HHS criteria met \(ADA\/EASD 2024\)/);
+  assert.match(x.msg, /HHS biochemical criteria met \(ADA\/EASD 2024\)/);
   assert.ok(x.keys.includes("hhs"));
 });
 
@@ -256,7 +256,7 @@ test("18. HHS with ketones not measured is only 'possible'", () => {
   const x = pipeline(Object.assign({}, HHS_GAS, { age: 75, el: { na: 148, glu: 980 } }));
   assert.equal(x.E.hhs.state, "possible");
   assert.match(x.msg, /HHS possible, not confirmed/);
-  assert.doesNotMatch(x.msg, /HHS criteria met/);
+  assert.doesNotMatch(x.msg, /HHS biochemical criteria met/);
   assert.match(x.text("hhs"), /measure β-hydroxybutyrate/);
   // significant ketones → not HHS
   const k = pipeline(Object.assign({}, HHS_GAS, { age: 75, el: { na: 148, glu: 980, bhb: 4 } }));
@@ -265,7 +265,7 @@ test("18. HHS with ketones not measured is only 'possible'", () => {
   const ov = pipeline(Object.assign({}, DKA_GAS, { el: { na: 140, glu: 900, bhb: 6 } }));
   assert.equal(ov.E.dka.state, "met"); assert.equal(ov.E.overlap, true);
   assert.match(ov.msg, /overlapping DKA–HHS/);
-  assert.doesNotMatch(ov.msg, /HHS criteria met/);
+  assert.doesNotMatch(ov.msg, /HHS biochemical criteria met/);
 });
 
 test("19. RSBI is information, never an SBT gate", () => {
@@ -338,8 +338,8 @@ test("27. seeded mini-fuzz (3,000 gases): no NaN/undefined/null and no contradic
     assert.doesNotMatch(x.msg, /NaN|undefined|\bnull\b|Infinity/, `${ph}/${paco2}/${hco3} ${mode}`);
     const m = x.msg;
     if (x.abRaw && x.abRaw.mismatch) assert.doesNotMatch(m, /Compensation\n|Winter|HCO3 deficit|Bicarbonate|anion gap metabolic/);
-    assert.ok(!(/DKA criteria met/.test(m) && /HHS criteria met/.test(m)), "DKA and HHS both 'met'");
-    if (/HHS criteria met|DKA criteria met/.test(m)) assert.ok(x.E && (x.E.bhb != null || x.E.uket != null), "met without a ketone result");
+    assert.ok(!(/DKA biochemical criteria met/.test(m) && /HHS biochemical criteria met/.test(m)), "DKA and HHS both 'met'");
+    if (/HHS biochemical criteria met|DKA biochemical criteria met/.test(m)) assert.ok(x.E && (x.E.bhb != null || x.E.uket != null), "met without a ketone result");
     if (/Traditional: fully compensated/.test(m)) assert.ok(!(x.ab.check && x.ab.check.extra), "fully compensated with a second disorder");
     if (/Driving pressure: \d/.test(m)) assert.ok(sp.pplat, "driving pressure without a plateau");
     if (x.ox && x.ox.onO2) assert.doesNotMatch(m, /normal oxygenation/);
