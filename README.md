@@ -7,9 +7,9 @@ Bedside blood gas and mechanical-ventilator assessment (formerly TIMPEX ABG). Th
 - **Interpretation** in the form "Severe metabolic acidosis with concomitant respiratory alkalosis", from pH, pCO₂ and HCO₃ only. The traditional label (uncompensated / partially / fully compensated) is shown for reference.
 - **Compensation** written out line by line: Winter's formula, metabolic alkalosis formula, acute and chronic respiratory rules.
 - **Desired FiO₂** by the a/A ratio method, with nasal cannula flow, P/F ratio and A-aDO₂. The Auto target is 104 − 0.4 × age, pO₂ 60 with CO₂ retention (SpO₂ 88–92%), or pO₂ 65 when ventilated with P/F ≤ 300 (ARDSNet 55–80). If pO₂ is already adequate or in the target window, it says "keep" instead of changing the oxygen.
-- **HCO₃ deficit** = 0.5 (or 0.4) × weight × (24 − HCO₃).
+- **HCO₃ deficit** = 0.5 (or 0.4) × weight × (24 − HCO₃): a theoretical distribution-space estimate, not a dose.
 - **Message to copy**: values with ⬇️/⬆️, P/F, A-aDO₂, desired FiO₂, HCO₃ deficit, compensation and interpretation.
-- Accepts TCO₂, BE and SO₂ from the printout; flags an HCO₃ or TCO₂ that doesn't fit pH and pCO₂.
+- Accepts TCO₂, BE and SO₂ from the printout. An HCO₃ that doesn't fit pH and pCO₂ (Henderson–Hasselbalch) pauses the acid–base reading until it is fixed; a TCO₂ that doesn't fit is flagged.
 - **Complete interpretation**: acid–base + oxygenation, traditional label, Type 1/Type 2 respiratory failure, and gas exchange (P/F, A-aDO₂ or a/A with the likely mechanism).
 - **Guideline-based suggestions** at the end of the message: BTS 2017 (O₂ targets), GOLD 2026 and NICE (NIV), Surviving Sepsis Campaign 2026 and BICARICU-2 (bicarbonate, lactate), ADA/EASD 2024 (DKA), 2023 global ARDS definition and ATS 2024 (ARDS), MSD Manual (metabolic alkalosis).
 - Optional lactate, and a CO₂-retainer tick box (SpO₂ 88–92%, desired FiO₂ for pO₂ 60).
@@ -21,8 +21,32 @@ Bedside blood gas and mechanical-ventilator assessment (formerly TIMPEX ABG). Th
 - **v12 additions**: entry checks (volumes typed in litres, height in metres or inches, Ftotal below the set rate, plateau above peak, VTE vs set TV); Ti/Te without an I:E (set Ti, or TV ÷ peak flow in volume control); SpO₂/FiO₂ and oxygen saturation index without a gas (global ARDS definition 2023); drive and effort from P0.1 and the end-expiratory occlusion ΔPocc (Telias 2020, Bertoni 2019); a weaning screen with SBT and extubation suggestions (ACCP/ATS 2017, Subirà 2019, ERS 2022); the volume tracing in the photo reader (leak, trapping, stacking); a stress index from passive volume-control breaths (Ranieri 2000, Terragni 2013); and a DOPES checklist for sudden deterioration.
 - **v13 (Mindray SV series)**: the ventilator's mode names (V-A/C, P-A/C, PRVC, CPAP/PSV, V-SIMV, P-SIMV, PRVC-SIMV), settings by their screen names (O2%, ΔPinsp, fsimv, Tinsp, PEEP OFF, ΔPsupp, F-Trig, Tslope, Exp%) and the Values-screen readings (MV, MVleak, MVspn, TVe spn, fmand, fspn, Ri, Cdyn, Cstat, RCexp, RSBI). SIMV interpretation (mandatory vs spontaneous breaths, PS vs Pinsp, SIMV weaning evidence), RSBI validity on support, PEEP 0 (RELAx 2020), and an optional AI button that fills the boxes from a photo of the Values screen. The photo reader now follows shaded, two-colour Mindray waveforms.
 - **v14 (optional electrolytes and audit)**: an optional Electrolytes and chemistry panel (Na, K, Cl, ionized Ca, glucose, albumin, β-hydroxybutyrate, BUN or urea, measured osmolality) giving the anion gap (classic or ion-selective normal range), albumin-corrected gap (Figge), delta ratio, hidden high-gap acidosis, corrected Na (Katz and Hillier), effective osmolality and osmolal gap; DKA and HHS criteria and severity (ADA/EASD 2024); K and Na classes (UKKA 2023, European hyponatraemia guideline 2014); and matching suggestions (DKA potassium and insulin order, hyperkalemia, toxic alcohols such as methanol in lambanog). The interpretation becomes anion-gap aware ("high anion gap metabolic acidosis"). Audit fixes: PS and fsimv in the support line for PSV and SIMV, SSC 2026 oxygen-target and HFNC wording, BTS/ICS NIV thresholds, "inadequate respiratory compensation" when pCO₂ is above Winter's range but not high, and punctuation.
+- **v15 (clinical safety, accuracy and testing; review build on branch `v15-clinical-safety`, not yet released)**:
+  - *Mixed disorders at normal pH*: both possible primary disorders are tested against their compensation rules; pH 7.40 with pCO₂ 20 and HCO₃ 12 now reads as metabolic acidosis with respiratory alkalosis (mixed), not "fully compensated". A normal-pH pattern with a second disorder is labelled "mixed".
+  - *Inconsistent gases*: an entered HCO₃ more than 2 mmol/L (or 15%) away from the Henderson–Hasselbalch value pauses the acid–base reading, compensation, bicarbonate advice and deficit, and asks whether all values came from the same gas; one tap uses the calculated HCO₃.
+  - *Predicted body weight*: no PBW, mL/kg or PBW-based advice until Male or Female is selected (the app used to assume male).
+  - *Oxygenation*: pO₂ adequacy on the current support is reported separately from impairment relative to FiO₂ (P/F); pO₂ 105 on FiO₂ 100% is no longer called simply "overcorrected".
+  - *Ventilator targets*: every target pCO₂ shows the projected pH; when the ARDSNet goal cannot be reached at the pCO₂ floor of 25 the app says so; with pH < 7.20 rate advice spells out the plateau, auto-PEEP and expiratory-time conditions and that the metabolic cause needs its own treatment.
+  - *DKA and HHS*: full 2024 criteria with Known diabetes and urine ketones; each result is "met", "possible, not confirmed" or "not met"; HHS is never confirmed without a ketone result; euglycemic DKA and overlapping DKA–HHS handled.
+  - *ARDS*: severity is graded only for intubated patients with PEEP ≥ 5 entered; non-intubated patients get the criterion without a grade; wording separates the oxygenation criterion from the diagnosis.
+  - *Mechanics*: driving pressure and static compliance only from a plateau (Pinsp and peak pressure are no longer used as substitutes); ventilator-measured Cstat is kept and labelled.
+  - *Liberation*: RSBI is information only, never an SBT gate (AARC 2024).
+  - *OI and OSI*: shown as numbers to trend; pediatric PALICC-2 bands are no longer applied to adults.
+  - *Estimates*: desired FiO₂, nasal-cannula flow and HCO₃ deficit are labelled as theoretical estimates, not prescriptions.
+  - *Privacy*: the API key is never stored (a key saved by v12–v14 is deleted on first open); nothing is sent to Anthropic without ticking a confirmation that the photo has no identifiers, and choosing a Values-screen photo shows it for review instead of sending it.
+  - *Offline cache*: the service worker now deletes only this app's own old caches, not other apps' caches on the same github.io origin.
+  - *Reliability*: result cards are only rewritten when their content changes, so a tap on a card button is not lost when an input loses focus.
+  - *Tests*: `src/` holds the sources and `python3 src/build.py` builds `index.html`; `npm test` (Node's built-in test runner, no dependencies) runs 32 regression tests; a GitHub Actions workflow runs them and checks that `index.html` matches `src/` on every pull request.
 Works offline once opened, and picks up updates on the next open when there is signal; install it from Safari (Share → Add to Home Screen) or Chrome (Install app).
 
 References: Berend K et al. N Engl J Med 2014;371:1434–45 · Shapiro BA et al. Clinical Application of Blood Gases, 5th ed. · Gilbert R, Keighley JF. Am Rev Respir Dis 1974;109:142–5.
+
+## Limitations
+
+- The formulas and thresholds come from the cited guidelines and textbooks, but the app as a whole has **not been externally or prospectively validated**. Passing the automated tests shows the code does what this README says; it does not establish bedside safety.
+- Not validated: the desired-FiO₂ estimate (assumes a constant a/A ratio), the nasal-cannula FiO₂ rule, the projected pH and rate calculations (assume constant HCO₃, VT and dead space), the photo reading of scalars, and the AI reads.
+- Compensation rules (Winter's, 0.7 × HCO₃ + 20, 0.1/0.35 and 0.2/0.4 per mmHg) are population averages with ± ranges; borderline values can be called mixed or not mixed.
+- DKA/HHS criteria are written for venous samples; the app uses the gas you enter. "A" is read as a metabolic acidosis, a choice made here and documented in the Method tab.
+- Adults only (PBW, ARDS definition, OI/OSI handling).
 
 Clinical decision aid for trained clinicians. It does not replace clinical judgment or your institution's protocols.

@@ -1,0 +1,9 @@
+{
+  "name": "timpex-gas-vent",
+  "private": true,
+  "description": "TIMPEX Gas & Vent: offline ABG and ventilator assessment. No runtime or test dependencies.",
+  "scripts": {
+    "build": "python3 src/build.py",
+    "test": "node --test tests/*.test.js"
+  }
+}

@@ -1,0 +1,23 @@
+name: Clinical regression tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: index.html is built from src/
+        run: |
+          python3 src/build.py
+          git diff --exit-code -- index.html
+      - name: Regression tests
+        run: node --test tests/*.test.js

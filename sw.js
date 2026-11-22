@@ -1,5 +1,9 @@
 // Offline cache for TIMPEX Gas & Vent. Bump CACHE when you replace any file.
-const CACHE = "timpex-gasvent-v14";
+const CACHE = "timpex-gasvent-v15";
+// Caches are shared by every app on this origin (other TIMPEX apps live beside this one on github.io).
+// Delete only this app's own older caches: "timpex-gasvent-vN" and the names it used before ("timpex-abg-vN", "abg-o2-vN").
+const OWN = /^(timpex-gasvent|timpex-abg|abg-o2)-v\d+$/;
+function isOldOwnCache(key) { return key !== CACHE && OWN.test(key); }
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {
@@ -9,7 +13,7 @@ self.addEventListener("install", (e) => {
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter(isOldOwnCache).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
