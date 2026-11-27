@@ -357,3 +357,26 @@ test("X6. randomized: the copied report never pairs a critical input check with 
     }
   }
 });
+
+/* ---------- v16.4: oxygenation is always part of the interpretation ---------- */
+test("O3. the copied message states the oxygenation reading in words (room air, oxygen, above alveolar)", () => {
+  const ra = pipeline({ ph: 7.40, paco2: 40, hco3: 24, pao2: 62, age: 50 });
+  assert.match(ra.msg, /ABG Interpretation:\nNormal acid–base status, with mild hypoxemia\n(.*\n)*Oxygenation: pO₂ 62 on room air: 60–79\./);
+  const o2 = pipeline({ ph: 7.40, paco2: 40, hco3: 24, pao2: 70, age: 50, sp: { mode: "mask", dev: "venturi", fio2Pct: 40 } });
+  assert.match(o2.msg, /Oxygenation: pO₂ 70 on FiO₂ 40% is still below 80 \(mild hypoxemia range\)\./);
+  const user = pipeline({ ph: 7.40, paco2: 24, hco3: 18, pao2: 184, age: 50 });
+  assert.match(user.msg, /Oxygenation: pO₂ 184 on room air is at or above 80\. This pO₂ is above what FiO₂ 21% can give/);
+});
+test("O4. no oxygen support entered: the pO₂ is still graded, and what is missing is said", () => {
+  const noFi = { ph: 7.40, paco2: 40, hco3: 24, pao2: 55, age: 50, sp: { mode: "nc" } };   // the app's default: NC with no flow
+  const x = pipeline(noFi);
+  assert.equal(x.fio2, null); assert.ok(x.ox); assert.equal(x.ox.noFio2, true); assert.equal(x.ox.grade, "moderate");
+  assert.match(x.msg, /ABG Interpretation:\nNormal acid–base status, with moderate hypoxemia \(oxygen support not entered\)/);
+  assert.match(x.msg, /Oxygenation: pO₂ 55 is in the moderate hypoxemia range \(40–59\)\. The oxygen support is not entered, so the app cannot tell room air from oxygen/);
+  assert.match(x.text("o2"), /Titrate O₂ to SpO₂/);
+  const ok = pipeline(Object.assign({}, noFi, { pao2: 95 }));
+  assert.match(ok.msg, /with no hypoxemia \(oxygen support not entered\)/);
+  assert.doesNotMatch(ok.msg, /NaN|undefined|P\/F Ratio/);
+  const old = pipeline(Object.assign({}, noFi, { pao2: 70, age: 80 }));   // age 80: the hypoxemia limit is 80 − 20 = 60
+  assert.equal(old.ox.mildLimit, 60); assert.equal(old.ox.grade, "none");
+});

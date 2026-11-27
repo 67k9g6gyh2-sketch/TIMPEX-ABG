@@ -341,7 +341,8 @@ test("27. seeded mini-fuzz (3,000 gases): no NaN/undefined/null and no contradic
     if (/HHS biochemical criteria met|DKA biochemical criteria met/.test(m)) assert.ok(x.E && (x.E.bhb != null || x.E.uket != null), "met without a ketone result");
     if (/Traditional: fully compensated/.test(m)) assert.ok(!(x.ab.check && x.ab.check.extra), "fully compensated with a second disorder");
     if (/Driving pressure: \d/.test(m)) assert.ok(sp.pplat, "driving pressure without a plateau");
-    if (x.ox && x.ox.onO2) assert.doesNotMatch(m, /normal oxygenation/);
+    // v16.4: the message now carries the oxygenation sentence, which may say "This is not normal oxygenation"
+    if (x.ox && x.ox.onO2) assert.doesNotMatch(m, /(?<!not )normal oxygenation/);
     if (sp.mode === "mv" && !sp.sex) assert.doesNotMatch(m, /\(\d+\.\d mL\/kg PBW\)|VT \d+\.\d mL\/kg PBW|PBW \d+(\.\d)? kg/);
     assert.doesNotMatch(m, /not ready/i);
     n++;

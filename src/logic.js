@@ -584,8 +584,9 @@ var ABG = (function () {
   // On O2: uncorrected (< acceptable limit), corrected (limit–100), overcorrected (> 100).
   function oxygenation(inp) {
     var pao2 = inp.pao2, fio2Pct = inp.fio2Pct, age = inp.age;
-    if (pao2 == null || fio2Pct == null || !isFinite(pao2) || !isFinite(fio2Pct)) return null;
-    if (vOK("pao2", pao2) == null || vOK("fio2Pct", fio2Pct) == null) return null;   // shared validation
+    if (pao2 == null || !isFinite(pao2) || vOK("pao2", pao2) == null) return null;   // shared validation
+    if (fio2Pct == null || !isFinite(fio2Pct)) return oxNoFio2(pao2, age);           // v16.4: read the pO2 even without FiO2
+    if (vOK("fio2Pct", fio2Pct) == null) return null;
     var alvA = inp.paco2 != null ? pao2AboveAlv(pao2, inp.paco2, fio2Pct) : null;   // v16.3: read as entered, with a hint
     var hasAge = age != null && isFinite(age);
     var adj = hasAge && age > 60 ? Math.min(age, 90) - 60 : 0;
@@ -613,7 +614,7 @@ var ABG = (function () {
       if (pao2 < o.mildLimit) {
         o.label = "uncorrected hypoxemia"; o.tone = o.grade === "severe" || o.impair === "severely" ? "crit" : "warn"; o.state = "uncorrected";
         o.detail = "pO₂ " + fmt(pao2, 0) + " on FiO₂ " + fmt(fio2Pct, 0) + "% is still below " + fmt(o.mildLimit, 0) + (adj ? " (age-adjusted)" : "") +
-          "; " + o.grade + " range.";
+          " (" + o.grade + " hypoxemia range).";
       } else if (pao2 <= 100) {
         o.label = "corrected hypoxemia" + (o.impair ? " on FiO₂ " + fmt(fio2Pct, 0) + "%" + impTxt : ""); o.tone = o.impair === "severely" ? "crit" : o.impair ? "warn" : "ok"; o.state = "corrected";
         o.detail = "pO₂ " + fmt(pao2, 0) + " on FiO₂ " + fmt(fio2Pct, 0) + "% is " + fmt(o.mildLimit, 0) + "–100: adequate on this support.";
@@ -634,6 +635,23 @@ var ABG = (function () {
   }
 
 
+
+  // v16.4: oxygenation from the pO2 alone when the oxygen support (FiO2) has not been entered yet. The hypoxemia grade
+  // needs only the pO2; whether it is on room air or corrected by oxygen, P/F and the A-a gradient need the FiO2.
+  function oxNoFio2(pao2, age) {
+    var hasAge = age != null && isFinite(age), adj = hasAge && age > 60 ? Math.min(age, 90) - 60 : 0;
+    var o = { pao2: pao2, fio2Pct: null, adj: adj, hasAge: hasAge, noFio2: true, onO2: null, pf: null, impair: null };
+    o.mildLimit = 80 - adj; o.modLimit = Math.max(40, 60 - adj);
+    o.grade = pao2 < 40 ? "severe" : pao2 < o.modLimit ? "moderate" : pao2 < o.mildLimit ? "mild" : "none";
+    o.state = o.grade === "none" ? "normal" : "hypoxemia";
+    o.label = (o.grade === "none" ? "no hypoxemia" : o.grade + " hypoxemia") + " (oxygen support not entered)";
+    o.tone = o.grade === "none" ? "" : o.grade === "severe" ? "crit" : "warn";
+    var rng = o.grade === "mild" ? fmt(o.modLimit, 0) + "–" + fmt(o.mildLimit - 1, 0) : o.grade === "moderate" ? "40–" + fmt(o.modLimit - 1, 0) : "below 40";
+    o.detail = "pO₂ " + fmt(pao2, 0) + (o.grade === "none" ? " is at or above " + fmt(o.mildLimit, 0) + ": no hypoxemia" : " is in the " + o.grade + " hypoxemia range (" + rng + ")") +
+      (adj && o.grade !== "severe" ? " (age-adjusted)" : "") + ". The oxygen support is not entered, so the app cannot tell room air from oxygen (corrected or uncorrected hypoxemia); P/F, the A-a gradient and the FiO₂ advice need it.";
+    if (!hasAge) o.detail += " Age not entered: limits not age-adjusted.";
+    return o;
+  }
 
   /* ---------- Oxygen / ventilatory support ---------- */
   // s: { mode: "ra"|"nc"|"mask"|"niv"|"mv", ncFlow, fio2Pct, dev ("venturi"|"mask"|"nrm"|"hfnc"), hfFlow,
@@ -1710,6 +1728,7 @@ var ABG = (function () {
     if (head) L.push(head);
     if (ab && ab.label && ab.primary !== "normal") L.push("Traditional: " + lc(ab.label));
     elInterp(m.el, ab).forEach(function (x) { L.push(x.text); });
+    if (m.ox) L.push("Oxygenation: " + m.ox.detail);   // v16.4: the oxygenation reading in words, not only in the headline
     if (m.rf) L.push(m.rf.text);
     if (m.g) L.push("Gas exchange: " + m.g.pfText + "; " + m.g.gradText + (m.g.mech ? " → " + m.g.mech : ""));
     return L;
