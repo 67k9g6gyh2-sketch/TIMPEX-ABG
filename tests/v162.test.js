@@ -380,3 +380,27 @@ test("O4. no oxygen support entered: the pO₂ is still graded, and what is miss
   const old = pipeline(Object.assign({}, noFi, { pao2: 70, age: 80 }));   // age 80: the hypoxemia limit is 80 − 20 = 60
   assert.equal(old.ox.mildLimit, 60); assert.equal(old.ox.grade, "none");
 });
+
+test("O5. the copied message writes out the desired-FiO₂ computation and the O₂ requirement", () => {
+  const block = (x) => x.msg.split("\n\n").find((b) => /Desired FiO2/.test(b)) || "";
+  const ra = block(pipeline({ ph: 7.40, paco2: 40, hco3: 24, pao2: 62, age: 50 }));
+  assert.match(ra, /^Desired FiO2: 26% \(NC 1\.5 L\/min\) · estimate; titrate to SpO₂\nComputation \(target pO₂ 84, 104 − 0\.4 × age 50\):/);
+  assert.match(ra, /PAO₂ = 713 × FiO₂ − pCO₂ ÷ 0\.8 = 713 × 0\.21 − 40 ÷ 0\.8 = 99\.7 mmHg/);
+  assert.match(ra, /a\/A = pO₂ ÷ PAO₂ = 62 ÷ 99\.7 = 0\.622/);
+  assert.match(ra, /FiO₂ needed = \(target ÷ a\/A \+ pCO₂ ÷ 0\.8\) ÷ 713 = \(84 ÷ 0\.622 \+ 50\) ÷ 713 = 26%/);
+  assert.match(ra, /O₂ requirement: nasal cannula ≈ 1\.5 L\/min, from L\/min = \(FiO₂ − 20\) ÷ 4 = \(26 − 20\) ÷ 4/);
+  const mask = block(pipeline({ ph: 7.40, paco2: 40, hco3: 24, pao2: 50, age: 50, sp: { mode: "mask", dev: "venturi", fio2Pct: 40 } }));
+  assert.match(mask, /O₂ requirement: 62% is more than a nasal cannula gives \(44% at 6 L\/min\): HFNC or a non-rebreather mask/);
+  const mv = block(pipeline({ ph: 7.40, paco2: 40, hco3: 24, pao2: 50, age: 50, sp: { mode: "mv", vmode: "acvc", fio2Pct: 40, vt: 400, peep: 8, rr: 14, height: 170, sex: "m" } }));
+  assert.match(mv, /O₂ requirement: set FiO₂ ≈ \d+% on the ventilator/);
+  const over = block(pipeline({ ph: 7.40, paco2: 40, hco3: 24, pao2: 45, age: 50, sp: { mode: "mask", dev: "nrm", fio2Pct: 100 } }));
+  assert.match(over, /O₂ requirement: more than 100%: oxygen alone cannot reach the target \(shunt physiology\)/);
+  const keep = block(pipeline({ ph: 7.40, paco2: 40, hco3: 24, pao2: 82, age: 50, sp: { mode: "nc", ncFlow: 2 } }));   // just below target 84, but ≥ 80
+  assert.match(keep, /O₂ requirement: no increase: pO₂ 82 is already adequate \(≥ 80\)/);
+  const wean = block(pipeline({ ph: 7.40, paco2: 40, hco3: 24, pao2: 95, age: 50, sp: { mode: "nc", ncFlow: 2 } }));   // above target: lower flow
+  assert.match(wean, /O₂ requirement: nasal cannula ≈ 1\.4 L\/min/);
+  const noFi = block(pipeline({ ph: 7.40, paco2: 40, hco3: 24, pao2: 62, age: 50, sp: { mode: "nc" } }));
+  assert.equal(noFi, "Desired FiO2 and O₂ requirement: need the current oxygen (room air, nasal cannula flow or FiO₂).");
+  const alv = block(pipeline({ ph: 7.40, paco2: 24, hco3: 18, pao2: 184, age: 50 }));
+  assert.match(alv, /^Desired FiO2 and O₂ requirement: not calculated, because pO₂ 184 is above what FiO₂ 21% can give \(alveolar ≈ 120\)/);
+});
