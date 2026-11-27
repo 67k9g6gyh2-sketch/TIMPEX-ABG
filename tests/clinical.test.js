@@ -69,20 +69,19 @@ test("5d. pH 7.38 with pCO2 below Winter's: mixed, not 'fully compensated'", () 
   assert.doesNotMatch(x.msg, /Traditional: fully compensated/);
 });
 
-test("6. Henderson–Hasselbalch mismatch pauses the acid–base reading", () => {
+// Expectation changed in v16.3 at the user's request: a HCO₃ that does not fit pH and pCO₂ (often a chemistry bicarbonate)
+// is interpreted as entered, with a quiet note showing the calculated value, instead of pausing the reading.
+test("6 (expectations updated in v16.3). an HCO₃ that does not fit is interpreted as entered, with a quiet note", () => {
   const x = pipeline({ ph: 7.40, paco2: 40, hco3: 10, pao2: 95, wt: 60 });
-  assert.equal(x.ab, null);
-  assert.equal(x.abRaw.mismatch, true);
-  assert.match(x.abRaw.errors[0], /paused/);
-  assert.match(x.abRaw.errors[0], /same blood gas/);
-  assert.match(x.msg, /Acid–base reading paused/);
-  assert.doesNotMatch(x.msg, /Compensation|metabolic acidosis|HCO3 deficit|Winter/);
-  assert.ok(x.keys.includes("check"));
-  assert.ok(!x.keys.includes("bicarb") && !x.keys.includes("cause"));
-  // a value from the same gas (rounding only) is accepted
-  assert.equal(pipeline({ ph: 7.40, paco2: 40, hco3: 24.4, pao2: 95 }).abRaw.errors.length, 0);
-  // small absolute but large relative gap at a low HCO3 is caught
-  assert.equal(pipeline({ ph: 7.00, paco2: 20, hco3: 3.2, pao2: 95 }).abRaw.mismatch, true);
+  assert.ok(x.ab, "interpreted"); assert.equal(x.ab.hco3, 10); assert.ok(!x.abRaw.mismatch);
+  assert.ok(Math.abs(x.ab.hco3Diff.calc - 24.1) < 0.1);
+  assert.ok(x.ab.notes.some((n) => n.key === "hco3" && /HCO₃ 10 as entered; pH and pCO₂ give 24\.1\. Interpreted with the entered value/.test(n.text)));
+  assert.doesNotMatch(x.msg, /paused|Input checks/);
+  assert.match(x.msg, /ABG Interpretation:\nMetabolic acidosis/);
+  // a value from the same gas (rounding only) gets no note
+  assert.ok(!pipeline({ ph: 7.40, paco2: 40, hco3: 24.4, pao2: 95 }).ab.notes.some((n) => n.key === "hco3"));
+  // small absolute but large relative gap at a low HCO3 is still noted
+  assert.ok(pipeline({ ph: 7.00, paco2: 20, hco3: 3.2, pao2: 95 }).ab.hco3Diff);
 });
 
 test("7. no PBW, mL/kg or PBW-based advice without an explicit sex", () => {

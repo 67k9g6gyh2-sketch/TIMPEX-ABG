@@ -183,8 +183,9 @@ test("V1. the copied message never looks reassuring when an input is rejected", 
   assert.match(checks(po2.msg), /pO₂ 800 on FiO₂ 100% is outside the accepted range/);
   const nc = pipeline({ ph: 7.40, paco2: 40, hco3: 24, pao2: 70, sp: { mode: "nc", ncFlow: 8 } });
   assert.match(checks(nc.msg), /Nasal cannula 8 L\/min: the FiO₂ estimate .* is unreliable above 6 L\/min/);
+  // v16.3 (user decision): a HCO₃ that does not fit is interpreted as entered, so it is no longer an input check
   const mm = pipeline({ ph: 7.40, paco2: 40, hco3: 10, pao2: 95 });
-  assert.match(checks(mm.msg), /Acid–base reading paused/);
+  assert.equal(checks(mm.msg), ""); assert.ok(mm.ab && mm.ab.hco3Diff);
 });
 test("V2. extreme but possible electrolytes are interpreted and flagged; impossible ones are reported", () => {
   const x = pipeline(Object.assign({}, N, { el: { na: 105, k: 8.6 } }));

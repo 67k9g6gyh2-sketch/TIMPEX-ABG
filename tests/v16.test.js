@@ -29,12 +29,14 @@ test("v16-1c. acidosis criterion boundaries: pH 7.30 with HCO3 18.0 is not met; 
   assert.equal(E(7.29, 18.0).dka.A, true);
   assert.equal(E(7.30, 17.9).dka.A, true);
 });
-test("v16-1d. a gas that doesn't fit is paused, and DKA is never 'met' from it", () => {
+// Expectation changed in v16.3 at the user's request: the gas is interpreted as entered (the entered HCO₃, often a
+// chemistry bicarbonate, is the one the DKA criteria use), with a quiet note showing the calculated HCO₃.
+test("v16-1d (expectations updated in v16.3). a HCO₃ that does not fit is used as entered for acid–base and DKA", () => {
   const x = pipeline({ ph: 7.20, paco2: 60, hco3: 15, pao2: 90, el: { glu: 380, gluUnit: "mgdl", bhb: 4.0 } });
-  assert.equal(x.ab, null);
-  assert.equal(x.E.dka.state, "possible");
-  assert.match(x.msg, /needs a valid pH and HCO₃/);
-  assert.doesNotMatch(x.msg, /DKA biochemical criteria met/);
+  assert.ok(x.ab); assert.equal(x.ab.hco3, 15); assert.ok(x.ab.hco3Diff);
+  assert.equal(x.E.dka.state, "met");
+  assert.match(x.msg, /DKA biochemical criteria met .*HCO₃ 15/);
+  assert.doesNotMatch(x.msg, /paused|Input checks/);
 });
 
 /* ---------- Issue 2: severity includes β-OHB > 6.0; worst finding sets the grade ---------- */

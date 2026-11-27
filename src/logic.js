@@ -88,8 +88,8 @@ var ABG = (function () {
     }
     r.aA = pao2 / r.PAO2;                                // step 3  (B9)
     if (r.aA > 1) {
-      r.errors.push("pO₂ (" + fmt(pao2, 0) + ") is higher than the calculated alveolar PO₂ (" + fmt(r.PAO2, 0) +
-        "). That is not possible: check the FiO₂ entered (the patient may be on more O₂), the units, and the sample.");
+      r.aboveAlv = true;   // shown as a note, not an error (v16.3); no a/A-based FiO2 estimate can be made
+      r.errors.push("pO₂ " + fmt(pao2, 0) + " is above what FiO₂ " + fmt(fio2Pct, 0) + "% can give (alveolar ≈ " + fmt(r.PAO2, 0) + "), so the FiO₂ estimate cannot be calculated. The patient is probably on more oxygen than entered, or the sample has air: set the oxygen support to get it.");
       return r;
     }
     r.target = custom ? inp.target : ageTarget(age);     // step 4  (B10)
@@ -184,12 +184,12 @@ var ABG = (function () {
     r.hco3Entered = inp.hco3 != null;
     var hco3 = r.hco3 = r.hco3Entered ? inp.hco3 : r.hco3Calc;
     // An analyzer calculates HCO₃ from pH and pCO₂ (Henderson–Hasselbalch), so values from one gas agree within rounding.
-    // A larger gap means a typo or values from different samples: pause the acid–base reading rather than interpret it.
+    // v16.3 (user decision): a larger gap (often a chemistry bicarbonate) no longer pauses the reading. The gas is interpreted
+    // with the values as entered, and the difference is shown as a quiet note with the calculated value.
     var dH = Math.abs(hco3 - r.hco3Calc);
     if (r.hco3Entered && (dH > 2 || (dH > 1 && dH / r.hco3Calc > 0.15))) {
-      r.mismatch = true;
-      r.errors.push("Acid–base reading paused: HCO₃ " + fmt(hco3, 1) + " does not fit pH " + fmt(ph, 2) + " and pCO₂ " + fmt(paco2, 0) + " (they give " + fmt(r.hco3Calc, 1) + "). Check that all three come from the same blood gas and fix any typo, or leave HCO₃ blank to use the calculated value. A serum (chemistry) bicarbonate from another sample will not match.");
-      return r;
+      r.hco3Diff = { entered: hco3, calc: r.hco3Calc };
+      r.notes.push({ tone: "", key: "hco3", text: "HCO₃ " + fmt(hco3, 1) + " as entered; pH and pCO₂ give " + fmt(r.hco3Calc, 1) + ". Interpreted with the entered value." });
     }
 
     var rA = paco2 > NORM.co2Hi, rB = paco2 < NORM.co2Lo, mA = hco3 < NORM.hco3Lo, mB = hco3 > NORM.hco3Hi;
@@ -475,8 +475,8 @@ var ABG = (function () {
   // Every unresolved input problem, for the app's check card and the top of the copied message.
   // m: { abRaw, el, ox, pao2, fio2Pct, support, vent, extra: [{ text, level }] }
   // pO2 or FiO2 entered but outside the accepted range: oxygenation is not interpreted
-  function oxOutOfRange(pao2, fio2Pct, paco2) {
-    return vStat("pao2", pao2) === "invalid" || vStat("fio2Pct", fio2Pct) === "invalid" || (paco2 != null && pao2AboveAlv(pao2, paco2, fio2Pct) != null);
+  function oxOutOfRange(pao2, fio2Pct) {   // range only: a pO2 above the alveolar value is still read (v16.3)
+    return vStat("pao2", pao2) === "invalid" || vStat("fio2Pct", fio2Pct) === "invalid";
   }
   // One wording for a rejected pO2 or FiO2, wherever it is reported (ABG tab, Ventilator tab, both messages)
   var OX_NA = "P/F, the oxygenation index, ARDS grading and the weaning oxygenation check are not assessed";
@@ -501,12 +501,10 @@ var ABG = (function () {
     else if (ab && ab.extreme) add(ab.extreme, "crit");
     if (oxOutOfRange(null, m.fio2Pct)) add(fio2IssueText(m.fio2Pct), "crit");
     else if (oxOutOfRange(m.pao2, null)) add(pao2IssueText(m.pao2, m.fio2Pct), "crit");
-    else if (m.paco2 != null && pao2AboveAlv(m.pao2, m.paco2, m.fio2Pct) != null) add(alvIssueText(m.pao2, m.fio2Pct, m.paco2, pao2AboveAlv(m.pao2, m.paco2, m.fio2Pct)), "crit");
     // the ventilator engine reports the same rejected values in the same words, so the two tabs always agree
     var vv = m.vent;
     if (vv && vv.fio2Bad != null && !oxOutOfRange(null, m.fio2Pct)) add(fio2IssueText(vv.fio2Bad), "crit");
     else if (vv && vv.pao2Bad != null && !oxOutOfRange(m.pao2, m.fio2Pct)) add(pao2IssueText(vv.pao2Bad, vv.fio2Raw), "crit");
-    else if (vv && vv.pao2Alv && !(m.paco2 != null && pao2AboveAlv(m.pao2, m.paco2, m.fio2Pct) != null)) add(alvIssueText(vv.pao2Alv.p, vv.pao2Alv.f, vv.pao2Alv.c, vv.pao2Alv.A), "crit");
     var sp = m.support;
     if (sp && sp.mode === "nc" && num_(sp.ncFlow) != null && sp.ncFlow > 6) add("Nasal cannula " + fmt(sp.ncFlow, 0) + " L/min: the FiO₂ estimate (20 + 4 × L/min) is unreliable above 6 L/min, so P/F and the desired FiO₂ are rough.", "warn");
     if (m.el && m.el.issues) m.el.issues.forEach(function (x) { add(x.text, x.level); });
@@ -588,7 +586,7 @@ var ABG = (function () {
     var pao2 = inp.pao2, fio2Pct = inp.fio2Pct, age = inp.age;
     if (pao2 == null || fio2Pct == null || !isFinite(pao2) || !isFinite(fio2Pct)) return null;
     if (vOK("pao2", pao2) == null || vOK("fio2Pct", fio2Pct) == null) return null;   // shared validation
-    if (inp.paco2 != null && pao2AboveAlv(pao2, inp.paco2, fio2Pct) != null) return null;
+    var alvA = inp.paco2 != null ? pao2AboveAlv(pao2, inp.paco2, fio2Pct) : null;   // v16.3: read as entered, with a hint
     var hasAge = age != null && isFinite(age);
     var adj = hasAge && age > 60 ? Math.min(age, 90) - 60 : 0;
     var o = { pao2: pao2, fio2Pct: fio2Pct, adj: adj, hasAge: hasAge };
@@ -605,7 +603,7 @@ var ABG = (function () {
       if (o.grade === "none") {
         o.label = "normal oxygenation"; o.tone = "ok"; o.state = "normal";
         o.detail = "pO₂ " + fmt(pao2, 0) + " on room air is at or above " + fmt(o.mildLimit, 0) + (adj ? " (age-adjusted)" : "") + ".";
-        if (pao2 > 100) o.detail += " Above 100 on room air: hyperventilation, or check FiO₂ and for an air bubble.";
+        if (pao2 > 100 && alvA == null) o.detail += " Above 100 on room air: hyperventilation, or check FiO₂ and for an air bubble.";
       } else {
         o.label = o.grade + " hypoxemia"; o.tone = o.grade === "severe" ? "crit" : "warn"; o.state = "hypoxemia";
         o.detail = "pO₂ " + fmt(pao2, 0) + " on room air: " + (o.grade === "mild" ? fmt(o.modLimit, 0) + "–" + fmt(o.mildLimit - 1, 0)
@@ -628,6 +626,10 @@ var ABG = (function () {
       }
     }
     if (!hasAge) o.detail += " Age not entered: limits not age-adjusted.";
+    if (alvA != null) {
+      o.aboveAlv = alvA;
+      o.detail += " This pO₂ is above what FiO₂ " + fmt(fio2Pct, 0) + "% can give (alveolar ≈ " + fmt(alvA, 0) + " at pCO₂ " + fmt(inp.paco2, 0) + "): the patient is probably on more oxygen than entered, or the sample has air. Set the oxygen support for P/F and the FiO₂ advice.";
+    }
     return o;
   }
 
@@ -992,7 +994,7 @@ var ABG = (function () {
     var C = [], add = function (k, label, ok, val) { C.push({ k: k, label: label, ok: ok, val: val }); };
     // v16.2: oxygenation only from a valid PaO2 (P/F) or, failing that, a valid SpO2 (its source named); otherwise not assessed
     var oxWhy = o.pao2Bad != null ? "pO₂ " + fmt(o.pao2Bad, 0) + " is invalid" : o.fio2Bad != null ? "FiO₂ " + fmt(o.fio2Bad, 0) + "% is invalid"
-      : o.pao2Alv ? "pO₂ " + fmt(o.pao2Alv.p, 0) + " is above the alveolar pO₂" : null;
+      : o.pao2Alv ? "pO₂ " + fmt(o.pao2Alv.p, 0) + " is above what FiO₂ " + fmt(o.pao2Alv.f, 0) + "% can give (check FiO₂)" : null;
     if (o.pf != null) add("ox", "Oxygenation: P/F ≥ 150", o.pf >= 150, "P/F " + Math.round(o.pf));
     else if (o.spo2 != null && fio2Pct != null) add("ox", "Oxygenation: SpO₂ > 90% on FiO₂ ≤ 40%" + (oxWhy ? " (from SpO₂ because " + oxWhy + "; pulse oximetry only)" : ""), o.spo2 > 90 && fio2Pct <= 40, "SpO₂ " + fmt(o.spo2, 0) + "% on " + fmt(fio2Pct, 0) + "%");
     else if (oxWhy) add("ox", "Oxygenation", null, "not assessed: " + oxWhy + " and there is no valid SpO₂");
@@ -1587,7 +1589,7 @@ var ABG = (function () {
     if (v.pbw) C.push("PBW " + fmt(v.pbw, 1) + " kg (6 mL/kg = " + Math.round(6 * v.pbw) + " mL)");
     else if (v.pbwNeedSex) C.push("PBW: not calculated (sex not selected)");
     if (v.pao2Bad != null || v.fio2Bad != null) C.push("P/F and oxygenation index: not assessed (" + (v.fio2Bad != null ? "FiO₂ " + fmt(v.fio2Bad, 0) + "%" : "pO₂ " + fmt(v.pao2Bad, 0)) + " is invalid; recheck)");
-    else if (v.pao2Alv) C.push("P/F and oxygenation index: not assessed (pO₂ " + fmt(v.pao2Alv.p, 0) + " is above the alveolar pO₂ ≈ " + fmt(v.pao2Alv.A, 0) + "; recheck FiO₂ and the sample)");
+    else if (v.pao2Alv) C.push("P/F and oxygenation index: not calculated (pO₂ " + fmt(v.pao2Alv.p, 0) + " is above what FiO₂ " + fmt(v.pao2Alv.f, 0) + "% can give; check FiO₂)");
     if (v.oi != null) C.push("Oxygenation index: " + fmt(v.oi, 1) + " (no adult severity bands; follow the trend)");
     if (v.spo2Bad != null) C.push("SpO₂: " + fmt(v.spo2Bad, 0) + "% (" + (v.spo2Bad > 100 ? "invalid" : "outside 51–100%") + "; not used for S/F)");
     if (v.sf != null) C.push("SpO₂/FiO₂: " + Math.round(v.sf) + " (SpO₂ " + fmt(v.spo2, 0) + "%)" + (v.spo2 > 97 ? "; not valid above 97%" : v.sfRange ? " " + DOWN + "; ARDS oxygenation range (≤ 315)" + (v.sfSev ? ", " + v.sfSev : "") : ""));

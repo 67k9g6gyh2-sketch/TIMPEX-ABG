@@ -82,26 +82,46 @@ test("A5. randomized: the same PaO₂ has the same status in every module, and a
     const pao2 = [5, 9.9, 10, 60, 95, 300, 700, 700.1, 800, 1200][Math.floor(rnd() * 10)];
     const fio2 = [21, 40, 60, 100][Math.floor(rnd() * 4)];
     const r = ventTab({ ph: 7.40, paco2: 40, hco3: 24, pao2, sp: MV({ fio2Pct: fio2, ftot: 14 + Math.floor(rnd() * 8), mawp: 12, ppeak: 28, pplat: rnd() < 0.5 ? 22 : undefined }) });
-    const bad = ABG.vStat("pao2", pao2) === "invalid" || ABG.pao2AboveAlv(pao2, 40, fio2) != null;
-    assert.equal(r.x.ox == null, bad); assert.equal(r.x.g == null, bad); assert.equal(r.vv.pf == null, bad); assert.equal(r.vv.oi == null, bad);
-    const listed = r.vchk.some((c) => /^pO₂ .* is (outside the accepted range|higher than the alveolar pO₂)/.test(c.text));
+    // v16.3: out-of-range pO₂ is rejected everywhere; a pO₂ above the alveolar value is still read for oxygenation (with a
+    // note) but never turned into P/F, OI or a weaning pass, and it is not a red input check
+    const bad = ABG.vStat("pao2", pao2) === "invalid", alv = !bad && ABG.pao2AboveAlv(pao2, 40, fio2) != null;
+    assert.equal(r.x.ox == null, bad); assert.equal(r.x.g == null, bad || alv); assert.equal(r.vv.pf == null, bad || alv); assert.equal(r.vv.oi == null, bad || alv);
+    if (alv) assert.ok(r.x.ox.aboveAlv);
+    const listed = r.vchk.some((c) => /^pO₂ .* is outside the accepted range/.test(c.text));
     assert.equal(listed, bad, "Ventilator tab input checks for pO₂ " + pao2);
     if (bad) for (const m of both(r)) assert.doesNotMatch(m, /P\/F Ratio: |\(P\/F \d|Oxygenation index: \d|✓ Oxygenation: P\/F|Meets the numeric criteria|No acid–base or oxygenation problem/);
+    if (alv) for (const m of both(r)) { assert.doesNotMatch(m, /P\/F Ratio: |\(P\/F \d|Oxygenation index: \d|✓ Oxygenation: P\/F|Meets the numeric criteria/); assert.ok(!/pO₂/.test(checks(m)), "no pO₂ input check"); }
   }
 });
 
-test("A6. pO₂ above the alveolar pO₂ (a/A > 1, the rule calc() already used) is rejected by every module", () => {
+// Expectation changed in v16.3 at the user's request: such a pO₂ is read for oxygenation (with a note to set the oxygen
+// support) instead of a red "resolve before acting" check; P/F, OI and the weaning check are still not calculated from it.
+test("A6 (expectations updated in v16.3). pO₂ above the alveolar pO₂: oxygenation read with a note, no derived indices", () => {
   // FiO2 40%, pCO2 40: alveolar pO2 = 0.40 × 713 − 40 / 0.8 ≈ 235
   const r = ventTab({ ph: 7.40, paco2: 40, hco3: 24, pao2: 300, sp: MV({ ftot: 20, mawp: 12, pplat: 22, ppeak: 28 }) });
   assert.ok(Math.abs(ABG.pao2AboveAlv(300, 40, 40) - 235.2) < 0.1);
-  assert.equal(r.x.ox, null); assert.equal(r.x.g, null); assert.equal(r.vv.pf, null); assert.equal(r.vv.oi, undefined);
+  assert.ok(r.x.ox); assert.match(r.x.ox.detail, /above what FiO₂ 40% can give \(alveolar ≈ 235 at pCO₂ 40\): the patient is probably on more oxygen than entered/);
+  assert.equal(r.x.g, null); assert.equal(r.vv.pf, null); assert.equal(r.vv.oi, undefined);
   assert.equal(r.vv.wean.items.find((c) => c.k === "ox").ok, null);
   for (const m of both(r)) {
-    assert.match(checks(m), /pO₂ 300 on FiO₂ 40% is higher than the alveolar pO₂ \(≈ 235 for pCO₂ 40 at sea level\), which is not possible: check the FiO₂ entry and the sample/);
+    assert.equal(checks(m).includes("pO₂ 300"), false, "not a red input check");
     assert.doesNotMatch(m, /P\/F (Ratio: )?750|✓ Oxygenation: P\/F|Meets the numeric criteria/);
   }
+  assert.match(r.vmsg, /P\/F and oxygenation index: not calculated \(pO₂ 300 is above what FiO₂ 40% can give; check FiO₂\)/);
   const ok = ventTab({ ph: 7.40, paco2: 40, hco3: 24, pao2: 230, sp: MV({ ftot: 14 }) });
-  assert.equal(ok.vv.pf, 575, "just below the alveolar value is still valid");
+  assert.equal(ok.vv.pf, 575, "just below the alveolar value is used normally");
+});
+
+/* ---------- v16.3: the user's case (screenshot, 27 Nov 2026) ---------- */
+test("U1. pH 7.40, pCO₂ 24, HCO₃ 18, pO₂ 184 on room air: interpreted as entered, no input-check card", () => {
+  const x = pipeline({ ph: 7.40, paco2: 24, hco3: 18, pao2: 184, age: 50 });
+  assert.ok(x.ab); assert.equal(x.ab.hco3, 18);
+  assert.equal(ABG.collectIssues({ abRaw: x.abRaw, el: x.E, ox: x.ox, pao2: 184, paco2: 24, fio2Pct: 21, support: { mode: "ra" } }).length, 0);
+  assert.doesNotMatch(x.msg, /Input checks|paused|not interpreted|not assessed/);
+  assert.match(x.msg, /ABG Interpretation:\nChronic respiratory alkalosis, with normal oxygenation/);
+  assert.match(x.msg, /Actual HCO₃: 18 mmol\/L/);
+  assert.ok(x.ab.notes.some((n) => /HCO₃ 18 as entered; pH and pCO₂ give 14\.5/.test(n.text)));
+  assert.match(x.ox.detail, /above what FiO₂ 21% can give \(alveolar ≈ 120 at pCO₂ 24\)/);
 });
 
 /* ---------- Issue B: no contradictory or unconditional rate instructions ---------- */
@@ -265,13 +285,14 @@ test("C5. randomized: an unresolved pressure disagreement never becomes a normal
 });
 
 /* ---------- Related routes found by the v16.2 investigation ---------- */
-test("X1. rejected or unverified pCO₂ never drives the ventilatory ratio or a rate target", () => {
+test("X1 (updated in v16.3). rejected pCO₂ never drives the ventilatory ratio or a rate target", () => {
   const bad = ventTab({ ph: 7.40, paco2: 300, hco3: 24, pao2: 90, sp: MV({ pco2Target: 40 }) });
   assert.equal(bad.vv.vr, undefined); assert.equal(bad.vv.rrNeed, undefined); assert.equal(bad.vv.veNeed, undefined);
   assert.doesNotMatch(bad.vmsg, /Ventilatory ratio: 6\.8|high dead space/);
-  const paused = ventTab({ ph: 7.40, paco2: 60, hco3: 24, pao2: 90, sp: MV({ pco2Target: 40 }) });
-  assert.ok(paused.x.abRaw.mismatch); assert.equal(paused.vv.rrNeed, undefined); assert.equal(paused.vv.vrUnverified, true);
-  assert.match(paused.vmsg, /Ventilatory ratio: 1\.4 \(unverified: the gas is internally inconsistent\)/);
+  // v16.3 (user decision): a HCO₃ that does not fit no longer pauses the gas, so pCO₂ is used as measured
+  const entered = ventTab({ ph: 7.40, paco2: 60, hco3: 24, pao2: 90, sp: MV({ pco2Target: 40 }) });
+  assert.ok(entered.x.ab); assert.ok(entered.vv.rrNeed > 0); assert.ok(!entered.vv.vrUnverified);
+  assert.match(entered.vmsg, /Ventilatory ratio: 1\.4 \(normal ≈ 1\)/);
 });
 
 test("X2. measured minute ventilation: implausible, disputed and extreme values", () => {
