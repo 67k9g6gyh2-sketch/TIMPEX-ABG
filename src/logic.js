@@ -584,8 +584,9 @@ var ABG = (function () {
   // On O2: uncorrected (< acceptable limit), corrected (limit–100), overcorrected (> 100).
   function oxygenation(inp) {
     var pao2 = inp.pao2, fio2Pct = inp.fio2Pct, age = inp.age;
-    if (pao2 == null || fio2Pct == null || !isFinite(pao2) || !isFinite(fio2Pct)) return null;
-    if (vOK("pao2", pao2) == null || vOK("fio2Pct", fio2Pct) == null) return null;   // shared validation
+    if (pao2 == null || !isFinite(pao2) || vOK("pao2", pao2) == null) return null;   // shared validation
+    if (fio2Pct == null || !isFinite(fio2Pct)) return oxNoFio2(pao2, age);           // v16.4: read the pO2 even without FiO2
+    if (vOK("fio2Pct", fio2Pct) == null) return null;
     var alvA = inp.paco2 != null ? pao2AboveAlv(pao2, inp.paco2, fio2Pct) : null;   // v16.3: read as entered, with a hint
     var hasAge = age != null && isFinite(age);
     var adj = hasAge && age > 60 ? Math.min(age, 90) - 60 : 0;
@@ -613,7 +614,7 @@ var ABG = (function () {
       if (pao2 < o.mildLimit) {
         o.label = "uncorrected hypoxemia"; o.tone = o.grade === "severe" || o.impair === "severely" ? "crit" : "warn"; o.state = "uncorrected";
         o.detail = "pO₂ " + fmt(pao2, 0) + " on FiO₂ " + fmt(fio2Pct, 0) + "% is still below " + fmt(o.mildLimit, 0) + (adj ? " (age-adjusted)" : "") +
-          "; " + o.grade + " range.";
+          " (" + o.grade + " hypoxemia range).";
       } else if (pao2 <= 100) {
         o.label = "corrected hypoxemia" + (o.impair ? " on FiO₂ " + fmt(fio2Pct, 0) + "%" + impTxt : ""); o.tone = o.impair === "severely" ? "crit" : o.impair ? "warn" : "ok"; o.state = "corrected";
         o.detail = "pO₂ " + fmt(pao2, 0) + " on FiO₂ " + fmt(fio2Pct, 0) + "% is " + fmt(o.mildLimit, 0) + "–100: adequate on this support.";
@@ -634,6 +635,23 @@ var ABG = (function () {
   }
 
 
+
+  // v16.4: oxygenation from the pO2 alone when the oxygen support (FiO2) has not been entered yet. The hypoxemia grade
+  // needs only the pO2; whether it is on room air or corrected by oxygen, P/F and the A-a gradient need the FiO2.
+  function oxNoFio2(pao2, age) {
+    var hasAge = age != null && isFinite(age), adj = hasAge && age > 60 ? Math.min(age, 90) - 60 : 0;
+    var o = { pao2: pao2, fio2Pct: null, adj: adj, hasAge: hasAge, noFio2: true, onO2: null, pf: null, impair: null };
+    o.mildLimit = 80 - adj; o.modLimit = Math.max(40, 60 - adj);
+    o.grade = pao2 < 40 ? "severe" : pao2 < o.modLimit ? "moderate" : pao2 < o.mildLimit ? "mild" : "none";
+    o.state = o.grade === "none" ? "normal" : "hypoxemia";
+    o.label = (o.grade === "none" ? "no hypoxemia" : o.grade + " hypoxemia") + " (oxygen support not entered)";
+    o.tone = o.grade === "none" ? "" : o.grade === "severe" ? "crit" : "warn";
+    var rng = o.grade === "mild" ? fmt(o.modLimit, 0) + "–" + fmt(o.mildLimit - 1, 0) : o.grade === "moderate" ? "40–" + fmt(o.modLimit - 1, 0) : "below 40";
+    o.detail = "pO₂ " + fmt(pao2, 0) + (o.grade === "none" ? " is at or above " + fmt(o.mildLimit, 0) + ": no hypoxemia" : " is in the " + o.grade + " hypoxemia range (" + rng + ")") +
+      (adj && o.grade !== "severe" ? " (age-adjusted)" : "") + ". The oxygen support is not entered, so the app cannot tell room air from oxygen (corrected or uncorrected hypoxemia); P/F, the A-a gradient and the FiO₂ advice need it.";
+    if (!hasAge) o.detail += " Age not entered: limits not age-adjusted.";
+    return o;
+  }
 
   /* ---------- Oxygen / ventilatory support ---------- */
   // s: { mode: "ra"|"nc"|"mask"|"niv"|"mv", ncFlow, fio2Pct, dev ("venturi"|"mask"|"nrm"|"hfnc"), hfFlow,
@@ -1710,6 +1728,7 @@ var ABG = (function () {
     if (head) L.push(head);
     if (ab && ab.label && ab.primary !== "normal") L.push("Traditional: " + lc(ab.label));
     elInterp(m.el, ab).forEach(function (x) { L.push(x.text); });
+    if (m.ox) L.push("Oxygenation: " + m.ox.detail);   // v16.4: the oxygenation reading in words, not only in the headline
     if (m.rf) L.push(m.rf.text);
     if (m.g) L.push("Gas exchange: " + m.g.pfText + "; " + m.g.gradText + (m.g.mech ? " → " + m.g.mech : ""));
     return L;
@@ -2165,6 +2184,39 @@ var ABG = (function () {
     return v + forT + (sp && sp.dev ? " (" + (DEVICES[sp.dev] || "mask") + ")" : "");
   }
 
+  // v16.4: the desired-FiO2 working and the O2 requirement, written out for the copied message (same steps as the app card)
+  function o2Requirement(r, sp, pao2) {
+    var mode = sp ? sp.mode : "nc", onDevice = mode === "mv" || mode === "niv", req = fmt(r.fio2Req, 0) + "%";
+    var where = mode === "mv" ? " on the ventilator" : mode === "niv" ? " on NIV" : "";
+    if (r.adequate) return "no increase: pO₂ " + fmt(pao2, 0) + " is already adequate" + (r.inWindow ? " (within " + r.inWindow + ")" : " (≥ " + fmt(r.adequateLimit, 0) + ")") + "; keep the current oxygen" + (mode === "ra" ? " (room air)" : " and wean toward the SpO₂ target");
+    if (r.level === "over") return "more than 100%: oxygen alone cannot reach the target (shunt physiology); PEEP or CPAP matters more than FiO₂" + (onDevice ? "" : ", so escalate support (HFNC, NIV or intubation as appropriate)");
+    if (r.level === "ra") return "none: room air (21%) reaches the target" + (mode === "ra" ? "" : "; wean the oxygen toward room air");
+    if (onDevice) return "set FiO₂ ≈ " + req + where;
+    if (r.level === "nc") return "nasal cannula ≈ " + fmt(r.lpm, 1) + " L/min, from L/min = (FiO₂ − 20) ÷ 4 = (" + fmt(r.fio2Req, 1) + " − 20) ÷ 4 (NC gives about 20 + 4 × L/min, up to 6 L/min = 44%)" +
+      (r.lpm < 1 ? "; below 1 L/min, so trial room air with SpO₂ monitoring, or use the lowest flow the flowmeter allows" : "");
+    return req + " is more than a nasal cannula gives (44% at 6 L/min): " + (r.fio2Req <= VENTURI_MAX ? "Venturi mask at about " + req + " or HFNC" : "HFNC or a non-rebreather mask");
+  }
+  function desiredLines(m, isMV) {
+    var r = m.r && !m.r.errors.length ? m.r : null, L = [];
+    if (r) {
+      L.push("Desired FiO2: " + (isMV ? desiredMV(r, m.pao2) : desiredText(r, m.support, m.tgt, m.pao2)) + (r.level === "ra" || r.adequate ? "" : " · estimate; titrate to SpO₂"));
+      var T = m.tgt, tTxt = T ? (T.kind === "age" && m.age != null ? "104 − 0.4 × age " + fmt(m.age, 0) : T.why) : "";
+      L.push("Computation (target pO₂ " + fmt(r.target, 0) + (tTxt ? ", " + tTxt : "") + "):");
+      L.push("PAO₂ = 713 × FiO₂ − pCO₂ ÷ 0.8 = 713 × " + fmt(r.fio2Pct / 100, 2) + " − " + n1(m.paco2) + " ÷ 0.8 = " + fmt(r.PAO2, 1) + " mmHg");
+      L.push("a/A = pO₂ ÷ PAO₂ = " + n1(m.pao2) + " ÷ " + fmt(r.PAO2, 1) + " = " + fmt(r.aA, 3));
+      L.push("FiO₂ needed = (target ÷ a/A + pCO₂ ÷ 0.8) ÷ 713 = (" + fmt(r.target, 0) + " ÷ " + fmt(r.aA, 3) + " + " + fmt(r.paco2Term, 1) + ") ÷ 713 = " + fmt(r.fio2Req, 1) + "%");
+      L.push("O₂ requirement: " + o2Requirement(r, m.support, m.pao2));
+    } else if (m.pao2 != null && m.paco2 != null && m.fio2Pct != null && pao2AboveAlv(m.pao2, m.paco2, m.fio2Pct) != null)
+      L.push("Desired FiO2 and O₂ requirement: not calculated, because pO₂ " + fmt(m.pao2, 0) + " is above what FiO₂ " + fmt(m.fio2Pct, 0) + "% can give (alveolar ≈ " + fmt(pao2AboveAlv(m.pao2, m.paco2, m.fio2Pct), 0) + "). The patient is probably on more oxygen than entered, or the sample has air: set the actual oxygen support.");
+    else if (m.pao2 != null && m.paco2 != null && vOK("pao2", m.pao2) != null) {
+      var need = [];
+      if (m.fio2Pct == null) need.push("the current oxygen (room air, nasal cannula flow or FiO₂)");
+      if (!m.tgt) need.push("age (target pO₂ = 104 − 0.4 × age) or a custom target");
+      if (need.length) L.push("Desired FiO2 and O₂ requirement: need " + need.join(" and ") + ".");
+    }
+    return L;
+  }
+
   /* m: { ph, paco2, pao2, hco3, tco2, be, so2, ab, ox, r, fio2Pct, def, support, vent } — any may be null */
   function message(m) {
     var blocks = [], v = [];
@@ -2192,7 +2244,7 @@ var ABG = (function () {
     if (o.length) blocks.push(o);
 
     var d = [], r = m.r && !m.r.errors.length ? m.r : null;
-    if (r) d.push("Desired FiO2: " + (isMV ? desiredMV(r, m.pao2) : desiredText(r, m.support, m.tgt, m.pao2)) + (r.level === "ra" || r.adequate ? "" : " · estimate; titrate to SpO₂"));
+    desiredLines(m, isMV).forEach(function (x) { d.push(x); });
     if (m.def && !m.def.none) d.push("HCO3 deficit: " + Math.round(m.def.value) + " mEq (theoretical estimate, not a dose)");
     if (d.length) blocks.push(d);
 

@@ -851,7 +851,7 @@
 
   <footer>
     <div class="disc"><b>Clinical decision aid.</b> For trained clinicians. It does not replace clinical judgment or your institution's protocols. Read the result with the patient and the history; recheck SpO₂ or the ABG after every change in oxygen.</div>
-    <div>TIMPEX Gas &amp; Vent · v16.3 · 27 Nov 2026 · <span id="app-hint"></span></div>
+    <div>TIMPEX Gas &amp; Vent · v16.4 · 27 Nov 2026 · <span id="app-hint"></span></div>
   </footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1250,7 +1250,7 @@
       : ab.phStatus === "alkalemia" ? (ab.severe ? "Severe alkalemia" : "Alkalemia") : PH + " normal";
 
     var trad = (ab.primary !== "normal" && ab.label) ? '<div class="trad">Traditional: ' + esc(ab.label.charAt(0).toLowerCase() + ab.label.slice(1)) + "</div>" : "";
-    var oxLine = ox ? '<div class="ox">Oxygenation: ' + ox.label + "</div>" : '<div class="ox small">Add pO<sub>2</sub> and FiO<sub>2</sub> to grade oxygenation</div>';
+    var oxLine = ox ? '<div class="ox">Oxygenation: ' + sub2(ox.label) + "</div>" : '<div class="ox small">Add pO<sub>2</sub> to read oxygenation</div>';
 
     // Value strip
     var R = ABG.RANGE, cells = [];

@@ -22,13 +22,13 @@ function loadSW(existing) {
 }
 
 test("22. service worker deletes only this app's old caches", async () => {
-  const before = ["timpex-gasvent-v16-3", "timpex-gasvent-v16-2", "timpex-gasvent-v16-1", "timpex-gasvent-v16", "timpex-gasvent-v15", "timpex-gasvent-v14", "timpex-gasvent-v9", "timpex-abg-v8", "abg-o2-v2",
+  const before = ["timpex-gasvent-v16-4", "timpex-gasvent-v16-3", "timpex-gasvent-v16-2", "timpex-gasvent-v16-1", "timpex-gasvent-v16", "timpex-gasvent-v15", "timpex-gasvent-v14", "timpex-gasvent-v9", "timpex-abg-v8", "abg-o2-v2",
     "timpex-rounds-v3", "timpex-drips-v2", "workbox-precache-v2", "other-app", "timpex-gasvent-extra"];
   const { store, handlers, ctx } = loadSW(before);
-  assert.equal(vm.runInContext("CACHE", ctx), "timpex-gasvent-v16-3");   // v16.3 cache; older ones are removed
+  assert.equal(vm.runInContext("CACHE", ctx), "timpex-gasvent-v16-4");   // v16.4 cache; older ones are removed
   let p; handlers.activate({ waitUntil: (x) => { p = x; } }); await p;
   const after = [...store].sort();
-  assert.deepEqual(after, ["other-app", "timpex-drips-v2", "timpex-gasvent-extra", "timpex-gasvent-v16-3", "timpex-rounds-v3", "workbox-precache-v2"].sort());
+  assert.deepEqual(after, ["other-app", "timpex-drips-v2", "timpex-gasvent-extra", "timpex-gasvent-v16-4", "timpex-rounds-v3", "workbox-precache-v2"].sort());
 });
 
 test("index.html ships exactly the tested calculation engine (src/logic.js)", () => {
